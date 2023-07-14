@@ -1,10 +1,8 @@
 import { sql } from '@vercel/postgres'
-import { timeAgo } from '@/lib/utils'
 import { seed } from '@/lib/seed'
 
 export default async function Entregas() {
   let data
-  let startTime = Date.now()
 
   try {
     data = await sql`SELECT * FROM Entrega`
@@ -15,7 +13,6 @@ export default async function Entregas() {
       )
       // Table is not created yet
       await seed()
-      startTime = Date.now()
       data = await sql`SELECT * FROM Entrega`
     } else {
       throw e
@@ -23,16 +20,12 @@ export default async function Entregas() {
   }
 
   const { rows: entregas } = data
-  const duration = Date.now() - startTime
 
   return (
     <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
       <div className="flex justify-between items-center mb-4">
         <div className="space-y-1">
-          <h2 className="text-xl font-semibold">Recent Entregas</h2>
-          <p className="text-sm text-gray-500">
-            Fetched {entregas.length} entregas in {duration}ms
-          </p>
+          <h2 className="text-xl font-semibold">Entregas</h2>        
         </div>
       </div>
       <div className="divide-y divide-gray-900/5">
@@ -42,8 +35,13 @@ export default async function Entregas() {
             className="flex items-center justify-between py-3"
           >
             <div className="space-y-1">
-              <p className="font-medium leading-none">{entrega.nombre}</p>
+            <p className="text-sm text-gray-500">Vendido en {entrega.punto_de_venta} el {entrega.fecha.toString()}</p>
+            <p className="font-medium leading-none">{entrega.producto}</p>
+              <p className="text-sm text-gray-500">{entrega.nombre}</p>
               <p className="text-sm text-gray-500">{entrega.celular}</p>
+              <p className="text-sm text-gray-500">{entrega.fecha.toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })}</p>
+              <p className="text-sm text-gray-500">{entrega.domcilio}</p>
+              <p className="text-sm text-gray-500">{entrega.notas}</p>
             </div>
           </div>
         ))}
