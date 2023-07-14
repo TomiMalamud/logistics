@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import Table from '@/components/table'
 import TablePlaceholder from '@/components/table-placeholder'
 import ExpandingArrow from '@/components/expanding-arrow'
+import Entregas from '@/components/test'
 
 export const runtime = 'edge'
 export const preferredRegion = 'home'
