@@ -1,58 +1,42 @@
 import React from "react"
 import { GetStaticProps } from "next"
 import Layout from "../components/Layout"
-import Post, { PostProps } from "../components/Post"
-
+import Entrega, { EntregaProps } from "../components/Entrega"
+import prisma from '../lib/prisma';
+import Link from "next/link";
 export const getStaticProps: GetStaticProps = async () => {
-  const feed = [
-    {
-      id: "1",
-      title: "Prisma is the perfect ORM for Next.js",
-      content: "[Prisma](https://github.com/prisma/prisma) and Next.js go _great_ together!",
-      published: false,
-      author: {
-        name: "Nikolas Burk",
-        email: "burk@prisma.io",
-      },
-    },
-  ]
-  return { 
-    props: { feed }, 
-    revalidate: 10 
-  }
-}
-
+  const feed = await prisma.entrega.findMany();
+  return {
+    props: { feed },
+    revalidate: 10,
+  };
+};
 type Props = {
-  feed: PostProps[]
+  feed: EntregaProps[]
 }
 
 const Blog: React.FC<Props> = (props) => {
   return (
     <Layout>
-      <div className="page">
-        <h1>Public Feed</h1>
-        <main>
-          {props.feed.map((post) => (
-            <div key={post.id} className="post">
-              <Post post={post} />
+      <div>
+        <main className="relative flex min-h-screen flex-col items-center justify-center">
+          <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
+            <div className="flex justify-between items-center mb-4">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold">Entregas</h2><span className="text-blue-500 hover:text-blue-700">
+                  <Link href="/create"> Nueva Entrega</Link></span>
+              </div>
             </div>
-          ))}
+            <div className="divide-y divide-gray-900/5">
+              {props.feed.map((entrega) => (
+                <div className="py-4" key={entrega.id}>
+                  <Entrega entrega={entrega} />
+                </div>
+              ))}
+            </div>
+          </div>
         </main>
       </div>
-      <style jsx>{`
-        .post {
-          background: white;
-          transition: box-shadow 0.1s ease-in;
-        }
-
-        .post:hover {
-          box-shadow: 1px 1px 3px #aaa;
-        }
-
-        .post + .post {
-          margin-top: 2rem;
-        }
-      `}</style>
     </Layout>
   )
 }
