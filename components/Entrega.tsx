@@ -16,7 +16,7 @@ export type EntregaProps = {
 const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
   return (
     <div className="space-y-2">
-      <p>Vendido en {entrega.punto_venta} el {entrega.fecha}</p>
+<p>Vendido en {entrega.punto_venta} el {new Date(entrega.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</p>
       <p className="font-bold"> {entrega.producto}</p>
       <div className="flex justify-between items-center">
         <p className="text-sm text-slate-600 mr-2 mb-0">{entrega.domicilio}</p>

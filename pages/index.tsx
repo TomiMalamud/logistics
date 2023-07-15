@@ -7,7 +7,7 @@ import Link from "next/link";
 export const getStaticProps: GetStaticProps = async () => {
   const feed = await prisma.entrega.findMany();
   return {
-    props: { feed },
+    props: { feed: JSON.parse(JSON.stringify(feed)) },
     revalidate: 10,
   };
 };

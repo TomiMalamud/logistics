@@ -49,11 +49,11 @@ const Draft: React.FC = () => {
                                 <label className="block text-sm font-medium leading-6 text-gray-500">
                 Fecha de venta
               </label>
-                <input
-                  onChange={(e) => setFecha(e.target.value)}
-                  type='date'
-                  placeholder="Fecha"
-                  value={fecha}
+              <input
+  onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
+  type='date'
+  placeholder="Fecha"
+  value={fecha.slice(0,10)}
                   className="block w-full rounded-md border-0 px-2 pt-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
                                 <label className="block text-sm font-medium leading-6 text-gray-500">
