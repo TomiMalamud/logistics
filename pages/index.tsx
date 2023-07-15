@@ -5,7 +5,16 @@ import Entrega, { EntregaProps } from "../components/Entrega"
 import prisma from '../lib/prisma';
 import Link from "next/link";
 export const getStaticProps: GetStaticProps = async () => {
-  const feed = await prisma.entrega.findMany();
+  const feed = await prisma.entrega.findMany({
+    where: {
+      estado: false,
+    },
+    orderBy: [
+      {
+        fecha: 'asc', // Ascending order of fecha
+      },
+    ],
+  });
   return {
     props: { feed: JSON.parse(JSON.stringify(feed)) },
     revalidate: 10,
@@ -23,7 +32,12 @@ const Blog: React.FC<Props> = (props) => {
           <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4">
               <div className="space-y-1">
-                <h2 className="text-xl font-semibold">Entregas</h2><span className="text-blue-500 hover:text-blue-700">
+                <div className="flex items-center">
+                  <h2 className="text-xl font-semibold mr-20">Entregas Pendientes</h2>
+                  <span className="text-slate-500 hover:text-slate-700">
+                    <Link href="/completed"> Ver entregas completadas</Link></span>
+                </div>
+                <span className="text-blue-500 hover:text-blue-700">
                   <Link href="/create"> Nueva Entrega</Link></span>
               </div>
             </div>

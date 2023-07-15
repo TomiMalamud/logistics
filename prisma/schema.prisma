@@ -12,24 +12,16 @@ datasource db {
   shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
 }
 
-model Post {
-  id        String     @default(cuid()) @id
-  title     String
-  content   String?
-  published Boolean @default(false)
-  author    User?   @relation(fields: [authorId], references: [id])
-  authorId  String?
-}
-
 model Entrega {
     id          String      @default(cuid()) @id
     punto_venta String
     fecha      DateTime
-    producto      String
-    domicilio     String
-    nombre     String
-    celular    String
-    notas     String
+    producto      String?
+    domicilio     String?
+    nombre     String?
+    celular    String?
+    notas     String?
+    estado     Boolean? @default(false)
 }
 
 model User {
@@ -38,6 +30,5 @@ model User {
   email         String?   @unique
   createdAt     DateTime  @default(now()) @map(name: "created_at")
   updatedAt     DateTime  @updatedAt @map(name: "updated_at")
-  posts         Post[]
   @@map(name: "users")
 }
