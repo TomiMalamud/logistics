@@ -35,13 +35,13 @@ export default async function Entregas() {
             className="flex items-center justify-between py-3"
           >
             <div className="space-y-1">
-            <p className="text-sm text-gray-500">Vendido en {entrega.punto_de_venta} el {entrega.fecha.toString()}</p>
+            <p className="text-sm text-gray-500">Vendido en {entrega.punto_de_venta} el {entrega.fecha.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}</p>
             <p className="font-medium leading-none">{entrega.producto}</p>
-              <p className="text-sm text-gray-500">{entrega.nombre}</p>
-              <p className="text-sm text-gray-500">{entrega.celular}</p>
-              <p className="text-sm text-gray-500">{entrega.fecha.toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })}</p>
-              <p className="text-sm text-gray-500">{entrega.domcilio}</p>
-              <p className="text-sm text-gray-500">{entrega.notas}</p>
+              <p className=" text-gray-500">{entrega.nombre}</p>
+              <a href={`tel:${entrega.celular}`}>Llamar</a>
+
+      <p className=" text-gray-500">{entrega.domcilio}</p>
+              <p className=" text-gray-500">{entrega.notas}</p>
             </div>
           </div>
         ))}
