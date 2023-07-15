@@ -20,7 +20,7 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
       <p className="font-bold"> {entrega.producto}</p>
       <div className="flex justify-between items-center">
         <p className="text-sm text-slate-600 mr-2 mb-0">{entrega.domicilio}</p>
-        <CopyToClipboard text={entrega.domicilio} />
+        <CopyToClipboard text={entrega.domicilio.toString()} />
       </div>
       <div className="flex">
         <p>{entrega.nombre}</p>
