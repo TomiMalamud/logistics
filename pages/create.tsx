@@ -36,8 +36,8 @@ const Draft: React.FC = () => {
               <div className="border-b border-gray-900/10 pb-12">
                 <h2 className="text-base font-semibold leading-7 text-gray-900">Nueva entrega</h2>
                 <label className="block text-sm font-medium leading-6 text-gray-500">
-                Punto de Venta
-              </label>
+                  Punto de Venta
+                </label>
                 <input
                   autoFocus
                   onChange={(e) => setPunto_venta(e.target.value)}
@@ -46,55 +46,55 @@ const Draft: React.FC = () => {
                   value={punto_venta}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                                <label className="block text-sm font-medium leading-6 text-gray-500">
-                Fecha de venta
-              </label>
-              <input
-  onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
-  type='date'
-  placeholder="Fecha"
-  value={fecha.slice(0,10)}
+                <label className="block text-sm font-medium leading-6 text-gray-500">
+                  Fecha de venta
+                </label>
+                <input
+                  onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
+                  type='date'
+                  placeholder="Fecha"
+                  value={fecha.slice(0, 10)}
                   className="block w-full rounded-md border-0 px-2 pt-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                                <label className="block text-sm font-medium leading-6 text-gray-500">
-                Producto
-              </label>
+                <label className="block text-sm font-medium leading-6 text-gray-500">
+                  Producto
+                </label>
                 <input
                   onChange={(e) => setProducto(e.target.value)}
                   placeholder="Producto"
                   value={producto}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                                <label className="block text-sm font-medium leading-6 text-gray-500">
-                Domicilio
-              </label>
+                <label className="block text-sm font-medium leading-6 text-gray-500">
+                  Domicilio
+                </label>
                 <input
                   onChange={(e) => setDomicilio(e.target.value)}
                   placeholder="Domicilio"
                   value={domicilio}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                                <label className="block text-sm font-medium leading-6 text-gray-500">
-                Nombre
-              </label>
+                <label className="block text-sm font-medium leading-6 text-gray-500">
+                  Nombre
+                </label>
                 <input
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Nombre"
                   value={nombre}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                                <label className="block text-sm font-medium leading-6 text-gray-500">
-                Celular
-              </label>
+                <label className="block text-sm font-medium leading-6 text-gray-500">
+                  Celular
+                </label>
                 <input
                   onChange={(e) => setCelular(e.target.value)}
                   placeholder="Celular"
                   value={celular}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                                <label className="block text-sm font-medium leading-6 text-gray-500">
-                Notas
-              </label>
+                <label className="block text-sm font-medium leading-6 text-gray-500">
+                  Notas
+                </label>
                 <input
                   onChange={(e) => setNotas(e.target.value)}
                   placeholder="Notas"
