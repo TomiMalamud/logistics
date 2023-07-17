@@ -30,17 +30,18 @@ const Blog: React.FC<Props> = (props) => {
         <Layout>
             <div>
                 <main className="relative flex min-h-screen flex-col items-center justify-center">
-                    <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
+                    <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
                         <div className="flex justify-between items-center mb-4">
                             <div className="space-y-1">
                                 <div className="flex items-center">
-                                    <h2 className="text-xl font-semibold mr-28">Entregas Completadas</h2>
-                                    <Button variant="ghost"> 
-                                    <Link href="/"> Ver pendientes</Link>
+                                    <h2 className="text:md md:text-xl font-semibold mr-40">Entregas Completadas</h2>
+                                    <Button variant="ghost">
+                                        <Link href="/">Ver pendientes</Link>
                                     </Button>
-                                    </div>
-                                <span className="text-blue-500 hover:text-blue-700">
-                                    <Link href="/create"> Nueva Entrega</Link></span>
+                                </div>
+                                <Button variant="ghost" className="text-blue-500 hover:text-blue-700">
+                                    <Link href="/create">+ Nueva Entrega</Link>
+                                </Button>
                             </div>
                         </div>
                         <div className="divide-y divide-gray-900/5">

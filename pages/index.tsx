@@ -27,21 +27,23 @@ type Props = {
 }
 
 const Blog: React.FC<Props> = (props) => {
+  const count = props.feed.length; // Count of instances displayed
   return (
     <Layout>
       <div>
         <main className="relative flex min-h-screen flex-col items-center justify-center">
-          <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
+          <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4">
               <div className="space-y-1">
                 <div className="flex items-center">
-                  <h2 className="text-xl font-semibold mr-20">Entregas Pendientes</h2>
+                  <h2 className="text:md md:text-xl font-semibold mr-20">Entregas Pendientes <span className="text-sm font-normal ml-2 text-slate-600 bg-slate-100 p-1.5 rounded-md">{count}</span></h2>          
                     <Button variant="ghost"> 
-                    <Link href="/completed"> Ver entregas completadas</Link>
+                    <Link href="/completed">Ver entregas completadas</Link>
                     </Button>
                 </div>
-                <span className="text-blue-500 hover:text-blue-700">
-                  <Link href="/create"> Nueva Entrega</Link></span>
+                  <Button variant="ghost" className="text-blue-500 hover:text-blue-700">
+                  <Link href="/create">+ Nueva Entrega</Link>
+                  </Button>
               </div>
             </div>
             <div className="divide-y divide-gray-900/5">

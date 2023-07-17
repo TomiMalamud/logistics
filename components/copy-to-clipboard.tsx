@@ -28,9 +28,10 @@ export const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ text }) => {
     };
   }, [isCopied]);
 
-  return (
-              <Button variant="ghost" onClick={copyToClipboard}>
-               {isCopied ? 'Copiado!' : 'Copiar'}
-            </Button>
+  return (<Button variant="ghost" onClick={copyToClipboard}>
+  {!isCopied && <ClipboardIcon className="mr-2" />}
+  {isCopied ? '✓ Copiado!' : 'Copiar'}
+</Button>
+
   );
 };
