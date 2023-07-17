@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import Router from 'next/router';
 
-const Draft: React.FC = () => {
+const Create: React.FC = () => {
   const [punto_venta, setPunto_venta] = useState('');
   const [fecha, setFecha] = useState('');
   const [producto, setProducto] = useState('');
@@ -97,7 +97,7 @@ const Draft: React.FC = () => {
                 </label>
                 <input
                   onChange={(e) => setNotas(e.target.value)}
-                  placeholder="Notas"
+                  placeholder="Anotar fecha de entrega estimada"
                   value={notas}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -123,4 +123,4 @@ const Draft: React.FC = () => {
   );
 };
 
-export default Draft;
+export default Create;

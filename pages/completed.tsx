@@ -36,7 +36,7 @@ const Blog: React.FC<Props> = (props) => {
                                 <div className="flex items-center">
                                     <h2 className="text:md md:text-xl font-semibold mr-40">Entregas Completadas</h2>
                                     <Button variant="ghost">
-                                        <Link href="/">Ver pendientes</Link>
+                                        <Link href="/">Pendientes</Link>
                                     </Button>
                                 </div>
                                 <Button variant="ghost" className="text-blue-500 hover:text-blue-700">
