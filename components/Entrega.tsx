@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import Router from "next/router";
 import { CopyToClipboard } from "./copy-to-clipboard";
 
+import { Button } from "./ui/button"
+
+
 export type EntregaProps = {
   id: string;
   punto_venta: string;
@@ -51,7 +54,7 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
 
   return (
     <div className="space-y-2">
-      <p>
+      <p className="text-sm">
         Vendido en {entrega.punto_venta} el{" "}
         {new Date(entrega.fecha).toLocaleDateString("es-ES", {
           day: "2-digit",
@@ -63,34 +66,32 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
         <p className="text-sm text-slate-600 mr-5 mb-0">{entrega.domicilio}</p>
         <CopyToClipboard text={entrega.domicilio.toString()} />
       </div>
-      <div className="flex">
-        <p>{entrega.nombre}</p>
-        <a href={`tel:${entrega.celular}`} className="text-blue-500 hover:text-blue-700 mx-8">
+      <div className="flex items-center">
+        <p className="text-sm">{entrega.nombre}</p>
+        <Button variant="ghost" className="mx-4 text-blue-700 hover:text-blue-900">
+        <a href={`tel:${entrega.celular}`}>
           Llamar
         </a>
-        <a href={`https://wa.me/54${entrega.celular}`} className="text-blue-500 hover:text-blue-700">
+        </Button>
+        <Button variant="ghost" className="text-blue-700 hover:text-blue-900">
+        <a href={`https://wa.me/54${entrega.celular}`}>
           Whatsapp
         </a>
+        </Button>
       </div>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-600 mb-1">
         Notas: <span className="text-base text-slate-800">{entrega.notas}</span>
       </p>
 
       <div>
         {isUpdating ? (
-          <button
-          className="bg-slate-200 text-slate-950 text-sm px-3 py-2 rounded"
-          disabled
-          >
-            Actualizando...
-          </button>
+          <Button disabled>
+            Actualizando
+          </Button>
         ) : (
-          <button
-            className="bg-slate-100 text-slate-800 hover:bg-slate-200 hover:text-slate-950 text-sm px-3 py-2 rounded"
-            onClick={toggleEstado}
-          >
+          <Button variant="outline" onClick={toggleEstado}>
             {isEstadoUpdated ? 'Marcar como Pendiente' : 'Marcar como Entregado'}
-          </button>
+          </Button>
         )}
       </div>
     </div>

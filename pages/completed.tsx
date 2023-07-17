@@ -4,6 +4,7 @@ import Layout from "../components/Layout"
 import Entrega, { EntregaProps } from "../components/Entrega"
 import prisma from '../lib/prisma';
 import Link from "next/link";
+import { Button } from "../components/ui/button"
 export const getStaticProps: GetStaticProps = async () => {
     const feed = await prisma.entrega.findMany({
         where: {
@@ -33,10 +34,11 @@ const Blog: React.FC<Props> = (props) => {
                         <div className="flex justify-between items-center mb-4">
                             <div className="space-y-1">
                                 <div className="flex items-center">
-                                    <h2 className="text-xl font-semibold mr-20">Entregas Completadas</h2>
-                                    <span className="text-slate-500 hover:text-slate-700">
-                                    <Link href="/"> Ver entregas pendientes</Link></span>
-                                </div>
+                                    <h2 className="text-xl font-semibold mr-28">Entregas Completadas</h2>
+                                    <Button variant="ghost"> 
+                                    <Link href="/"> Ver pendientes</Link>
+                                    </Button>
+                                    </div>
                                 <span className="text-blue-500 hover:text-blue-700">
                                     <Link href="/create"> Nueva Entrega</Link></span>
                             </div>

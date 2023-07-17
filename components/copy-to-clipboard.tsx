@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
-
+import { ClipboardIcon } from '@radix-ui/react-icons'
+import { Button } from "./ui/button"
 type CopyToClipboardProps = {
   text: string;
 };
@@ -13,7 +14,7 @@ export const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ text }) => {
       await navigator.clipboard.writeText(text);
       setIsCopied(true);
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error('Error: ', err);
     }
   };
   
@@ -28,8 +29,8 @@ export const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ text }) => {
   }, [isCopied]);
 
   return (
-    <button className="text-blue-500 hover:text-blue-900" onClick={copyToClipboard}>
-      {isCopied ? '✓ Copiado!' : 'Copiar'}
-    </button>
+              <Button variant="ghost" onClick={copyToClipboard}>
+               {isCopied ? 'Copiado!' : 'Copiar'}
+            </Button>
   );
 };
