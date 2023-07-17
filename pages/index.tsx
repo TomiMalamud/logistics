@@ -14,7 +14,7 @@ export const getStaticProps: GetStaticProps = async () => {
     },
     orderBy: [
       {
-        fecha: 'asc', // Ascending order of fecha
+        fecha: 'asc', 
       },
     ],
   });
