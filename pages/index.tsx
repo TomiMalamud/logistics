@@ -28,7 +28,7 @@ type Props = {
 }
 
 const Index: React.FC<Props> = (props) => {
-  const count = props.feed.length; // Count of instances displayed
+  const count = props.feed.length;
   const { user, error, isLoading } = useUser();
   const allowAccess = user && user.email === 'rohi.sommiers@gmail.com';
 
