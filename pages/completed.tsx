@@ -10,7 +10,7 @@ import { useUser } from '@auth0/nextjs-auth0/client';
 export const getServerSideProps: GetServerSideProps = async () => {
     const feed = await prisma.entrega.findMany({
         where: {
-            estado: false,
+            estado: true,
         },
         orderBy: [
             {
