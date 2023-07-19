@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { CopyToClipboard } from "./copy-to-clipboard";
 import { Pencil2Icon, ChevronDownIcon } from "@radix-ui/react-icons";
 import { Button } from "./ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger} from "./ui/collapsible"
-
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible"
+import Router from "next/router";
 export type EntregaProps = {
   id: string;
   punto_venta: string;
@@ -37,7 +37,7 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
       if (response.status === 200) {
         setIsEstadoUpdated(!isEstadoUpdated);
         setIsUpdating(false);
-        // No need to reload the page, as the state change will trigger a re-render
+        Router.reload();
       } else {
         setIsUpdating(false);
         // handle error here
@@ -72,7 +72,7 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
       if (response.status === 200) {
         setIsSaving(false);
         setIsEditing(false);
-        // No need to reload the page, as the state change will trigger a re-render
+        Router.reload();
       } else {
         setIsEditing(false);
         setIsSaving(false);
@@ -91,12 +91,12 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
 
   return (
     <div className="space-y-2">      <p className="text-sm text-slate-600">
-        Vendido en {entrega.punto_venta} el{" "}
-        {new Date(entrega.fecha).toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-        })}
-      </p>
+      Vendido en {entrega.punto_venta} el{" "}
+      {new Date(entrega.fecha).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+      })}
+    </p>
       <Collapsible>
         <div className="flex items-center justify-between">
           <p className="font-bold">{entrega.producto}</p>
