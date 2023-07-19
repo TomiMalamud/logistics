@@ -90,13 +90,14 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
   }, [entrega.notas]);
 
   return (
-    <div className="space-y-2">      <p className="text-sm text-slate-600">
-      Vendido en {entrega.punto_venta} el{" "}
-      {new Date(entrega.fecha).toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-      })}
-    </p>
+    <div className="space-y-2">
+      <p className="text-sm text-slate-600">
+        Vendido en {entrega.punto_venta} el{" "}
+        {new Date(entrega.fecha).toLocaleDateString("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+        })}
+      </p>
       <Collapsible>
         <div className="flex items-center justify-between">
           <p className="font-bold">{entrega.producto}</p>

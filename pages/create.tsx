@@ -10,11 +10,21 @@ const Create: React.FC = () => {
   const [nombre, setNombre] = useState('');
   const [celular, setCelular] = useState('');
   const [notas, setNotas] = useState('');
+  const [celularError, setCelularError] = useState('');
 
-
+  const validateCelular = (value: string) => {
+    const celularRegex = /^\d{10}$/;
+    return celularRegex.test(value);
+  };
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
+      if (!validateCelular(celular)) {
+        // Show an error message or handle the invalid celular format
+        setCelularError('Formato válido: 3541614107. Sin 0 ni 15, sin espacios ni guiones.');
+        return;
+      }
+
       const body = { punto_venta, fecha, producto, domicilio, nombre, celular, notas };
       await fetch('/api/post', {
         method: 'POST',
@@ -41,7 +51,7 @@ const Create: React.FC = () => {
                 <input
                   autoFocus
                   onChange={(e) => setPunto_venta(e.target.value)}
-                  placeholder="Punto Venta"
+                  placeholder="Punto de Venta"
                   type="text"
                   value={punto_venta}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -61,7 +71,7 @@ const Create: React.FC = () => {
                 </label>
                 <input
                   onChange={(e) => setProducto(e.target.value)}
-                  placeholder="Producto"
+                  placeholder="Euro 2x2 + bases + Almohadas"
                   value={producto}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -70,7 +80,7 @@ const Create: React.FC = () => {
                 </label>
                 <input
                   onChange={(e) => setDomicilio(e.target.value)}
-                  placeholder="Domicilio"
+                  placeholder="9 de Julio 322"
                   value={domicilio}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -79,7 +89,7 @@ const Create: React.FC = () => {
                 </label>
                 <input
                   onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Nombre"
+                  placeholder="Juan Pérez"
                   value={nombre}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -88,16 +98,18 @@ const Create: React.FC = () => {
                 </label>
                 <input
                   onChange={(e) => setCelular(e.target.value)}
-                  placeholder="Celular"
+                  placeholder="3541614107"
                   value={celular}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
+                />       {celularError && (
+                  <p className="text-sm text-red-500">{celularError}</p>
+                )}
                 <label className="block text-sm font-medium leading-6 text-gray-500">
                   Notas
                 </label>
                 <input
                   onChange={(e) => setNotas(e.target.value)}
-                  placeholder="Anotar fecha de entrega estimada"
+                  placeholder="Agregar fecha de entrega estimada"
                   value={notas}
                   className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
