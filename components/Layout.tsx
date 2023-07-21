@@ -1,11 +1,15 @@
 import React, { ReactNode } from "react";
+import Head from "next/head";
 
 type Props = {
   children: ReactNode;
 };
 
 const Layout: React.FC<Props> = (props) => (
-  <html lang="en" className="h-full bg-gray-50">
+  <html lang="es" className="h-full bg-gray-50">
+  <Head>
+        <title>Entregas ROHI Sommiers</title>
+  </Head>
   <div>
     {props.children}
   </div>
@@ -13,3 +17,4 @@ const Layout: React.FC<Props> = (props) => (
 );
 
 export default Layout;
+
