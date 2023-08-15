@@ -39,7 +39,7 @@ const Completed: React.FC<Props> = (props) => {
     if (error) return <div>{error.message}</div>;
 
     return (
-        !allowAccess ? (
+        allowAccess ? (
             <Layout>
                 <div>
                     <main className="relative flex min-h-screen flex-col items-center justify-center">

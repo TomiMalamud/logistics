@@ -40,7 +40,7 @@ const Index: React.FC<Props> = (props) => {
   if (isLoading) return <div>Cargando...</div>;
   if (error) return <div>{error.message}</div>;
 
-  return !allowAccess ? (
+  return allowAccess ? (
     <Layout>
       <div>
         <main className="relative flex min-h-screen flex-col items-center justify-center">
