@@ -40,11 +40,10 @@ const Create: React.FC = () => {
     <Layout>
       <main className="relative flex min-h-screen flex-col items-center justify-center">
         <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
-
           <form onSubmit={submitData}>
             <div className="space-y-12">
               <div className="border-b border-gray-900/10 pb-12">
-                <h2 className="text-base font-semibold leading-7 text-gray-900">Nueva entrega</h2>
+                <h2 className="font-semibold leading-7 mb-4 text-xl text-gray-900">Nueva entrega</h2>
                 <label className="block text-sm font-medium leading-6 text-gray-500">
                   Punto de Venta
                 </label>
@@ -128,9 +127,7 @@ const Create: React.FC = () => {
             </div>
           </form>
         </div>
-
       </main>
-
     </Layout>
   );
 };

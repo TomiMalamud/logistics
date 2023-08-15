@@ -6,7 +6,7 @@ import prisma from "../lib/prisma";
 import Link from "next/link";
 import { Button } from "../components/ui/button";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { ChevronLeftIcon } from "@radix-ui/react-icons";
+import Footer from "../components/Footer";
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const feed = await prisma.entrega.findMany({
@@ -46,8 +46,8 @@ const Index: React.FC<Props> = (props) => {
         <main className="relative flex min-h-screen flex-col items-center justify-center">
           <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
             <Link href="/completed"><span className="opacity-80 text-sm hover:underline-offset-4 hover:underline hover:decoration-current cursor-pointer">Completadas</span></Link>
-            <div className="flex mt-2 justify-between items-center">
-              <h2 className="text:md md:text-xl font-semibold">
+            <div className="flex my-2 justify-between items-center">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Entregas Pendientes
                 <span className="text-xs text-yellow-700 ml-4 bg-yellow-100 p-1.5 rounded-lg">
                   {count}
@@ -82,6 +82,7 @@ const Index: React.FC<Props> = (props) => {
             </Button>
           </div>
         </div>
+        <Footer />
       </main>
     </>
   );
