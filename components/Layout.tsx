@@ -31,8 +31,6 @@ const Layout: React.FC<Props> = (props) => {
     linkText = "Completadas";
   }
 
-  if (isLoading) return <div>Cargando...</div>;
-  if (error) return <div>{error.message}</div>;
   let countSpan = null;
   if (props.count !== undefined) {
     countSpan = (
@@ -49,7 +47,7 @@ const Layout: React.FC<Props> = (props) => {
     title = 'Entregas Completadas | ROHI Sommiers';
   }
 
-  return allowAccess ? (
+  return !allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
         <title>{title}</title>
@@ -72,7 +70,13 @@ const Layout: React.FC<Props> = (props) => {
               <Link href="/create">+</Link>
             </Button>
           </div>
-          <div className="divide-y divide-gray-900/5">{props.children}</div>
+          {isLoading ? (
+            <div>Cargaando...</div>
+          ) : error ? (
+            <div>{error.message}</div>
+          ) : (
+            <div className="divide-y divide-gray-900/5">{props.children}</div>
+          )}
         </div>
       </main>
     </html>
