@@ -13,10 +13,9 @@ type Props = {
 
 const Layout: React.FC<Props> = (props) => {
   const { user, error, isLoading } = useUser();
-  const allowAccess = user && user.email === "rohi.sommiers@gmail.com";
+  const allowAccess = user && user.email === process.env.ALLOWED_USER;
   const router = useRouter();
   const currentPath = router.pathname;
-
   let linkHref = "/";
   let linkText = "Pendientes";
   let titleText = "Entregas Pendientes";
@@ -42,11 +41,18 @@ const Layout: React.FC<Props> = (props) => {
       </span>
     );
   }
+  let title = '';
+
+  if (router.pathname === '/') {
+    title = 'Entregas Pendientes | ROHI Sommiers';
+  } else {
+    title = 'Entregas Completadas | ROHI Sommiers';
+  }
 
   return allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
-        <title>Entregas ROHI Sommiers</title>
+        <title>{title}</title>
       </Head>
       <main className="relative flex min-h-screen flex-col items-center justify-center">
         <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
@@ -79,7 +85,7 @@ const Layout: React.FC<Props> = (props) => {
               Entregas - ROHI Sommiers
             </h2>
             <Button>
-              <a href="/api/auth/login">Iniciar sesión</a>
+              <Link href="/api/auth/login">Iniciar sesión</Link>
             </Button>
           </div>
         </div>

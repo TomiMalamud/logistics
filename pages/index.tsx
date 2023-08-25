@@ -1,25 +1,26 @@
-import React from 'react';
-import useSWR from 'swr';
-import Layout from '../components/Layout';
-import Entrega, { EntregaProps } from '../components/Entrega';
+import React from "react";
+import useSWR from "swr";
+import Layout from "../components/Layout";
+import Entrega, { EntregaProps } from "../components/Entrega";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const apiURL = "/api/feed";
 
 const Index: React.FC = () => {
-  const { data, error } = useSWR('/api/feed', fetcher);
+  const { data, error } = useSWR(apiURL, fetcher);
 
-  if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (error) return <div>Error al cargar</div>;
+  if (!data) return <div>Cargando...</div>;
 
   const count = data.length;
 
   return (
     <Layout count={count}>
-        {data.map((entrega: EntregaProps) => (
-          <div className="py-4" key={entrega.id}>
-            <Entrega entrega={entrega} />
-          </div>
-        ))}
+      {data.map((entrega: EntregaProps) => (
+        <div className="py-4" key={entrega.id}>
+          <Entrega entrega={entrega} fetchURL={apiURL} />
+        </div>
+      ))}
     </Layout>
   );
 };

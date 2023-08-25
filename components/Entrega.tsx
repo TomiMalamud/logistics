@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CopyToClipboard } from "./copy-to-clipboard";
 import { Pencil2Icon, CaretSortIcon } from "@radix-ui/react-icons";
+import { mutate } from 'swr';
 
 import { Button } from "./ui/button";
 import {
@@ -8,7 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "./ui/collapsible";
-import Router from "next/router";
+
 export type EntregaProps = {
   id: string;
   punto_venta: string;
@@ -19,44 +20,60 @@ export type EntregaProps = {
   celular: string;
   notas: string;
   estado: boolean;
+  fetchURL?: string; // Add this line
 };
 
-const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
+const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({ entrega, fetchURL }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEstadoUpdated, setIsEstadoUpdated] = useState(entrega.estado);
   const [isEditing, setIsEditing] = useState(false);
+  const [notas, setNotas] = useState(entrega.notas); // Change to separate state for notas
   const [editedNotas, setEditedNotas] = useState(entrega.notas);
   const [isSaving, setIsSaving] = useState(false);
 
-  const updateEstado = async () => {
+  const toggleEstado = () => {
+    // Optimistically update the UI
+    const newEstado = !isEstadoUpdated;
+    setIsEstadoUpdated(newEstado);
+  
+    // Send the update to the server
+    updateEstado(newEstado)
+      .then(() => {
+        // Trigger revalidation of data (refresh the list)
+        mutate(fetchURL); // Replace with the correct URL if you have a different one for completed tasks
+      })
+      .catch((error) => {
+        // Optionally revert the state change if an error occurs
+        setIsEstadoUpdated(!newEstado);
+        // Handle error here
+      });
+  };
+    
+  const updateEstado = async (newEstado) => {
     try {
       setIsUpdating(true);
       const response = await fetch(`/api/publish/${entrega.id}`, {
         method: "PUT",
-        body: JSON.stringify({ estado: !isEstadoUpdated }),
+        body: JSON.stringify({ estado: newEstado }),
         headers: {
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
-
-      if (response.status === 200) {
-        setIsEstadoUpdated(!isEstadoUpdated);
-        setIsUpdating(false);
-      } else {
-        setIsUpdating(false);
-        // handle error here
+  
+      if (response.status !== 200) {
+        // Handle error here
+        throw new Error("Failed to update estado");
       }
+  
+      const updatedEntrega = await response.json();
+      setIsEstadoUpdated(updatedEntrega.estado);
+      setIsUpdating(false);
     } catch (error) {
       setIsUpdating(false);
-      // handle error here
+      throw error; // Re-throw the error to be handled by the caller
     }
   };
-
-  const toggleEstado = () => {
-    if (!isUpdating) {
-      updateEstado();
-    }
-  };
+    
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -76,6 +93,7 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
       if (response.status === 200) {
         setIsSaving(false);
         setIsEditing(false);
+        setNotas(editedNotas); // Update notas state here
       } else {
         setIsEditing(false);
         setIsSaving(false);
@@ -90,6 +108,7 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
 
   useEffect(() => {
     setEditedNotas(entrega.notas);
+    setNotas(entrega.notas); // Keep the notas state updated with prop changes
   }, [entrega.notas]);
 
   return (
@@ -145,7 +164,7 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
                 />
               ) : (
                 <span className="text-base text-slate-800">
-                  {entrega.notas}
+                  {notas}
                 </span>
               )}
             </p>

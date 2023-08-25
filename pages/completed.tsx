@@ -1,44 +1,26 @@
 import React from "react";
-import { GetServerSideProps } from "next";
+import useSWR from "swr";
 import Layout from "../components/Layout";
 import Entrega, { EntregaProps } from "../components/Entrega";
-import prisma from "../lib/prisma";
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const feed = await prisma.entrega.findMany({
-    where: {
-      estado: true
-    },
-    orderBy: [
-      {
-        fecha: "asc"
-      }
-    ]
-  });
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const apiURL = "/api/completedFeed";
 
-  return {
-    props: {
-      feed: JSON.parse(JSON.stringify(feed))
-    }
-  };
-};
+const Completed: React.FC = () => {
+  const { data, error } = useSWR(apiURL, fetcher);
 
-type Props = {
-  feed: EntregaProps[];
-};
-
-const Completed: React.FC<Props> = (props) => {
+  if (error) return <div>Error al cargar</div>;
+  if (!data) return <div>Cargando...</div>;
+  const count = data.length;
 
   return (
-    <>
-      <Layout>
-          {props.feed.map((entrega) => (
-            <div className="py-4" key={entrega.id}>
-              <Entrega entrega={entrega} />
-            </div>
-          ))}
-      </Layout>
-    </>
+    <Layout count={count}>
+      {data.map((entrega: EntregaProps) => (
+        <div className="py-4" key={entrega.id}>
+          <Entrega entrega={entrega} fetchURL={apiURL} />
+        </div>
+      ))}
+    </Layout>
   );
 };
 
