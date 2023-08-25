@@ -1,34 +1,27 @@
-import React, { Suspense } from "react";
-import fetcher from "../components/fetcher";
+import React from "react";
+import useSWR from "swr";
 import Layout from "../components/Layout";
 import Entrega, { EntregaProps } from "../components/Entrega";
 import TablePlaceholder from "../components/TablePlaceholder";
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const apiURL = "/api/completedFeed";
-const resource = fetcher(apiURL);
 
 const Index: React.FC = () => {
-  return (
-    <Layout>
-      <Suspense fallback={<TablePlaceholder />}>
-        <DataComponent />
-      </Suspense>
-    </Layout>
-  );
-};
+  const { data, error } = useSWR(apiURL, fetcher);
 
-const DataComponent: React.FC = () => {
-  const data: EntregaProps[] = resource.read();
+  if (error) return <div>Error al cargar</div>;
+  if (!data) return (<Layout><TablePlaceholder/></Layout>);
   const count = data.length;
 
   return (
-    <>
-      {count > 0 && data.map((entrega: EntregaProps) => (
+    <Layout count={count}>
+      {data.map((entrega: EntregaProps) => (
         <div className="py-4" key={entrega.id}>
           <Entrega entrega={entrega} fetchURL={apiURL} />
         </div>
       ))}
-    </>
+    </Layout>
   );
 };
 

@@ -1,11 +1,11 @@
 import React, { ReactNode } from "react";
 import Head from "next/head";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { Button } from "../components/ui/button";
-import Footer from "../components/Footer";
+import { Button } from "./ui/button";
+import Footer from "./Footer";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import TablePlaceholder from "../components/TablePlaceholder";
+import TablePlaceholder from "./TablePlaceholder";
 
 type Props = {
   children: ReactNode;
