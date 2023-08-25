@@ -13,7 +13,7 @@ type Props = {
 
 const Layout: React.FC<Props> = (props) => {
   const { user, error, isLoading } = useUser();
-  const allowAccess = user && user.email === process.env.ALLOWED_USER;
+  const allowAccess = user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER;
   const router = useRouter();
   const currentPath = router.pathname;
   let linkHref = "/";
