@@ -42,7 +42,6 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
       if (response.status === 200) {
         setIsEstadoUpdated(!isEstadoUpdated);
         setIsUpdating(false);
-        Router.reload();
       } else {
         setIsUpdating(false);
         // handle error here
@@ -77,7 +76,6 @@ const Entrega: React.FC<{ entrega: EntregaProps }> = ({ entrega }) => {
       if (response.status === 200) {
         setIsSaving(false);
         setIsEditing(false);
-        Router.reload();
       } else {
         setIsEditing(false);
         setIsSaving(false);
