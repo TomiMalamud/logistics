@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import Footer from "../components/Footer";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import TablePlaceholder from "../components/TablePlaceholder";
 
 type Props = {
   children: ReactNode;
@@ -47,7 +48,7 @@ const Layout: React.FC<Props> = (props) => {
     title = 'Entregas Completadas | ROHI Sommiers';
   }
 
-  return !allowAccess ? (
+  return allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
         <title>{title}</title>
@@ -71,7 +72,7 @@ const Layout: React.FC<Props> = (props) => {
             </Button>
           </div>
           {isLoading ? (
-            <div>Cargaando...</div>
+            <TablePlaceholder />
           ) : error ? (
             <div>{error.message}</div>
           ) : (
