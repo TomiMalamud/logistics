@@ -7,20 +7,28 @@ import { Button } from "../components/ui/button";
 
 const Create: React.FC = () => {
   const [punto_venta, setPunto_venta] = useState("");
-  const [fecha, setFecha] = useState("");
   const [producto, setProducto] = useState("");
   const [domicilio, setDomicilio] = useState("");
   const [nombre, setNombre] = useState("");
   const [celular, setCelular] = useState("");
   const [celularError, setCelularError] = useState("");
   const [newNotas, setNewNotas] = useState<{ content: string }[]>([]);
-
+  const [fecha, setFecha] = useState(() => {
+    const today = new Date();
+    return today.toISOString().slice(0, 10) + "T00:00:00Z";
+  });
+  
   const validateCelular = (value: string) => {
     const celularRegex = /^\d{10}$/;
     return celularRegex.test(value);
   };
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    const finalFecha = fecha || (() => {
+      const today = new Date();
+      return today.toISOString().slice(0, 10) + "T00:00:00Z";
+    })();
+  
     try {
       if (!validateCelular(celular)) {
         setCelularError(
@@ -30,7 +38,7 @@ const Create: React.FC = () => {
       }
       const body = {
         punto_venta,
-        fecha,
+        fecha: finalFecha,
         producto,
         domicilio,
         nombre,
@@ -66,15 +74,16 @@ const Create: React.FC = () => {
                   type="number"
                   value={punto_venta}
                   className="mb-2"
+                  required
                 />
                 <Label className="mt-2">Fecha de venta</Label>
                 <Input
                   onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
-                  defaultValue={new Date().toISOString().slice(0, 10)}
                   type="date"
                   placeholder="Fecha"
                   value={fecha.slice(0, 10)}
                   className="mb-2"
+                  required
                 />
                 <Label>Producto</Label>
                 <Input
@@ -82,6 +91,7 @@ const Create: React.FC = () => {
                   placeholder="Euro 2x2 + bases + Almohadas"
                   value={producto}
                   className="mb-2"
+                  required
                 />
                 <Label className="mt-2">Domicilio</Label>
                 <Input
@@ -89,6 +99,7 @@ const Create: React.FC = () => {
                   placeholder="9 de Julio 322"
                   value={domicilio}
                   className="mb-2"
+                  required
                 />
                 <Label className="mt-2">Nombre</Label>
                 <Input
@@ -96,6 +107,7 @@ const Create: React.FC = () => {
                   placeholder="Juan Pérez"
                   value={nombre}
                   className="mb-2"
+                  required
                 />
                 <Label className="mt-2">Celular</Label>
                 <Input
@@ -103,6 +115,7 @@ const Create: React.FC = () => {
                   placeholder="3541614107"
                   value={celular}
                   className="mb-2"
+                  required
                 />{" "}
                 {celularError && (
                   <p className="text-sm text-red-500">{celularError}</p>
