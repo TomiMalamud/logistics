@@ -8,9 +8,8 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const apiURL = "/api/feed";
 
 const Index: React.FC = () => {
-  const { data, error } = useSWR(apiURL, fetcher);
+  const { data } = useSWR(apiURL, fetcher);
 
-  if (error) return <div>Error al cargar</div>;
   if (!data) return (<Layout><TablePlaceholder/></Layout>);
   const count = data.length;
 

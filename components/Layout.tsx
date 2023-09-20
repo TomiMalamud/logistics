@@ -48,7 +48,7 @@ const Layout: React.FC<Props> = (props) => {
     title = 'Entregas Completadas | ROHI Sommiers';
   }
 
-  return allowAccess ? (
+  return !allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
         <title>{title}</title>
@@ -76,7 +76,7 @@ const Layout: React.FC<Props> = (props) => {
           ) : error ? (
             <div>{error.message}</div>
           ) : (
-            <div className="divide-y divide-gray-900/5">{props.children}</div>
+            <div className="divide-y divide-gray-900/5 py-4">{props.children}</div>
           )}
         </div>
       </main>

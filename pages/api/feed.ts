@@ -12,6 +12,9 @@ export default async function handle(req, res) {
         fecha: 'asc',
       },
     ],
+    include: {
+      new_notas: true,
+    },
   });
 
   res.json(feed);

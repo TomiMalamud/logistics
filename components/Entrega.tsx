@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { CopyToClipboard } from "./copy-to-clipboard";
-import { Pencil2Icon, CaretSortIcon } from "@radix-ui/react-icons";
-import { mutate } from 'swr';
+import { CaretSortIcon } from "@radix-ui/react-icons";
+import { mutate } from "swr";
 
 import { Button } from "./ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "./ui/collapsible";
+import { Input } from "./ui/input";
 
 export type EntregaProps = {
   id: string;
@@ -19,108 +20,111 @@ export type EntregaProps = {
   nombre: string;
   celular: string;
   notas: string;
+  new_notas?: string[];
   estado: boolean;
   fetchURL?: string; // Add this line
 };
+export type NotaType = {
+  id: string;
+  content: string;
+  entrega_id: string;
+};
 
-const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({ entrega, fetchURL }) => {
+type NoteObject = { content: string };
+
+const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
+  entrega,
+  fetchURL
+}) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEstadoUpdated, setIsEstadoUpdated] = useState(entrega.estado);
-  const [isEditing, setIsEditing] = useState(false);
-  const [notas, setNotas] = useState(entrega.notas); // Change to separate state for notas
-  const [editedNotas, setEditedNotas] = useState(entrega.notas);
-  const [isSaving, setIsSaving] = useState(false);
+  const [newNotas, setNewNotas] = useState(entrega.new_notas ?? []); // Use nullish coalescing
+  const [newNote, setNewNote] = useState(""); // State for the new note
+  const [isAddingNote, setIsAddingNote] = useState(false); // New state for saving status
 
-  const toggleEstado = () => {
-    // Optimistically update the UI
-    const newEstado = !isEstadoUpdated;
-    setIsEstadoUpdated(newEstado);
-  
-    // Send the update to the server
-    updateEstado(newEstado)
-      .then(() => {
-        // Trigger revalidation of data (refresh the list)
-        mutate(fetchURL); // Replace with the correct URL if you have a different one for completed tasks
-      })
-      .catch((error) => {
-        // Optionally revert the state change if an error occurs
-        setIsEstadoUpdated(!newEstado);
-        // Handle error here
-      });
-  };
-    
-  const updateEstado = async (newEstado) => {
+  const updateField = async (fieldData) => {
     try {
-      setIsUpdating(true);
-      const response = await fetch(`/api/publish/${entrega.id}`, {
+      const response = await fetch(`/api/entregas/${entrega.id}`, {
         method: "PUT",
-        body: JSON.stringify({ estado: newEstado }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-  
-      if (response.status !== 200) {
-        // Handle error here
-        throw new Error("Failed to update estado");
-      }
-  
-      const updatedEntrega = await response.json();
-      setIsEstadoUpdated(updatedEntrega.estado);
-      setIsUpdating(false);
-    } catch (error) {
-      setIsUpdating(false);
-      throw error; // Re-throw the error to be handled by the caller
-    }
-  };
-    
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(`/api/post/${entrega.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ notas: editedNotas }),
+        body: JSON.stringify(fieldData),
         headers: {
           "Content-Type": "application/json"
         }
       });
 
-      if (response.status === 200) {
-        setIsSaving(false);
-        setIsEditing(false);
-        setNotas(editedNotas); // Update notas state here
-      } else {
-        setIsEditing(false);
-        setIsSaving(false);
-        // handle error here
+      if (response.status !== 200) {
+        throw new Error(`Failed to update`);
       }
+
+      const updatedEntrega = await response.json();
+      return updatedEntrega;
     } catch (error) {
-      setIsEditing(false);
-      setIsSaving(false);
-      // handle error here
+      throw error;
     }
   };
 
-  useEffect(() => {
-    setEditedNotas(entrega.notas);
-    setNotas(entrega.notas); // Keep the notas state updated with prop changes
-  }, [entrega.notas]);
+  const toggleEstado = () => {
+    const newEstado = !isEstadoUpdated;
+    setIsEstadoUpdated(newEstado);
+
+    // Corrected line: Pass an object to updateField
+    updateField({ estado: newEstado })
+      .then(() => {
+        mutate(fetchURL);
+      })
+      .catch((error) => {
+        setIsEstadoUpdated(!newEstado);
+      });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
+
+    // Adjust the date to the server's time zone
+    const serverDate = new Date(year, month, day);
+
+    return serverDate.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit"
+    });
+  };
+
+  const handleAddNote = async () => {
+    setIsAddingNote(true);
+
+    const timestamp = formatDate(new Date().toISOString());
+    const updatedNote = `${newNote} | ${timestamp}`; // Append timestamp to the new note
+
+    const updatedNotas = [...newNotas, { content: updatedNote }];
+    {/*// @ts-ignore*/}
+    setNewNotas(updatedNotas);
+
+    try {
+      await updateField({ new_notas: [updatedNote] }); // Send the note with appended timestamp
+      setNewNote("");
+
+      mutate(fetchURL);
+    } catch (error) {
+      setNewNotas(newNotas);
+      console.error("Could not add note: ", error);
+    } finally {
+      setIsAddingNote(false);
+    }
+  };
 
   return (
     <div className="space-y-2">
-      <p className="text-sm text-slate-600">
-        Vendido en {entrega.punto_venta} el{" "}
-        {new Date(entrega.fecha).toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit"
-        })}
-      </p>
-      <Collapsible>
+      <div className="flex items-center text-slate-500">
+        <p className="text-sm">
+          Vendido en {entrega.punto_venta} el {formatDate(entrega.fecha)}
+        </p>
+        <span className="mx-2 text-sm">·</span>
+        <p className="text-sm">{entrega.nombre}</p>
+      </div>
+      <Collapsible className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="font-bold">{entrega.producto}</p>
           <CollapsibleTrigger asChild>
@@ -130,68 +134,62 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({ entre
           </CollapsibleTrigger>
         </div>
         <CollapsibleContent>
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-sm text-slate-600 mr-5 mb-0">
-              {entrega.domicilio}
-            </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-600 mr-5">{entrega.domicilio}</p>
             <CopyToClipboard text={entrega.domicilio.toString()} />
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-600">{entrega.nombre}</p>
+          <div className="flex items-center py-4 space-x-2 justify-between">
+            <div className="">
+              {isUpdating ? (
+                <Button disabled>Actualizando</Button>
+              ) : (
+                <Button variant="outline" onClick={toggleEstado}>
+                  {isEstadoUpdated ? "Pendiente" : "Entregado"}
+                </Button>
+              )}
+            </div>
             <div>
               <Button
                 variant="ghost"
-                className="mx-4 text-blue-700 hover:text-blue-900"
+                className="text-blue-700 hover:text-blue-900"
               >
                 <a href={`tel:${entrega.celular}`}>Llamar</a>
               </Button>
               <Button
                 variant="ghost"
-                className="text-blue-700 hover:text-blue-900"
+                className="text-blue-700 ml-2 hover:text-blue-900"
               >
-                <a href={`https://wa.me/54${entrega.celular}`}>Whatsapp</a>
+                <a href={`https://wa.me/54${entrega.celular}`}>WhatsApp</a>
               </Button>
             </div>
           </div>
-          <div className="inline-flex items-center justify-between">
-            <p className="text-sm text-slate-600 my-2">
-              Notas:{" "}
-              {isEditing ? (
-                <textarea
-                  className="text-base text-slate-800 border rounded px-2 py-1 focus:outline-none"
-                  value={editedNotas}
-                  onChange={(e) => setEditedNotas(e.target.value)}
-                />
-              ) : (
-                <span className="text-base text-slate-800">
-                  {notas}
-                </span>
-              )}
-            </p>
-            {!isEditing ? (
-              <Button variant="ghost" className="ml-3" onClick={handleEdit}>
-                <Pencil2Icon />
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? "Guardando..." : "Guardar"}
-              </Button>
-            )}
+          <div>
+            <p className="text-sm text-slate-600">Notas:</p>
+            <ul className="list-disc list-inside">
+              {newNotas.map((note, index) => (
+                <li className="text-sm text-slate-600  leading-6" key={index}>
+                  {/*// @ts-ignore*/}
+                  {note.content}
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="mt-2">
-            {isUpdating ? (
-              <Button disabled>Actualizando</Button>
-            ) : (
-              <Button variant="outline" onClick={toggleEstado}>
-                {isEstadoUpdated
-                  ? "Marcar como Pendiente"
-                  : "Marcar como Entregado"}
-              </Button>
-            )}
+          {/* Adapted section for adding a new Nota */}
+          <div className="w-full space-x-2 pt-2 flex items-center justify-between">
+            <Input
+              type="text"
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="Añadir nueva nota"
+              disabled={isAddingNote} // Disable input during saving
+            />
+            <Button
+              variant="outline"
+              onClick={handleAddNote}
+              disabled={isAddingNote || !newNote.trim()} // Disable button if saving or input is empty
+            >
+              {isAddingNote ? "Guardando..." : "Guardar"}
+            </Button>
           </div>
         </CollapsibleContent>
       </Collapsible>

@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
-import Layout from '../components/Layout';
-import Router from 'next/router';
+import React, { useState } from "react";
+import Layout from "../components/Layout";
+import Router from "next/router";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Button } from "../components/ui/button";
 
 const Create: React.FC = () => {
-  const [punto_venta, setPunto_venta] = useState('');
-  const [fecha, setFecha] = useState('');
-  const [producto, setProducto] = useState('');
-  const [domicilio, setDomicilio] = useState('');
-  const [nombre, setNombre] = useState('');
-  const [celular, setCelular] = useState('');
-  const [notas, setNotas] = useState('');
-  const [celularError, setCelularError] = useState('');
+  const [punto_venta, setPunto_venta] = useState("");
+  const [fecha, setFecha] = useState("");
+  const [producto, setProducto] = useState("");
+  const [domicilio, setDomicilio] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [celular, setCelular] = useState("");
+  const [celularError, setCelularError] = useState("");
+  const [newNotas, setNewNotas] = useState<{ content: string }[]>([]);
 
   const validateCelular = (value: string) => {
     const celularRegex = /^\d{10}$/;
@@ -20,22 +23,31 @@ const Create: React.FC = () => {
     e.preventDefault();
     try {
       if (!validateCelular(celular)) {
-        // Show an error message or handle the invalid celular format
-        setCelularError('Formato válido: 3541614107. Sin 0 ni 15, sin espacios ni guiones.');
+        setCelularError(
+          "Formato válido: 3541614107. Sin 0 ni 15, sin espacios ni guiones."
+        );
         return;
       }
-
-      const body = { punto_venta, fecha, producto, domicilio, nombre, celular, notas };
-      await fetch('/api/post', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+      const body = {
+        punto_venta,
+        fecha,
+        producto,
+        domicilio,
+        nombre,
+        celular,
+        newNotaContent: newNotas.length > 0 ? newNotas[0].content : ""
+      };
+      await fetch("/api/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
       });
-      await Router.push('/');
+      await Router.push("/");
     } catch (error) {
       console.error(error);
     }
   };
+
   return (
     <Layout>
       <main className="relative flex min-h-screen flex-col items-center justify-center">
@@ -43,85 +55,76 @@ const Create: React.FC = () => {
           <form onSubmit={submitData}>
             <div className="space-y-12">
               <div className="border-b border-gray-900/10 pb-12">
-                <h2 className="font-semibold leading-7 mb-4 text-xl text-gray-900">Nueva entrega</h2>
-                <label className="block text-sm font-medium leading-6 text-gray-500">
-                  Punto de Venta
-                </label>
-                <input
+                <h2 className="font-semibold leading-7 mb-4 text-xl text-gray-900">
+                  Nueva entrega
+                </h2>
+                <Label>Punto de Venta</Label>
+                <Input
                   autoFocus
                   onChange={(e) => setPunto_venta(e.target.value)}
                   placeholder="Punto de Venta"
-                  type="text"
+                  type="number"
                   value={punto_venta}
-                  className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="mb-2"
                 />
-                <label className="block text-sm font-medium leading-6 text-gray-500">
-                  Fecha de venta
-                </label>
-                <input
+                <Label className="mt-2">Fecha de venta</Label>
+                <Input
                   onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
-                  type='date'
+                  defaultValue={new Date().toISOString().slice(0, 10)}
+                  type="date"
                   placeholder="Fecha"
                   value={fecha.slice(0, 10)}
-                  className="block w-full rounded-md border-0 px-2 pt-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="mb-2"
                 />
-                <label className="block text-sm font-medium leading-6 text-gray-500">
-                  Producto
-                </label>
-                <input
+                <Label>Producto</Label>
+                <Input
                   onChange={(e) => setProducto(e.target.value)}
                   placeholder="Euro 2x2 + bases + Almohadas"
                   value={producto}
-                  className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="mb-2"
                 />
-                <label className="block text-sm font-medium leading-6 text-gray-500">
-                  Domicilio
-                </label>
-                <input
+                <Label className="mt-2">Domicilio</Label>
+                <Input
                   onChange={(e) => setDomicilio(e.target.value)}
                   placeholder="9 de Julio 322"
                   value={domicilio}
-                  className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="mb-2"
                 />
-                <label className="block text-sm font-medium leading-6 text-gray-500">
-                  Nombre
-                </label>
-                <input
+                <Label className="mt-2">Nombre</Label>
+                <Input
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Juan Pérez"
                   value={nombre}
-                  className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="mb-2"
                 />
-                <label className="block text-sm font-medium leading-6 text-gray-500">
-                  Celular
-                </label>
-                <input
+                <Label className="mt-2">Celular</Label>
+                <Input
                   onChange={(e) => setCelular(e.target.value)}
                   placeholder="3541614107"
                   value={celular}
-                  className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />       {celularError && (
+                  className="mb-2"
+                />{" "}
+                {celularError && (
                   <p className="text-sm text-red-500">{celularError}</p>
                 )}
-                <label className="block text-sm font-medium leading-6 text-gray-500">
-                  Notas
-                </label>
-                <input
-                  onChange={(e) => setNotas(e.target.value)}
-                  placeholder="Agregar fecha de entrega estimada"
-                  value={notas}
-                  className="block w-full rounded-md border-0 p-2 my-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                <Label className="mt-2">Notas</Label>
+                <Input
+                  onChange={(e) => setNewNotas([{ content: e.target.value }])}
+                  placeholder="Agregar fecha de entrega en lo posible."
+                  value={newNotas.length > 0 ? newNotas[0].content : ""}
+                  className="mb-2"
                 />
                 <div className="mt-6 flex items-center justify-end gap-x-6">
-                  <button type="button" className="text-sm font-semibold leading-6 text-gray-900" onClick={() => Router.push('/')}>
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" value="Create"
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => Router.push("/")}
                   >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" value="Create">
                     Guardar
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

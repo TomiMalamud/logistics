@@ -1,31 +1,39 @@
 // schema.prisma
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["jsonProtocol"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  provider          = "postgresql"
+  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
   shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
 }
 
 model Entrega {
-    id          String      @default(cuid()) @id
-    punto_venta String
-    fecha      DateTime
-    producto      String?
-    domicilio     String?
-    nombre     String?
-    celular    String?
-    notas     String?
-    estado     Boolean? @default(false)
+  id          String   @id @default(cuid())
+  punto_venta String
+  fecha       DateTime
+  producto    String?
+  domicilio   String?
+  nombre      String?
+  celular     String?
+  notas       String?
+  new_notas   Nota[]
+  estado      Boolean? @default(false)
+}
+
+model Nota {
+  id         String   @id @default(cuid())
+  content    String
+  entrega_id String?
+  entrega    Entrega? @relation(fields: [entrega_id], references: [id])
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  email         String   @unique
-  password      String
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
 }
