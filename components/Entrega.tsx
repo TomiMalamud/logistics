@@ -10,6 +10,7 @@ import {
   CollapsibleTrigger
 } from "./ui/collapsible";
 import { Input } from "./ui/input";
+import { Badge } from "./ui/badge";
 
 export type EntregaProps = {
   id: string;
@@ -22,7 +23,8 @@ export type EntregaProps = {
   notas: string;
   new_notas?: string[];
   estado: boolean;
-  fetchURL?: string; // Add this line
+  pagado: boolean;
+  fetchURL?: string;
 };
 export type NotaType = {
   id: string;
@@ -30,17 +32,16 @@ export type NotaType = {
   entrega_id: string;
 };
 
-type NoteObject = { content: string };
-
 const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
   entrega,
   fetchURL
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEstadoUpdated, setIsEstadoUpdated] = useState(entrega.estado);
-  const [newNotas, setNewNotas] = useState(entrega.new_notas ?? []); // Use nullish coalescing
-  const [newNote, setNewNote] = useState(""); // State for the new note
-  const [isAddingNote, setIsAddingNote] = useState(false); // New state for saving status
+  const [newNotas, setNewNotas] = useState(entrega.new_notas ?? []); 
+  const [newNote, setNewNote] = useState(""); 
+  const [isAddingNote, setIsAddingNote] = useState(false); 
+  const [isPagadoUpdating, setIsPagadoUpdating] = useState(false);
 
   const updateField = async (fieldData) => {
     try {
@@ -62,12 +63,27 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
       throw error;
     }
   };
+  const togglePagado = () => {
+    setIsPagadoUpdating(true); 
+
+    const newPagadoStatus = !entrega.pagado; 
+
+    updateField({ pagado: newPagadoStatus }) 
+      .then(() => {
+        mutate(fetchURL); 
+      })
+      .catch((error) => {
+        console.error("Failed to update pagado status: ", error); 
+      })
+      .finally(() => {
+        setIsPagadoUpdating(false); 
+      });
+  };
 
   const toggleEstado = () => {
     const newEstado = !isEstadoUpdated;
     setIsEstadoUpdated(newEstado);
 
-    // Corrected line: Pass an object to updateField
     updateField({ estado: newEstado })
       .then(() => {
         mutate(fetchURL);
@@ -83,7 +99,6 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
     const month = date.getUTCMonth();
     const day = date.getUTCDate();
 
-    // Adjust the date to the server's time zone
     const serverDate = new Date(year, month, day);
 
     return serverDate.toLocaleDateString("es-ES", {
@@ -96,14 +111,14 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
     setIsAddingNote(true);
 
     const timestamp = formatDate(new Date().toISOString());
-    const updatedNote = `${newNote} | ${timestamp}`; // Append timestamp to the new note
+    const updatedNote = `${newNote} | ${timestamp}`; 
 
     const updatedNotas = [...newNotas, { content: updatedNote }];
-    {/*// @ts-ignore*/}
+    // @ts-ignore
     setNewNotas(updatedNotas);
 
     try {
-      await updateField({ new_notas: [updatedNote] }); // Send the note with appended timestamp
+      await updateField({ new_notas: [updatedNote] }); 
       setNewNote("");
 
       mutate(fetchURL);
@@ -117,6 +132,42 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
 
   return (
     <div className="space-y-2">
+      {entrega.pagado == true ? (
+        <div className="justify-between items-center flex">
+          <Badge
+            variant="outline"
+            className=" bg-green-50 border-green-400 text-slate-600 font-normal"
+          >
+            Pagado
+          </Badge>
+          <Button
+            variant="link"
+            className="text-xs h-4 text-slate-600"
+            disabled={isPagadoUpdating}
+            onClick={togglePagado}
+          >
+            Marcar pago pendiente
+          </Button>{" "}
+        </div>
+      ) : (
+        <div className="justify-between items-center flex">
+          <Badge
+            variant="outline"
+            className=" bg-yellow-50 border-yellow-400 text-slate-600 font-normal"
+          >
+            Falta cobrar
+          </Badge>
+          <Button
+            variant="link"
+            className="text-xs h-4 text-slate-600"
+            disabled={isPagadoUpdating}
+            onClick={togglePagado}
+          >
+            Marcar pago recibido
+          </Button>{" "}          
+        </div>
+      )}
+
       <div className="flex items-center text-slate-500">
         <p className="text-sm">
           Vendido en {entrega.punto_venta} el {formatDate(entrega.fecha)}
@@ -139,7 +190,7 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
             <CopyToClipboard text={entrega.domicilio.toString()} />
           </div>
           <div className="flex items-center py-4 space-x-2 justify-between">
-            <div className="">
+            <div>
               {isUpdating ? (
                 <Button disabled>Actualizando</Button>
               ) : (
@@ -173,20 +224,19 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
                 </li>
               ))}
             </ul>
-          </div>
-          {/* Adapted section for adding a new Nota */}
+          </div>          
           <div className="w-full space-x-2 pt-2 flex items-center justify-between">
             <Input
               type="text"
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Añadir nueva nota"
-              disabled={isAddingNote} // Disable input during saving
+              disabled={isAddingNote}
             />
             <Button
               variant="outline"
               onClick={handleAddNote}
-              disabled={isAddingNote || !newNote.trim()} // Disable button if saving or input is empty
+              disabled={isAddingNote || !newNote.trim()}
             >
               {isAddingNote ? "Guardando..." : "Guardar"}
             </Button>

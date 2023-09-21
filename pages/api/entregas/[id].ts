@@ -17,13 +17,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(404).json({ error: 'Entrega not found' });
   }
 
-  const { estado, new_notas } = req.body;
+  const { estado, new_notas, pagado } = req.body;
 
   try {
     const updatedEntrega = await prisma.entrega.update({
       where: { id: String(entregaId) },
       data: {
         estado: estado !== undefined ? estado : entrega.estado,
+        pagado: pagado !== undefined ? pagado : entrega.pagado,
         new_notas: {
             create: new_notas !== undefined ? new_notas.map(note => ({content: note})) : undefined
           },
