@@ -127,6 +127,7 @@ const Create: React.FC = () => {
                   value={newNotas.length > 0 ? newNotas[0].content : ""}
                   className="mb-2"
                 />
+                <p className="bg-slate-50 text-sm text-slate-600 p-4 rounded-lg">Si corresponde, anotar monto a cobrar y dónde se cobra (domicilio o local). Luego marcar pago pendiente en el listado.</p>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                   <Button
                     type="button"
