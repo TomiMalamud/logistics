@@ -22,7 +22,7 @@ model Entrega {
   celular     String?
   notas       String?
   new_notas   Nota[]
-  pagado     Boolean? @default(true)
+  pagado     Boolean? @default(false)
   estado      Boolean? @default(false)
 }
 

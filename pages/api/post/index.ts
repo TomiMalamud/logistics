@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 
 // POST /api/post
 export default async function handle(req, res) {
-  const { punto_venta, fecha, producto, domicilio, nombre, celular, newNotaContent } = req.body;
+  const { punto_venta, fecha, producto, domicilio, nombre, celular, pagado, newNotaContent } = req.body;
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
       day: "2-digit",
@@ -21,6 +21,7 @@ export default async function handle(req, res) {
       domicilio: domicilio,
       nombre: nombre,
       celular: celular,
+      pagado: pagado,
       new_notas: newNotaContent ? {
         create: {
           content: appendedContent

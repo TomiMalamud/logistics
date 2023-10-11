@@ -199,13 +199,14 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
                 </Button>
               )}
             </div>
-            <div>
+            <div className="flex items-center">
               <Button
                 variant="ghost"
-                className="text-blue-700 hover:text-blue-900"
+                className="text-blue-700 md:hidden hover:text-blue-900"
               >
                 <a href={`tel:${entrega.celular}`}>Llamar</a>
               </Button>
+              <p className="text-slate-600 hidden md:block text-sm">{entrega.celular}</p>
               <Button
                 variant="ghost"
                 className="text-blue-700 ml-2 hover:text-blue-900"

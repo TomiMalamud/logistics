@@ -4,6 +4,7 @@ import Router from "next/router";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
+import { Checkbox } from "../components/ui/checkbox";
 
 const Create: React.FC = () => {
   const [punto_venta, setPunto_venta] = useState("");
@@ -13,22 +14,30 @@ const Create: React.FC = () => {
   const [celular, setCelular] = useState("");
   const [celularError, setCelularError] = useState("");
   const [newNotas, setNewNotas] = useState<{ content: string }[]>([]);
+  const [pagado, setPagado] = useState(false);
   const [fecha, setFecha] = useState(() => {
     const today = new Date();
     return today.toISOString().slice(0, 10) + "T00:00:00Z";
   });
-  
+
   const validateCelular = (value: string) => {
     const celularRegex = /^\d{10}$/;
     return celularRegex.test(value);
   };
+
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPagado(event.target.checked);
+  };
+
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    const finalFecha = fecha || (() => {
-      const today = new Date();
-      return today.toISOString().slice(0, 10) + "T00:00:00Z";
-    })();
-  
+    const finalFecha =
+      fecha ||
+      (() => {
+        const today = new Date();
+        return today.toISOString().slice(0, 10) + "T00:00:00Z";
+      })();
+
     try {
       if (!validateCelular(celular)) {
         setCelularError(
@@ -43,6 +52,7 @@ const Create: React.FC = () => {
         domicilio,
         nombre,
         celular,
+        pagado,
         newNotaContent: newNotas.length > 0 ? newNotas[0].content : ""
       };
       await fetch("/api/post", {
@@ -123,11 +133,30 @@ const Create: React.FC = () => {
                 <Label className="mt-2">Notas</Label>
                 <Input
                   onChange={(e) => setNewNotas([{ content: e.target.value }])}
-                  placeholder="Agregar fecha de entrega en lo posible."
+                  placeholder="Agregar fecha de entrega en lo posible. Agregar saldos pendientes"
                   value={newNotas.length > 0 ? newNotas[0].content : ""}
                   className="mb-2"
                 />
-                <p className="bg-slate-50 text-sm text-slate-600 p-4 rounded-lg">Si corresponde, anotar monto a cobrar y dónde se cobra (domicilio o local). Luego marcar pago pendiente en el listado.</p>
+                <div className="items-top mt-4 bg-slate-50 p-4 rounded-md flex space-x-2">
+                  <input
+                    type="checkbox"
+                    id="pagado"
+                    checked={pagado}
+                    onChange={handleCheckboxChange}
+                    className="h-4 w-4"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="pagado"
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Está pagado en su totalidad
+                    </label>
+                    <p className="text-sm text-slate-600 text-muted-foreground">
+                      Cualquier saldo que quede pendiente, agregar a notas.
+                    </p>
+                  </div>
+                </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                   <Button
                     type="button"
