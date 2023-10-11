@@ -4,7 +4,6 @@ import Router from "next/router";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
-import { Checkbox } from "../components/ui/checkbox";
 
 const Create: React.FC = () => {
   const [punto_venta, setPunto_venta] = useState("");
