@@ -12,7 +12,7 @@ type Props = {
   count?: number;
 };
 
-const Layout: React.FC<Props> = (props) => {
+const LayoutDesktop: React.FC<Props> = (props) => {
   const { user, error, isLoading } = useUser();
   const allowAccess = user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER;
   const router = useRouter();
@@ -53,15 +53,15 @@ const Layout: React.FC<Props> = (props) => {
       <Head>
         <title>{title}</title>
       </Head>
-      <main className="relative flex min-h-screen flex-col items-center justify-center">
-        <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
+      <main className="p-4 md:p-10 mx-auto max-w-7xl">        
+        <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-6xl w-full">
           <Link href={linkHref}>
             <span className="opacity-80 text-sm hover:underline-offset-4 hover:underline hover:decoration-current cursor-pointer">
               {linkText}
             </span>
           </Link>
           <div className="flex mt-2 justify-between items-center">
-            <h2 className={`text-xl sm:text-2xl font-semibold ${titleClass}`}>
+            <h2 className={`text-xl sm:text-2xl  font-semibold ${titleClass}`}>
               {titleText} {countSpan}
             </h2>
             <Button
@@ -76,7 +76,7 @@ const Layout: React.FC<Props> = (props) => {
           ) : error ? (
             <div>{error.message}</div>
           ) : (
-            <div className="divide-y divide-gray-900/5 py-4">{props.children}</div>
+            <div className="divide-y divide-gray-900/5 py-4 mt-4 md:mt-16">{props.children}</div>
           )}
         </div>
       </main>
@@ -100,4 +100,4 @@ const Layout: React.FC<Props> = (props) => {
   );
 };
 
-export default Layout;
+export default LayoutDesktop;
