@@ -24,6 +24,16 @@ import {
   AlertDialogTrigger
 } from "./ui/alert-dialog";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "./ui/dialog";
+
 export type EntregaProps = {
   id: string;
   punto_venta: string;
@@ -56,6 +66,19 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
   const [isPagadoUpdating, setIsPagadoUpdating] = useState(false);
   const [showAlertDialog, setShowAlertDialog] = useState(false);
   const [showEstadoAlertDialog, setShowEstadoAlertDialog] = useState(false); // New state for Estado AlertDialog visibility
+  const [dni, setDni] = useState("");
+  const [dniError, setDniError] = useState("");
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const handleDniChange = (e) => {
+    setDni(e.target.value);
+    setDniError(""); // Reset error message on new input
+  };
+
+  const validateDni = () => {
+    const length = dni.length;
+    return length === 7 || length === 8 || length === 11;
+  };
 
   const updateField = async (fieldData) => {
     try {
@@ -97,22 +120,35 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
     togglePagado();
     setShowAlertDialog(false); // Close the dialog after confirmation
   };
-  const handleConfirmEstadoChange = () => {
-    toggleEstado();
-    setShowEstadoAlertDialog(false); // Close the dialog after confirmation
+  const handleConfirmEstadoChange = async () => {
+    if (!validateDni()) {
+      setDniError("El DNI debe tener 7, 8 o 11 dígitos.");
+      return; // Prevent further action
+    }
+    setIsConfirming(true); // Start loading
+
+    try {
+      await toggleEstado(); // Assuming this is an async operation
+      setShowEstadoAlertDialog(false); // Close the dialog
+    } catch (error) {
+      console.error("Failed to update estado: ", error);
+    } finally {
+      setIsConfirming(false); // Stop loading
+    }
   };
 
-  const toggleEstado = () => {
+  const toggleEstado = async () => {
     const newEstado = !isEstadoUpdated;
     setIsEstadoUpdated(newEstado);
 
-    updateField({ estado: newEstado })
-      .then(() => {
-        mutate(fetchURL);
-      })
-      .catch((error) => {
-        setIsEstadoUpdated(!newEstado);
-      });
+    try {
+      const response = await updateField({ estado: newEstado }); // Assuming updateField is async
+      // Handle response if necessary
+      mutate(fetchURL);
+    } catch (error) {
+      console.error("Error updating estado: ", error);
+      setIsEstadoUpdated(!newEstado); // Revert state in case of error
+    }
   };
 
   const formatDate = (dateString) => {
@@ -235,40 +271,50 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
             <CopyToClipboard text={entrega.domicilio.toString()} />
           </div>
           <div className="flex items-center py-4 space-x-2 justify-between">
-          <div>
-  {isUpdating ? (
-    <Button disabled>Actualizando</Button>
-  ) : (
-    <div>
-      {/* Existing Button for Estado - now triggers AlertDialog */}
+            <div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowEstadoAlertDialog(true)}
+                  >
+                    {isEstadoUpdated ? "Pendiente" : "Entregado"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Ingresar DNI de quien recibe</DialogTitle>
+                    <DialogDescription>
+                      Puede ser el comprador mismo o un familiar. Opcionalmente
+                      registrar parentesco con el cliente.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex gap-x-4">
+                    <Input
+                      type="text"
+                      placeholder="DNI"
+                      value={dni}
+                      onChange={handleDniChange}
+                      required
+                    />
 
-      {/* AlertDialog for Confirming Estado Change */}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-        <Button variant="outline" onClick={() => setShowEstadoAlertDialog(true)}>
-        {isEstadoUpdated ? "Pendiente" : "Entregado"}
-      </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cambiando Estado de Entrega</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Estás seguro de que querés cambiar el estado de esta entrega?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowEstadoAlertDialog(false)}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmEstadoChange}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  )}
-</div>
+                    <Input type="text" placeholder="Parentesco con cliente" />
+                  </div>
+                  {dniError && (
+                    <p className="text-red-500 text-sm">{dniError}</p>
+                  )}
+
+                  <DialogFooter>
+                    <Button
+                      onClick={handleConfirmEstadoChange}
+                      disabled={isConfirming}
+                    >
+                      {isConfirming ? "Procesando..." : "Confirmar"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
 
             <div className="flex items-center">
               <Button
