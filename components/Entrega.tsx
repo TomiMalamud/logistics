@@ -12,6 +12,18 @@ import {
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "./ui/alert-dialog";
+
 export type EntregaProps = {
   id: string;
   punto_venta: string;
@@ -38,10 +50,12 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEstadoUpdated, setIsEstadoUpdated] = useState(entrega.estado);
-  const [newNotas, setNewNotas] = useState(entrega.new_notas ?? []); 
-  const [newNote, setNewNote] = useState(""); 
-  const [isAddingNote, setIsAddingNote] = useState(false); 
+  const [newNotas, setNewNotas] = useState(entrega.new_notas ?? []);
+  const [newNote, setNewNote] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
   const [isPagadoUpdating, setIsPagadoUpdating] = useState(false);
+  const [showAlertDialog, setShowAlertDialog] = useState(false);
+  const [showEstadoAlertDialog, setShowEstadoAlertDialog] = useState(false); // New state for Estado AlertDialog visibility
 
   const updateField = async (fieldData) => {
     try {
@@ -64,20 +78,28 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
     }
   };
   const togglePagado = () => {
-    setIsPagadoUpdating(true); 
+    setIsPagadoUpdating(true);
 
-    const newPagadoStatus = !entrega.pagado; 
+    const newPagadoStatus = !entrega.pagado;
 
-    updateField({ pagado: newPagadoStatus }) 
+    updateField({ pagado: newPagadoStatus })
       .then(() => {
-        mutate(fetchURL); 
+        mutate(fetchURL);
       })
       .catch((error) => {
-        console.error("Failed to update pagado status: ", error); 
+        console.error("Failed to update pagado status: ", error);
       })
       .finally(() => {
-        setIsPagadoUpdating(false); 
+        setIsPagadoUpdating(false);
       });
+  };
+  const handleConfirmPaymentReceived = () => {
+    togglePagado();
+    setShowAlertDialog(false); // Close the dialog after confirmation
+  };
+  const handleConfirmEstadoChange = () => {
+    toggleEstado();
+    setShowEstadoAlertDialog(false); // Close the dialog after confirmation
   };
 
   const toggleEstado = () => {
@@ -111,14 +133,14 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
     setIsAddingNote(true);
 
     const timestamp = formatDate(new Date().toISOString());
-    const updatedNote = `${newNote} | ${timestamp}`; 
+    const updatedNote = `${newNote} | ${timestamp}`;
 
     const updatedNotas = [...newNotas, { content: updatedNote }];
     // @ts-ignore
     setNewNotas(updatedNotas);
 
     try {
-      await updateField({ new_notas: [updatedNote] }); 
+      await updateField({ new_notas: [updatedNote] });
       setNewNote("");
 
       mutate(fetchURL);
@@ -157,14 +179,37 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
           >
             Falta cobrar
           </Badge>
-          <Button
-            variant="link"
-            className="text-xs h-4 text-slate-600"
-            disabled={isPagadoUpdating}
-            onClick={togglePagado}
-          >
-            Marcar pago recibido
-          </Button>{" "}          
+          {/* AlertDialog for Confirming Payment */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="link"
+                className="text-xs h-4 text-slate-600"
+                disabled={isPagadoUpdating}
+                onClick={() => setShowAlertDialog(true)}
+              >
+                Marcar pago recibido
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Entrega cobrada en su totalidad
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  ¿Estás seguro que querés marcar el pago como recibido?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowAlertDialog(false)}>
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmPaymentReceived}>
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
 
@@ -190,15 +235,41 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
             <CopyToClipboard text={entrega.domicilio.toString()} />
           </div>
           <div className="flex items-center py-4 space-x-2 justify-between">
-            <div>
-              {isUpdating ? (
-                <Button disabled>Actualizando</Button>
-              ) : (
-                <Button variant="outline" onClick={toggleEstado}>
-                  {isEstadoUpdated ? "Pendiente" : "Entregado"}
-                </Button>
-              )}
-            </div>
+          <div>
+  {isUpdating ? (
+    <Button disabled>Actualizando</Button>
+  ) : (
+    <div>
+      {/* Existing Button for Estado - now triggers AlertDialog */}
+
+      {/* AlertDialog for Confirming Estado Change */}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+        <Button variant="outline" onClick={() => setShowEstadoAlertDialog(true)}>
+        {isEstadoUpdated ? "Pendiente" : "Entregado"}
+      </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiando Estado de Entrega</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que querés cambiar el estado de esta entrega?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowEstadoAlertDialog(false)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmEstadoChange}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )}
+</div>
+
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -206,7 +277,9 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
               >
                 <a href={`tel:${entrega.celular}`}>Llamar</a>
               </Button>
-              <p className="text-slate-600 hidden md:block text-sm">{entrega.celular}</p>
+              <p className="text-slate-600 hidden md:block text-sm">
+                {entrega.celular}
+              </p>
               <Button
                 variant="ghost"
                 className="text-blue-700 ml-2 hover:text-blue-900"
@@ -225,7 +298,7 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
                 </li>
               ))}
             </ul>
-          </div>          
+          </div>
           <div className="w-full space-x-2 pt-2 flex items-center justify-between">
             <Input
               type="text"
