@@ -18,7 +18,7 @@ const LayoutDesktop: React.FC<Props> = (props) => {
   const router = useRouter();
   const currentPath = router.pathname;
   let linkHref = "/";
-  let linkText = "Pendientes";
+  let linkText = "Completadas";
   let titleText = "Entregas Pendientes";
   let titleClass = "";
 
@@ -54,7 +54,7 @@ const LayoutDesktop: React.FC<Props> = (props) => {
         <title>{title}</title>
       </Head>
       <main className="p-4 md:p-10 mx-auto max-w-7xl">        
-        <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-6xl w-full">
+        <div className="">
           <Link href={linkHref}>
             <span className="opacity-80 text-sm hover:underline-offset-4 hover:underline hover:decoration-current cursor-pointer">
               {linkText}
@@ -64,11 +64,9 @@ const LayoutDesktop: React.FC<Props> = (props) => {
             <h2 className={`text-xl sm:text-2xl  font-semibold ${titleClass}`}>
               {titleText} {countSpan}
             </h2>
-            <Button
-              variant="ghost"
-              className="text-blue-500 hover:text-blue-700 text-2xl font-light"
+            <Button              
             >
-              <Link href="/create">+</Link>
+              <Link href="/create">+ Agregar</Link>
             </Button>
           </div>
           {isLoading ? (
@@ -76,7 +74,7 @@ const LayoutDesktop: React.FC<Props> = (props) => {
           ) : error ? (
             <div>{error.message}</div>
           ) : (
-            <div className="divide-y divide-gray-900/5 py-4 mt-4 md:mt-16">{props.children}</div>
+            <div className="mt-10">{props.children}</div>
           )}
         </div>
       </main>

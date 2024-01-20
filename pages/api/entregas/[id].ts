@@ -17,8 +17,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(404).json({ error: 'Entrega not found' });
   }
 
-  const { estado, new_notas, pagado, dni } = req.body;
-
+  const { estado, new_notas, pagado, fecha_programada } = req.body;
 
   try {
     const updatedEntrega = await prisma.entrega.update({
@@ -26,6 +25,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       data: {
         estado: estado !== undefined ? estado : entrega.estado,
         pagado: pagado !== undefined ? pagado : entrega.pagado,
+        fecha_programada: fecha_programada !== undefined ? new Date(fecha_programada) : entrega.fecha_programada,
         new_notas: {
             create: new_notas !== undefined ? new_notas.map(note => ({content: note})) : undefined
           },
