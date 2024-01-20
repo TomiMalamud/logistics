@@ -55,11 +55,13 @@ const Layout: React.FC<Props> = (props) => {
       </Head>
       <main className="relative flex min-h-screen flex-col items-center justify-center">
         <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
+          <div className="justify-between flex">
+            <Button variant="link">
           <Link href={linkHref}>
-            <span className="opacity-80 text-sm hover:underline-offset-4 hover:underline hover:decoration-current cursor-pointer">
               {linkText}
-            </span>
-          </Link>
+          </Link></Button>
+          <Button variant="outline"><Link href="/tabla_ordenes">Ver el dashboard nuevo!</Link></Button>
+          </div>
           <div className="flex mt-2 justify-between items-center">
             <h2 className={`text-xl sm:text-2xl font-semibold ${titleClass}`}>
               {titleText} {countSpan}
