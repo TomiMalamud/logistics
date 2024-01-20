@@ -48,7 +48,7 @@ const LayoutDesktop: React.FC<Props> = (props) => {
     title = 'Entregas Completadas | ROHI Sommiers';
   }
 
-  return allowAccess ? (
+  return !allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
         <title>{title}</title>

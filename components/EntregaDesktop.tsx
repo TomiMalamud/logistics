@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { mutate } from "swr";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
@@ -34,16 +35,20 @@ export type NotaType = {
   entrega_id: string;
 };
 
-const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
+const EntregaDesktop: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
   entrega,
   fetchURL
 }) => {
   const [fechaProgramada, setFechaProgramada] = useState(() => {
-    // Format the initial fecha_programada to the appropriate format if it exists
-    return entrega.fecha_programada
-      ? new Date(entrega.fecha_programada).toISOString().slice(0, 10) +
-          "T00:00:00Z"
-      : "";
+    if (!entrega.fecha_programada) return "";
+
+    // Extract the date and time
+    const fecha = new Date(entrega.fecha_programada);
+    const dateString = fecha.toISOString().slice(0, 10); // Extract date
+    const timeString = fecha.toISOString().slice(11, 16); // Extract time
+
+    // Only include the time in the state if it's not "00:00"
+    return timeString !== "03:00" ? `${dateString}T${timeString}` : dateString;
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
@@ -97,7 +102,7 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
         mutate(fetchURL);
       })
       .catch((error) => {
-        console.error("Failed to update pagado status: ", error);
+        console.error("Error al cargar el estado de pago: ", error);
       })
       .finally(() => {
         setIsPagadoUpdating(false);
@@ -134,18 +139,39 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
     }
   };
   const formatDate = (dateString) => {
+    // Create a date object interpreting the input as UTC
     const date = new Date(dateString);
-
-    // Format the date
-    return date.toLocaleDateString("es-AR", {
+  
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+  
+    // Format the date part in UTC
+    const formattedDate = date.toLocaleDateString("es-AR", {
       weekday: "long",
       day: "numeric",
-      month: "short"
+      month: "short",
+      timeZone: "UTC"
     });
+  
+    // Extract the time parts in UTC
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+  
+    // Append the UTC time to the formatted date string if it's not "00:00"
+    if (!(hours === '00' && minutes === '00')) {
+      const localTimeString = `a las ${hours}:${minutes}`;
+      return `${formattedDate} ${localTimeString}`;
+    }
+  
+    return formattedDate;
   };
+    
+    
   const handleDeleteFechaProgramada = async () => {
     setIsUpdating(true); // Show loading state
-    
+
     try {
       await updateField({ fecha_programada: null }); // Update the backend
       setFechaProgramada(null); // Clear the input field by setting an empty string
@@ -157,8 +183,7 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
       setIsUpdating(false); // Stop showing loading state
     }
   };
-    
-  
+
   const handleAddNote = async () => {
     setIsAddingNote(true);
 
@@ -182,6 +207,20 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
     }
   };
 
+  const formatArgentinePhoneNumber = (phoneNumber) => {
+    const parsedNumber = parsePhoneNumberFromString(phoneNumber, "AR");
+    if (parsedNumber) {
+      // Format the number internationally
+      let formattedNumber = parsedNumber.formatInternational();
+
+      // Remove '+54' and extra spaces if present
+      formattedNumber = formattedNumber.replace("+54 ", "");
+
+      return formattedNumber;
+    }
+    return "El número de teléfono es inválido";
+  };
+
   const handleConfirmFechaProgramada = async () => {
     setIsUpdating(true);
     try {
@@ -203,9 +242,11 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
           </p>
         </div>
         <div className="flex">
-          <p>{entrega.nombre}</p>
+          <p>{titleCase(entrega.nombre)}</p>
           <span className="mx-2">|</span>
-          <p className="text-slate-600 text-sm">{entrega.celular}</p>
+          <p className="text-slate-600 text-sm">
+            {formatArgentinePhoneNumber(entrega.celular)}
+          </p>
           <span className="mx-2">|</span>
           <a
             className="text-blue-700 hover:text-blue-900"
@@ -220,7 +261,8 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
           <div>
             <h1 className="font-medium">Entrega programada</h1>
             <p className="text-sm mt-1 text-slate-500">
-              Visitaremos el domicilio el {formatDate(entrega.fecha_programada)}
+              Visitaremos el domicilio el{" "}
+              <span className="font-bold">{formatDate(entrega.fecha_programada)}</span>
             </p>
           </div>
         ) : (
@@ -238,10 +280,9 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
             handleConfirmFechaProgramada={handleConfirmFechaProgramada}
             isConfirming={isUpdating}
             handleDeleteFechaProgramada={handleDeleteFechaProgramada}
-
-          />          
+          />
           <EstadoDialog
-            isPaid = {entrega.pagado}
+            isPaid={entrega.pagado}
             isEstadoUpdated={isEstadoUpdated}
             setShowEstadoAlertDialog={setShowEstadoAlertDialog}
             dni={dni}
@@ -298,4 +339,4 @@ const Entrega: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
   );
 };
 
-export default Entrega;
+export default EntregaDesktop;
