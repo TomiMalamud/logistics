@@ -22,33 +22,35 @@ const FechaProgramadaAlertDialog = ({
   fechaProgramada,
   setFechaProgramada,
   handleConfirmFechaProgramada,
-  handleDeleteFechaProgramada, 
+  handleDeleteFechaProgramada,
   isConfirming
 }) => {
-
   const handleFechaProgramadaChange = (e) => {
     const localDateTime = new Date(e.target.value);
-    const adjustedDateTime = new Date(localDateTime.getTime() - localDateTime.getTimezoneOffset() * 60000);
+    const adjustedDateTime = new Date(
+      localDateTime.getTime() - localDateTime.getTimezoneOffset() * 60000
+    );
     setFechaProgramada(adjustedDateTime.toISOString());
   };
-            return (
+  return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline">Actualizar Fecha de Entrega</Button>
+      <AlertDialogTrigger>
+        Actualizar Fecha de Entrega
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Actualizar Fecha de Entrega</AlertDialogTitle>
           <AlertDialogDescription>
-            Seleccioná la nueva fecha programada para la entrega. Si no hay hora definida, ingresar 00:00.
+            Seleccioná la nueva fecha programada para la entrega. Si no hay hora
+            definida, ingresar 00:00.
           </AlertDialogDescription>
         </AlertDialogHeader>
-      <Input
-        type="datetime-local"
-        value={fechaProgramada ? fechaProgramada.slice(0, 16) : ""}
-        onChange={handleFechaProgramadaChange}
-        required
-      />
+        <Input
+          type="datetime-local"
+          value={fechaProgramada ? fechaProgramada.slice(0, 16) : ""}
+          onChange={handleFechaProgramadaChange}
+          required
+        />
         <AlertDialogFooter>
           <TooltipProvider>
             <Tooltip>

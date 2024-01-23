@@ -12,28 +12,7 @@ import PaymentStatusDialog from "./PaymentStatusDialog";
 import PaymentStatusBadge from "./PaymentStatusBadge";
 import EstadoDialog from "./EstadoDialog";
 import FechaProgramadaAlertDialog from "./FechaProgramadaDialog";
-
-export type EntregaProps = {
-  id: string;
-  punto_venta: string;
-  fecha: Date;
-  producto: string;
-  domicilio: string;
-  nombre: string;
-  celular: string;
-  notas: string;
-  new_notas?: string[];
-  estado: boolean;
-  pagado: boolean;
-  fecha_programada: Date;
-  fetchURL?: string;
-};
-
-export type NotaType = {
-  id: string;
-  content: string;
-  entrega_id: string;
-};
+import { EntregaProps } from "../lib/types";
 
 const EntregaDesktop: React.FC<{
   entrega: EntregaProps;
@@ -301,14 +280,15 @@ const EntregaDesktop: React.FC<{
   </div>
 )}
 
-        <div className="space-x-2">
+        <div className="space-x-2 flex"><Button variant="outline">
           <FechaProgramadaAlertDialog
             fechaProgramada={fechaProgramada}
             setFechaProgramada={setFechaProgramada}
             handleConfirmFechaProgramada={handleConfirmFechaProgramada}
             isConfirming={isUpdating}
             handleDeleteFechaProgramada={handleDeleteFechaProgramada}
-          />
+          /></Button>
+          <div className="w-24">
           <EstadoDialog
             isPaid={entrega.pagado}
             isEstadoUpdated={isEstadoUpdated}
@@ -319,6 +299,7 @@ const EntregaDesktop: React.FC<{
             handleConfirmEstadoChange={handleConfirmEstadoChange}
             isConfirming={isConfirming}
           />
+          </div>
         </div>
       </div>
 

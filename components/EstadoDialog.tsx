@@ -36,7 +36,7 @@ const EstadoDialog = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="default" onClick={handleDialogTriggerClick}>
+        <Button className="w-full" onClick={handleDialogTriggerClick}>
           {isEstadoUpdated ? "Pendiente" : "Entregado"}
         </Button>
       </DialogTrigger>

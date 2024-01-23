@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import useSWR from "swr";
-import LayoutDesktop from "../components/LayoutDesktop";
-import EntregaDesktop, { EntregaProps } from "../components/EntregaDesktop";
+import Layout from "../components/Layout";
+import EntregaDesktop from "../components/EntregaDesktop";
 import TablePlaceholder from "../components/TablePlaceholder";
 import { Input } from "../components/ui/input";
 import { Search } from "lucide-react";
@@ -15,6 +15,7 @@ import {
 } from "../components/ui/select";
 import { SelectGroup } from "@radix-ui/react-select";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { EntregaProps } from "../lib/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const apiURL = "/api/feed";
@@ -28,11 +29,10 @@ const DashboardDesktop: React.FC = () => {
 
   if (!data)
     return (
-      <LayoutDesktop>
+      <Layout>
         <TablePlaceholder />
-      </LayoutDesktop>
+      </Layout>
     );
-  const count = data.length;
 
   const filteredData = data.filter((entrega: EntregaProps) => {
     // Filter by 'pagado'
@@ -63,7 +63,7 @@ const DashboardDesktop: React.FC = () => {
     (entrega: EntregaProps) => !entrega.estado
   ).length;
   return (
-    <LayoutDesktop>
+    <Layout>
       <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Tabs
           defaultValue="false"
@@ -139,7 +139,7 @@ const DashboardDesktop: React.FC = () => {
           <EntregaDesktop entrega={entrega} fetchURL={apiURL} />
         </div>
       ))}
-    </LayoutDesktop>
+    </Layout>
   );
 };
 

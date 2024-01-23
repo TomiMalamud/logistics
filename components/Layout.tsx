@@ -9,68 +9,44 @@ import TablePlaceholder from "./TablePlaceholder";
 
 type Props = {
   children: ReactNode;
-  count?: number;
 };
 
 const Layout: React.FC<Props> = (props) => {
   const { user, error, isLoading } = useUser();
-  const allowAccess = user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER;
-  const router = useRouter();
-  const currentPath = router.pathname;
-  let linkHref = "/";
-  let linkText = "Pendientes";
-  let titleText = "Entregas Pendientes";
-  let titleClass = "";
-
-  if (currentPath === "/completed") {
-    titleText = "Entregas Completadas";
-    titleClass = "text-gray-600";
-  }
-
-  if (currentPath === "/") {
-    linkHref = "/completed";
-    linkText = "Completadas";
-  }
-
-  let countSpan = null;
-  if (props.count !== undefined) {
-    countSpan = (
-      <span className="text-xs text-yellow-700 ml-4 bg-yellow-100 p-1.5 rounded-lg">
-        {props.count}
-      </span>
-    );
-  }
-  let title = '';
-
-  if (router.pathname === '/') {
-    title = 'Entregas Pendientes | ROHI Sommiers';
-  } else {
-    title = 'Entregas Completadas | ROHI Sommiers';
-  }
-
+  const allowAccess =
+    user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER;
+    const router = useRouter();
+    const currentPath = router.pathname;
+    let linkHref = "/";
+    let linkText = "";
+  
+    if (currentPath === "/tabla_ordenes") {
+      linkHref = "/";
+      linkText = "Ir a Expedición";
+    }
+  
+    if (currentPath === "/") {
+      linkHref = "/tabla_ordenes";
+      linkText = "Ir al dashboard";
+    }
+  
+  
   return allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
-        <title>{title}</title>
+        <title>Entregas | ROHI Sommiers</title>
       </Head>
-      <main className="relative flex min-h-screen flex-col items-center justify-center">
-        <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
-          <div className="justify-between flex">
-            <Button variant="link">
-          <Link href={linkHref}>
-              {linkText}
-          </Link></Button>
-          <Button variant="outline"><Link href="/tabla_ordenes">Ver el dashboard nuevo!</Link></Button>
-          </div>
+      <main className="p-4 md:p-10 mx-auto max-w-7xl">
+        <div>
+          <Button variant="link" className="-ml-4 text-gray-500">
+            <Link href={linkHref}>{linkText}</Link>
+          </Button>
           <div className="flex mt-2 justify-between items-center">
-            <h2 className={`text-xl sm:text-2xl font-semibold ${titleClass}`}>
-              {titleText} {countSpan}
-            </h2>
-            <Button
-              variant="ghost"
-              className="text-blue-500 hover:text-blue-700 text-2xl font-light"
-            >
-              <Link href="/create">+</Link>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Entregas de ROHI Sommiers
+            </h1>
+            <Button className="hidden md:block">
+              <Link href="/create">+ Agregar</Link>
             </Button>
           </div>
           {isLoading ? (
@@ -78,7 +54,7 @@ const Layout: React.FC<Props> = (props) => {
           ) : error ? (
             <div>{error.message}</div>
           ) : (
-            <div className="divide-y divide-gray-900/5 py-4">{props.children}</div>
+            <div>{props.children}</div>
           )}
         </div>
       </main>
