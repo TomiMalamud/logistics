@@ -35,10 +35,10 @@ export type NotaType = {
   entrega_id: string;
 };
 
-const EntregaDesktop: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = ({
-  entrega,
-  fetchURL
-}) => {
+const EntregaDesktop: React.FC<{
+  entrega: EntregaProps;
+  fetchURL?: string;
+}> = ({ entrega, fetchURL }) => {
   const [fechaProgramada, setFechaProgramada] = useState(() => {
     if (!entrega.fecha_programada) return "";
 
@@ -70,6 +70,14 @@ const EntregaDesktop: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = (
   const validateDni = () => {
     const length = dni.length;
     return length === 7 || length === 8 || length === 11;
+  };
+  const isToday = (someDate) => {
+    const today = new Date();
+    return (
+      someDate.getDate() === today.getDate() &&
+      someDate.getMonth() === today.getMonth() &&
+      someDate.getFullYear() === today.getFullYear()
+    );
   };
 
   const updateField = async (fieldData) => {
@@ -141,12 +149,12 @@ const EntregaDesktop: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = (
   const formatDate = (dateString) => {
     // Create a date object interpreting the input as UTC
     const date = new Date(dateString);
-  
+
     // Check if the date is valid
     if (isNaN(date.getTime())) {
-      return 'Invalid Date';
+      return "Invalid Date";
     }
-  
+
     // Format the date part in UTC
     const formattedDate = date.toLocaleDateString("es-AR", {
       weekday: "long",
@@ -154,21 +162,20 @@ const EntregaDesktop: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = (
       month: "short",
       timeZone: "UTC"
     });
-  
+
     // Extract the time parts in UTC
-    const hours = date.getUTCHours().toString().padStart(2, '0');
-    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-  
+    const hours = date.getUTCHours().toString().padStart(2, "0");
+    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+
     // Append the UTC time to the formatted date string if it's not "00:00"
-    if (!(hours === '00' && minutes === '00')) {
+    if (!(hours === "00" && minutes === "00")) {
       const localTimeString = `a las ${hours}:${minutes}`;
       return `${formattedDate} ${localTimeString}`;
     }
-  
+
     return formattedDate;
   };
-    
-    
+
   const handleDeleteFechaProgramada = async () => {
     setIsUpdating(true); // Show loading state
 
@@ -257,22 +264,43 @@ const EntregaDesktop: React.FC<{ entrega: EntregaProps; fetchURL?: string }> = (
         </div>
       </div>
       <div className="flex items-center py-4 justify-between">
-        {entrega.fecha_programada ? (
-          <div>
-            <h1 className="font-medium">Entrega programada</h1>
-            <p className="text-sm mt-1 text-slate-500">
-              Visitaremos el domicilio el{" "}
-              <span className="font-bold">{formatDate(entrega.fecha_programada)}</span>
-            </p>
-          </div>
-        ) : (
-          <div>
-            <h1 className="text-orange-500">Fecha de entrega no programada</h1>
-            <p className="text-sm mt-1 text-slate-500">
-              Coordinar cuanto antes con el cliente
-            </p>
-          </div>
-        )}
+      {isUpdating ? (
+  <div>
+    <h1 className="font-medium text-slate-500">Actualizando fecha de entrega...</h1>
+    <p className="text-sm mt-1 text-slate-500">
+      Visitaremos el domicilio...
+    </p>
+  </div>
+) : entrega.fecha_programada ? (
+  <div>
+    <h1 className="font-medium">Entrega programada</h1>
+    <p className="text-sm mt-1 text-slate-500">
+      {isToday(new Date(entrega.fecha_programada)) ? (
+        <span>
+          Visitaremos el domicilio{" "}
+          <span className="font-bold text-black">
+            hoy, {formatDate(entrega.fecha_programada)}
+          </span>
+        </span>
+      ) : (
+        <span>
+          Visitaremos el domicilio el{" "}
+          <span className="font-bold">
+            {formatDate(entrega.fecha_programada)}
+          </span>
+        </span>
+      )}
+    </p>
+  </div>
+) : (
+  <div>
+    <h1 className="text-orange-500">Fecha de entrega no programada</h1>
+    <p className="text-sm mt-1 text-slate-500">
+      Coordinar cuanto antes con el cliente
+    </p>
+  </div>
+)}
+
         <div className="space-x-2">
           <FechaProgramadaAlertDialog
             fechaProgramada={fechaProgramada}

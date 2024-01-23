@@ -25,7 +25,7 @@ const EstadoDialog = ({
       // Assuming 'Entregado' status is represented by isEstadoUpdated being false
       if (!isPaid) {
         alert(
-          "The user has not completed payment. Please verify payment status before marking as 'Entregado'."
+          "El cliente no pagó. Marcar primero el estado de pago  y luego marcar la entrega."
         );
         return; // Exit the function, preventing the dialog from showing
       }

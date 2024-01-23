@@ -9,12 +9,12 @@ import TablePlaceholder from "./TablePlaceholder";
 
 type Props = {
   children: ReactNode;
-  count?: number;
 };
 
 const LayoutDesktop: React.FC<Props> = (props) => {
   const { user, error, isLoading } = useUser();
-  const allowAccess = user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER;
+  const allowAccess =
+    user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER;
   const router = useRouter();
   const currentPath = router.pathname;
   let linkHref = "/";
@@ -32,40 +32,18 @@ const LayoutDesktop: React.FC<Props> = (props) => {
     linkText = "Completadas";
   }
 
-  let countSpan = null;
-  if (props.count !== undefined) {
-    countSpan = (
-      <span className="text-xs text-yellow-700 ml-4 bg-yellow-100 p-1.5 rounded-lg">
-        {props.count}
-      </span>
-    );
-  }
-  let title = '';
-
-  if (router.pathname === '/') {
-    title = 'Entregas Pendientes | ROHI Sommiers';
-  } else {
-    title = 'Entregas Completadas | ROHI Sommiers';
-  }
-
-  return !allowAccess ? (
+  return allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
-        <title>{title}</title>
+        <title>Entregas | ROHI Sommiers</title>
       </Head>
-      <main className="p-4 md:p-10 mx-auto max-w-7xl">        
-        <div className="">
-          <Link href={linkHref}>
-            <span className="opacity-80 text-sm hover:underline-offset-4 hover:underline hover:decoration-current cursor-pointer">
-              {linkText}
-            </span>
-          </Link>
+      <main className="p-4 md:p-10 mx-auto max-w-7xl">
+        <div>
           <div className="flex mt-2 justify-between items-center">
-            <h2 className={`text-xl sm:text-2xl  font-semibold ${titleClass}`}>
-              {titleText} {countSpan}
-            </h2>
-            <Button              
-            >
+            <h1 className="text-2xl font-bold tracking-tight">
+              Entregas de ROHI Sommiers
+            </h1>
+            <Button>
               <Link href="/create">+ Agregar</Link>
             </Button>
           </div>
@@ -74,7 +52,7 @@ const LayoutDesktop: React.FC<Props> = (props) => {
           ) : error ? (
             <div>{error.message}</div>
           ) : (
-            <div className="mt-10">{props.children}</div>
+            <div>{props.children}</div>
           )}
         </div>
       </main>

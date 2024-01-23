@@ -18,6 +18,7 @@ const Create: React.FC = () => {
     const today = new Date();
     return today.toISOString().slice(0, 10) + "T00:00:00Z";
   });
+  const [fecha_programada, setFecha_programada] = useState("");
 
   const validateCelular = (value: string) => {
     const celularRegex = /^\d{10}$/;
@@ -52,6 +53,7 @@ const Create: React.FC = () => {
         nombre,
         celular,
         pagado,
+        fecha_programada,
         newNotaContent: newNotas.length > 0 ? newNotas[0].content : ""
       };
       await fetch("/api/post", {
@@ -59,22 +61,22 @@ const Create: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
-      await Router.push("/");
+      await Router.push("/tabla_ordenes");
     } catch (error) {
       console.error(error);
     }
   };
 
   return (
-    <Layout>
-      <main className="relative flex min-h-screen flex-col items-center justify-center">
-        <div className="bg-white/30 p-12 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
+    <>
+      <main className="relative flex min-h-screen p-20 flex-col items-center justify-center">
+        <div className=" max-w-xl mx-auto w-full">
           <form onSubmit={submitData}>
-            <div className="space-y-12">
+            <div className="space-y-12 max-w-xl">
               <div className="border-b border-gray-900/10 pb-12">
-                <h2 className="font-semibold leading-7 mb-4 text-xl text-gray-900">
+                <h1 className="text-2xl font-bold tracking-tight mb-4">
                   Nueva entrega
-                </h2>
+                </h1>
                 <Label>Punto de Venta</Label>
                 <Input
                   autoFocus
@@ -85,15 +87,40 @@ const Create: React.FC = () => {
                   className="mb-2"
                   required
                 />
-                <Label className="mt-2">Fecha de venta</Label>
-                <Input
-                  onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
-                  type="date"
-                  placeholder="Fecha"
-                  value={fecha.slice(0, 10)}
-                  className="mb-2"
-                  required
-                />
+                <div className="flex items-center space-x-5">
+                  <div>
+                    <Label htmlFor="fecha" className="my-2 flex w-full">
+                      Fecha de venta
+                    </Label>
+                    <Input
+                      onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
+                      type="date"
+                      placeholder="Fecha"
+                      value={fecha.slice(0, 10)}
+                      className="mb-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="fecha_programada"
+                      className=" flex w-full my-2"
+                    >
+                      Fecha de Entrega Programada (opcional)
+                    </Label>
+                    <Input
+                      onChange={(e) =>
+                        setFecha_programada(`${e.target.value}T00:00:00Z`)
+                      } // Append "T00:00:00Z" to the date
+                      type="date"
+                      placeholder="Fecha de Entrega Programada"
+                      value={
+                        fecha_programada ? fecha_programada.slice(0, 10) : ""
+                      }
+                      className="mb-2 w-full "
+                    />
+                  </div>
+                </div>
                 <Label>Producto</Label>
                 <Input
                   onChange={(e) => setProducto(e.target.value)}
@@ -160,7 +187,7 @@ const Create: React.FC = () => {
                   <Button
                     type="button"
                     variant="link"
-                    onClick={() => Router.push("/")}
+                    onClick={() => Router.push("/tabla_ordenes")}
                   >
                     Cancelar
                   </Button>
@@ -173,7 +200,7 @@ const Create: React.FC = () => {
           </form>
         </div>
       </main>
-    </Layout>
+    </>
   );
 };
 
