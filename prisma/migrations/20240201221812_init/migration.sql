@@ -2,7 +2,7 @@
 CREATE TABLE "Entrega" (
     "id" TEXT NOT NULL,
     "punto_venta" TEXT NOT NULL,
-    "fecha" TIMESTAMP(3) NOT NULL,
+    "fecha" DATE NOT NULL,
     "producto" TEXT,
     "domicilio" TEXT,
     "nombre" TEXT,
@@ -10,7 +10,7 @@ CREATE TABLE "Entrega" (
     "notas" TEXT,
     "pagado" BOOLEAN DEFAULT false,
     "estado" BOOLEAN DEFAULT false,
-    "fecha_programada" TIMESTAMP(3),
+    "fecha_programada" DATE,
 
     CONSTRAINT "Entrega_pkey" PRIMARY KEY ("id")
 );
@@ -38,4 +38,3 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
 ALTER TABLE "Nota" ADD CONSTRAINT "Nota_entrega_id_fkey" FOREIGN KEY ("entrega_id") REFERENCES "Entrega"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-

@@ -16,8 +16,9 @@ const Create: React.FC = () => {
   const [pagado, setPagado] = useState(false);
   const [fecha, setFecha] = useState(() => {
     const today = new Date();
-    return today.toISOString().slice(0, 10) + "T00:00:00Z";
+    return today.toISOString().slice(0, 10); 
   });
+  
   const [fecha_programada, setFecha_programada] = useState("");
 
   const validateCelular = (value: string) => {
@@ -47,21 +48,22 @@ const Create: React.FC = () => {
       }
       const body = {
         punto_venta,
-        fecha: finalFecha,
+        fecha: new Date(fecha).toISOString(), // Convert date string to ISO format for Prisma
         producto,
         domicilio,
         nombre,
         celular,
         pagado,
-        fecha_programada,
-        newNotaContent: newNotas.length > 0 ? newNotas[0].content : ""
+        fecha_programada: fecha_programada ? new Date(fecha_programada).toISOString() : null, // Convert date string to ISO format for Prisma, handle null
+        newNotaContent: newNotas.length > 0 ? newNotas[0].content : ''
       };
+  
       await fetch("/api/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
-      await Router.push("/tabla_ordenes");
+      await Router.push("/");
     } catch (error) {
       console.error(error);
     }
@@ -93,7 +95,7 @@ const Create: React.FC = () => {
                       Fecha de venta
                     </Label>
                     <Input
-                      onChange={(e) => setFecha(`${e.target.value}T00:00:00Z`)}
+                      onChange={(e) => setFecha(e.target.value)}
                       type="date"
                       placeholder="Fecha"
                       value={fecha.slice(0, 10)}
@@ -110,8 +112,8 @@ const Create: React.FC = () => {
                     </Label>
                     <Input
                       onChange={(e) =>
-                        setFecha_programada(`${e.target.value}T00:00:00Z`)
-                      } // Append "T00:00:00Z" to the date
+                        setFecha_programada(e.target.value)
+                      } 
                       type="date"
                       placeholder="Fecha de Entrega Programada"
                       value={

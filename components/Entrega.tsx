@@ -41,7 +41,6 @@ const Entrega: React.FC<{
   const [newNotas, setNewNotas] = useState(entrega.new_notas ?? []);
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [isPagadoUpdating, setIsPagadoUpdating] = useState(false);
   const [showEstadoAlertDialog, setShowEstadoAlertDialog] = useState(false); // New state for Estado AlertDialog visibility
   const [dni, setDni] = useState("");
   const [dniError, setDniError] = useState("");
@@ -85,22 +84,7 @@ const Entrega: React.FC<{
       throw error;
     }
   };
-  const togglePagado = () => {
-    setIsPagadoUpdating(true);
 
-    const newPagadoStatus = !entrega.pagado;
-
-    updateField({ pagado: newPagadoStatus })
-      .then(() => {
-        mutate(fetchURL);
-      })
-      .catch((error) => {
-        console.error("Error al cargar el estado de pago: ", error);
-      })
-      .finally(() => {
-        setIsPagadoUpdating(false);
-      });
-  };
   const handleConfirmEstadoChange = async () => {
     if (!validateDni()) {
       setDniError("El DNI debe tener 7, 8 o 11 dígitos.");

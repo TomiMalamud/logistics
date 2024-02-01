@@ -38,6 +38,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-notas.csv
+nota.csv
 backup.tar
-entrega.csv
+entregas.csv

@@ -50,14 +50,16 @@ const EntregaDesktop: React.FC<{
     const length = dni.length;
     return length === 7 || length === 8 || length === 11;
   };
+  
   const isToday = (someDate) => {
     const today = new Date();
-    return (
-      someDate.getDate() === today.getDate() &&
-      someDate.getMonth() === today.getMonth() &&
-      someDate.getFullYear() === today.getFullYear()
-    );
+    
+    const someDateUTC = someDate.toISOString().slice(0, 10);
+    const todayUTC = today.toISOString().slice(0, 10);
+    
+    return someDateUTC === todayUTC;
   };
+    
 
   const updateField = async (fieldData) => {
     try {
