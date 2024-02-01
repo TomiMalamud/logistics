@@ -31,7 +31,7 @@ const Layout: React.FC<Props> = (props) => {
     }
   
   
-  return !allowAccess ? (
+  return allowAccess ? (
     <html lang="es" className="h-full bg-gray-50">
       <Head>
         <title>Entregas | ROHI Sommiers</title>
