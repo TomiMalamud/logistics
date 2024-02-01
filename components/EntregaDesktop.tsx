@@ -228,7 +228,7 @@ const EntregaDesktop: React.FC<{
           </p>
         </div>
         <div className="flex">
-          <p>{titleCase(entrega.nombre)}</p>
+          <p className="font-bold">{titleCase(entrega.nombre)}</p>
           <span className="mx-2">|</span>
           <p className="text-slate-600 text-sm">
             {formatArgentinePhoneNumber(entrega.celular)}

@@ -20,14 +20,14 @@ const Layout: React.FC<Props> = (props) => {
     let linkHref = "/";
     let linkText = "";
   
-    if (currentPath === "/tabla_ordenes") {
+    if (currentPath === "/expedition") {
       linkHref = "/";
-      linkText = "Ir a Expedición";
+      linkText = "Ir al Dashboard";
     }
   
     if (currentPath === "/") {
-      linkHref = "/tabla_ordenes";
-      linkText = "Ir al dashboard";
+      linkHref = "/expedition";
+      linkText = "Ir a Expedición";
     }
   
   

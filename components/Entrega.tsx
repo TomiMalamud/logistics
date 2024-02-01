@@ -20,7 +20,7 @@ import FechaProgramadaAlertDialog from "./FechaProgramadaDialog";
 import { EntregaProps } from "../lib/types";
 import { CopyToClipboard } from "./copy-to-clipboard";
 
-const EntregaDesktop: React.FC<{
+const Entrega: React.FC<{
   entrega: EntregaProps;
   fetchURL?: string;
 }> = ({ entrega, fetchURL }) => {
@@ -353,4 +353,4 @@ const EntregaDesktop: React.FC<{
   );
 };
 
-export default EntregaDesktop;
+export default Entrega;
