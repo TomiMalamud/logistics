@@ -222,13 +222,9 @@ const EntregaDesktop: React.FC<{
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
       <div className="flex justify-between text-sm pb-4 items-center text-slate-500  border-b">
-        <div className="flex">
-          <p>
-            Vendido en {entrega.punto_venta} el {formatDate(entrega.fecha)}
-          </p>
-        </div>
-        <div className="flex">
-          <p className="font-bold">{titleCase(entrega.nombre)}</p>
+        
+        <div className="flex items-center">
+          <p className="font-bold text-lg">{titleCase(entrega.nombre)}</p>
           <span className="mx-2">|</span>
           <p className="text-slate-600 text-sm">
             {formatArgentinePhoneNumber(entrega.celular)}
@@ -240,6 +236,11 @@ const EntregaDesktop: React.FC<{
           >
             WhatsApp
           </a>
+        </div>
+        <div className="flex items-center">
+          <p>
+            Vendido en {entrega.punto_venta} el {formatDate(entrega.fecha)}
+          </p>
         </div>
       </div>
       <div className="flex items-center py-4 justify-between">
