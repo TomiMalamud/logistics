@@ -35,7 +35,8 @@ const Expedition: React.FC = () => {
 
   return (
     
-    <Layout>                
+    <Layout> 
+      <p className="text-sm text-gray-500 mb-4">Entregas sólo con pago recibido</p>               
       {filteredData.map((entrega: EntregaProps) => (
         <div className="py-4" key={entrega.id}>
           <Entrega entrega={entrega} fetchURL={apiURL} />

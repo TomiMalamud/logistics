@@ -11,7 +11,7 @@ import {
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
-import { Calendar, Phone } from "lucide-react";
+import { Calendar, Navigation, Phone } from "lucide-react";
 import { Input } from "./ui/input";
 import { titleCase } from "title-case";
 
@@ -194,7 +194,17 @@ const Entrega: React.FC<{
       setIsUpdating(false);
     }
   };
-
+  const openInGoogleMaps = () => {
+    if (!entrega.domicilio) {
+      alert("No existe un domicilio registrado");
+      return;
+    }
+  
+    const encodedAddress = encodeURIComponent(entrega.domicilio);
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    window.open(googleMapsUrl, "_blank");
+  };
+  
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
       <div className="pb-4 border-b">
@@ -294,8 +304,10 @@ const Entrega: React.FC<{
 
       <div className="flex py-2 items-center justify-between">
         <p className="text-sm text-slate-600 mr-5">{entrega.domicilio}</p>
-        <CopyToClipboard text={entrega.domicilio.toString()} />
-      </div>
+        <Button variant="outline" onClick={openInGoogleMaps} className="flex items-center"><Navigation className="w-4 h-4 mr-2"></Navigation>Ir</Button>
+
+      </div> 
+
       <div className="border-t pt-4">
         <ul className="list-disc list-inside">
           {newNotas.map((note, index) => (

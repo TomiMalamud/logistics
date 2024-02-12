@@ -32,7 +32,7 @@ const Layout: React.FC<Props> = (props) => {
   
   
   return allowAccess ? (
-    <html lang="es" className="h-full bg-gray-50">
+    <html lang="es" className="h-full bg-gray-100">
       <Head>
         <title>Entregas | ROHI Sommiers</title>
       </Head>
