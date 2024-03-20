@@ -44,13 +44,14 @@ const Index: React.FC = () => {
       return false;
     if (filterFechaProgramada === "noDate" && entrega.fecha_programada)
       return false;
-    if (
-      searchQuery &&
-      !entrega.nombre.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !entrega.domicilio.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !entrega.producto.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-      return false;
+      if (
+        searchQuery &&
+        !entrega.nombre?.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !entrega.domicilio?.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !entrega.producto?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+        return false;
+      
     if (filterEstado === "true" && !entrega.estado) return false;
     if (filterEstado === "false" && entrega.estado) return false;
 
