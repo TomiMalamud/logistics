@@ -23,7 +23,7 @@ const Create: React.FC = () => {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY, 
     libraries: ["places"]
   });
-  const allowedValues = ["1", "6", "7", "13"];
+  const allowedValues = ["1", "6", "7", "13", "14"];
 
   const handleChange = (e) => {
     const value = e.target.value;
