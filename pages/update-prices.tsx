@@ -126,7 +126,7 @@ export default function UpdatePrices() {
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", "updated_ecommerce_prices.csv");
+      link.setAttribute("download", "precios_actualizados_tiendanube.csv");
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
@@ -140,18 +140,18 @@ export default function UpdatePrices() {
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="w-full max-w-lg mx-auto">
+      <Card className="w-full max-w-xl mx-auto">
         <CardHeader>
           <CardTitle>Actualización de precios de Tienda Nube</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="mb-20">
+          <div className="mb-10">
             <p className="text-gray-500 mb-2">
               Esta aplicación sirve para actualizar precios de Colchones y
               Sommiers en Tienda Nube. Los precios de almohadas, camas
               marineras, y sillones se actualizan automáticamente.
             </p>
-            <ol className="list-decimal list-inside text-gray-800 leading-7">
+            <ol className="list-decimal list-inside text-gray-800 space-y-2">
               <li>
                 Descargá el archivo .xlsx de productos desde{" "}
                 <a
@@ -176,7 +176,18 @@ export default function UpdatePrices() {
               </li>
               <li>Subilos a ambos usando los botones de abajo</li>
               <li>Hacé click en el botón de Actualizar Precios</li>
-              <li>Verificá que los precios se hayan actualizado abriendo el archivo que se acaba de descargar.</li>
+              <li>Verificá que los precios se hayan actualizado abriendo <span className="text-gray-500">precios_actualizados_tiendanube.csv</span> (que se acaba de descargar).</li>
+              <li>Subí el archivo creado a{" "}
+              <a
+                  href="https://rohisommiers2.mitiendanube.com/admin/v2/products/import/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-500 hover:text-blue-900 transition underline underline-offset-4"
+                >
+                  Tienda Nube
+                </a>
+              </li>
+              <li>¡Listo! Verificá los cambios luego de 10 minutos en la página. Deben coindicir con Contabilium.</li>
             </ol>
           </div>
           <div>
@@ -191,6 +202,7 @@ export default function UpdatePrices() {
               ref={erpButtonRef}
               onClick={() => document.getElementById("erpFile")?.click()}
               className="w-full"
+              variant="outline"
             >
               <Upload className="mr-2 h-4 w-4" /> Subir archivo de Contabilium
               (.xlsx)
@@ -207,7 +219,7 @@ export default function UpdatePrices() {
             <Button
               onClick={() => document.getElementById("ecommerceFile")?.click()}
               className="w-full"
-              variant="secondary"
+              variant="outline"
             >
               <Upload className="mr-2 h-4 w-4" /> Subir archivo de Tienda Nube
               (.csv)
@@ -221,8 +233,8 @@ export default function UpdatePrices() {
         </CardFooter>
       </Card>
       {result && (
-        <Alert className="mt-4 max-w-md mx-auto">
-          <AlertTitle>Estado</AlertTitle>
+        <Alert className="mt-4 max-w-md bg-green-100 mx-auto">
+          <AlertTitle>¡Listo!</AlertTitle>
           <AlertDescription>{result}</AlertDescription>
         </Alert>
       )}
