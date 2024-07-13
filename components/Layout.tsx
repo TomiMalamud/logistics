@@ -15,22 +15,21 @@ const Layout: React.FC<Props> = (props) => {
   const { user, error, isLoading } = useUser();
   const allowAccess =
     user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER;
-    const router = useRouter();
-    const currentPath = router.pathname;
-    let linkHref = "/";
-    let linkText = "";
-  
-    if (currentPath === "/expedition") {
-      linkHref = "/";
-      linkText = "Ir al Dashboard";
-    }
-  
-    if (currentPath === "/") {
-      linkHref = "/expedition";
-      linkText = "Ir a Expedición";
-    }
-  
-  
+  const router = useRouter();
+  const currentPath = router.pathname;
+  let linkHref = "/";
+  let linkText = "";
+
+  if (currentPath === "/expedition") {
+    linkHref = "/";
+    linkText = "Ir al Dashboard";
+  }
+
+  if (currentPath === "/") {
+    linkHref = "/expedition";
+    linkText = "Ir a Expedición";
+  }
+
   return allowAccess ? (
     <html lang="es" className="h-full bg-gray-100">
       <Head>
@@ -38,13 +37,18 @@ const Layout: React.FC<Props> = (props) => {
       </Head>
       <main className="p-4 md:p-10 mx-auto max-w-7xl">
         <div>
+          <div className="flex justify-between">
           <Button variant="link" className="-ml-4 text-gray-500">
             <Link href={linkHref}>{linkText}</Link>
-          </Button>
+          </Button>        
+          <Button variant="link" className="hidden md:block">
+              <Link href="/update-prices">Actualizar Precios</Link>
+            </Button>
+          </div>
           <div className="flex mt-2 justify-between items-center">
             <h1 className="text-2xl font-bold tracking-tight">
               Entregas de ROHI Sommiers
-            </h1>
+            </h1>            
             <Button className="hidden md:block">
               <Link href="/create">+ Agregar</Link>
             </Button>
