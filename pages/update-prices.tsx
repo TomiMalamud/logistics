@@ -29,6 +29,7 @@ export default function UpdatePrices() {
   const [erpData, setErpData] = useState<ERPRow[]>([]);
   const [ecommerceData, setEcommerceData] = useState<EcommerceRow[]>([]);
   const [result, setResult] = useState<string>("");
+  const [notFoundProducts, setNotFoundProducts] = useState<EcommerceRow[]>([]);
   const erpButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleErpUpload = async (
@@ -107,6 +108,7 @@ export default function UpdatePrices() {
 
     let updatedCount = 0;
     let notFoundCount = 0;
+    const notFound: EcommerceRow[] = [];
 
     const updatedData = ecommerceData.map((ecommerceRow) => {
       const erpRow = erpData.find((erp) => erp.SKU === ecommerceRow["Código de barras"]);
@@ -125,10 +127,13 @@ export default function UpdatePrices() {
         };
       } else {
         notFoundCount++;
+        notFound.push(ecommerceRow);
         console.log(`No matching SKU found for: ${ecommerceRow["Código de barras"]}`);
         return ecommerceRow;
       }
     });
+
+    setNotFoundProducts(notFound);
 
     console.log(`Updated ${updatedCount} products`);
     console.log(`${notFoundCount} products not found in ERP data`);
@@ -257,7 +262,23 @@ export default function UpdatePrices() {
         </CardFooter>
         <p className="text-center mb-4">Nota: Sólo sirve para actualizar colchones y sommiers</p>
       </Card>
-      
+      {notFoundProducts.length > 1 && (
+        <Card className="w-full max-w-xl mx-auto mt-4">
+          <CardHeader>
+            <CardTitle>Productos no encontrados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5">
+              {notFoundProducts.map((product, index) => (
+                <li key={index}>
+                  Código de barras: {product["Código de barras"]}, Nombre: {product["Nombre"]}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
     </div>
   );
 }

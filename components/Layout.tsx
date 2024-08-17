@@ -30,7 +30,7 @@ const Layout: React.FC<Props> = (props) => {
     linkText = "Ir a Expedición";
   }
 
-  return !allowAccess ? (
+  return allowAccess ? (
     <html lang="es" className="h-full bg-gray-100">
       <Head>
         <title>Entregas | ROHI Sommiers</title>
