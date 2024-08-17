@@ -19,7 +19,7 @@ interface ERPRow {
 }
 
 interface EcommerceRow {
-  SKU: string;
+  "Código de barras": string;
   "Precio promocional": string;
   Precio: string;
   [key: string]: string;
@@ -66,7 +66,7 @@ export default function UpdatePrices() {
         );
       } finally {
         if (erpButtonRef.current) {
-          erpButtonRef.current.textContent = "Subir el archivo ERP (.xlsx)";
+          erpButtonRef.current.textContent = "Archivo de Contabilium subido correctamente.";
           erpButtonRef.current.disabled = false;
         }
       }
@@ -102,19 +102,36 @@ export default function UpdatePrices() {
       return;
     }
 
+    console.log("ERP Data:", erpData);
+    console.log("Ecommerce Data:", ecommerceData);
+
+    let updatedCount = 0;
+    let notFoundCount = 0;
+
     const updatedData = ecommerceData.map((ecommerceRow) => {
-      const erpRow = erpData.find((erp) => erp.SKU === ecommerceRow.SKU);
+      const erpRow = erpData.find((erp) => erp.SKU === ecommerceRow["Código de barras"]);
       if (erpRow) {
+        updatedCount++;
+        console.log(`Matching SKU found: ${erpRow.SKU}`);
+        console.log(`Old price: ${ecommerceRow["Precio promocional"]}, New price: ${erpRow["Precio Final"]}`);
+        
         const newPrecioPromocional = erpRow["Precio Final"];
         const newPrecio = Math.round(newPrecioPromocional / (1 - 0.45));
+        
         return {
           ...ecommerceRow,
           "Precio promocional": newPrecioPromocional.toString(),
           Precio: newPrecio.toString()
         };
+      } else {
+        notFoundCount++;
+        console.log(`No matching SKU found for: ${ecommerceRow["Código de barras"]}`);
+        return ecommerceRow;
       }
-      return ecommerceRow;
     });
+
+    console.log(`Updated ${updatedCount} products`);
+    console.log(`${notFoundCount} products not found in ERP data`);
 
     const csv = Papa.unparse(updatedData);
 
@@ -134,12 +151,18 @@ export default function UpdatePrices() {
     }
 
     setResult(
-      "Los precios fueron actualizados. Por favor, revisá un colchón y un sommier antes de subirlos a Tienda Nube."
+      `Proceso completado. ${updatedCount} productos actualizados. ${notFoundCount} productos no encontrados en el archivo de Contabilium. Por favor, revisá un colchón y un sommier antes de subirlos a Tienda Nube.`
     );
   };
 
   return (
     <div className="container mx-auto p-4">
+      {result && (
+        <Alert className="mb-4 max-w-md bg-green-100 mx-auto">
+          <AlertTitle>¡Listo!</AlertTitle>
+          <AlertDescription>{result}</AlertDescription>
+        </Alert>
+      )}
       <Card className="w-full max-w-xl mx-auto">
         <CardHeader>
           <CardTitle>Actualización de precios de Tienda Nube</CardTitle>
@@ -166,7 +189,7 @@ export default function UpdatePrices() {
               <li>
                 Descargá el archivo .csv de productos desde{" "}                
                 <a
-                  href="https://rohisommiers2.mitiendanube.com/admin/v2/products/import?categoryId=11051538"
+                  href="https://rohisommiers2.mitiendanube.com/admin/v2/products/import?categoryId=11051538&published=true"
                   target="_blank"
                   rel="noreferrer"
                   className="text-blue-500 hover:text-blue-900 transition underline underline-offset-4"
@@ -230,14 +253,11 @@ export default function UpdatePrices() {
           <Button onClick={updatePrices} className="w-full" variant="default">
             Actualizar Precios
           </Button>
+          
         </CardFooter>
+        <p className="text-center mb-4">Nota: Sólo sirve para actualizar colchones y sommiers</p>
       </Card>
-      {result && (
-        <Alert className="mt-4 max-w-md bg-green-100 mx-auto">
-          <AlertTitle>¡Listo!</AlertTitle>
-          <AlertDescription>{result}</AlertDescription>
-        </Alert>
-      )}
+      
     </div>
   );
 }
