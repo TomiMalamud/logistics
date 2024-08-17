@@ -156,7 +156,7 @@ export default function UpdatePrices() {
     }
 
     setResult(
-      `Proceso completado. ${updatedCount} productos actualizados. ${notFoundCount} productos no encontrados en el archivo de Contabilium. Por favor, revisá un colchón y un sommier antes de subirlos a Tienda Nube.`
+      `Proceso completado. ${updatedCount} productos actualizados. Por favor, revisá un colchón y un sommier antes de subirlos a Tienda Nube.`
     );
   };
 
