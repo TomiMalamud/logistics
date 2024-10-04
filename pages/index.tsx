@@ -15,12 +15,19 @@ import {
 } from "../components/ui/select"
 import { SelectGroup } from "@radix-ui/react-select"
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs"
-import withAuth from '../hoc/withAuth'
+import type { User } from '@supabase/supabase-js'
+import type { GetServerSidePropsContext } from 'next'
+
+import { createClient } from '@utils/supabase/server-props'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 const apiURL = "/api/feed"
 
-const Index: React.FC = () => {
+interface IndexProps {
+  user: User
+}
+
+const Index: React.FC<IndexProps> = ({ user }) => {
   const { data } = useSWR<any[]>(apiURL, fetcher)
   const [filterPagado, setFilterPagado] = useState("all") // 'all', 'paid', 'notPaid'
   const [filterFechaProgramada, setFilterFechaProgramada] = useState("all") // 'all', 'hasDate', 'noDate'
@@ -69,6 +76,7 @@ const Index: React.FC = () => {
 
   return (
     <Layout>
+      <p> {user.email}</p>
       <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Tabs
           defaultValue="pending"
@@ -157,3 +165,24 @@ const Index: React.FC = () => {
 }
 
 export default Index
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const supabase = createClient(context)
+
+  const { data, error } = await supabase.auth.getUser()
+
+  if (error || !data.user) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    }
+  }
+
+  return {
+    props: {
+      user: data.user,
+    },
+  }
+}

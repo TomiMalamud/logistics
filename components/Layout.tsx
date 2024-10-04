@@ -1,19 +1,15 @@
 // components/Layout.tsx
 import React, { ReactNode, useEffect, useState } from "react";
 import Head from "next/head";
-import { useUser } from "@auth0/nextjs-auth0/client";
 import { Button } from "./ui/button";
-import Footer from "./Footer";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import TablePlaceholder from "./TablePlaceholder";
 
 type Props = {
   children: ReactNode;
 };
 
 const Layout: React.FC<Props> = ({ children }) => {
-  const { user, error, isLoading } = useUser();
   const router = useRouter();
   const currentPath = router.pathname;
   let linkHref = "/";
@@ -32,18 +28,6 @@ const Layout: React.FC<Props> = ({ children }) => {
   // Determine if the environment is development
   const isDevelopment = process.env.NODE_ENV === "development";
 
-  // Determine if access should be allowed
-  const allowAccess =
-    isDevelopment ||
-    (user && user.email === process.env.NEXT_PUBLIC_ALLOWED_USER);
-
-  // Optionally, mock user data in development
-  const effectiveUser = isDevelopment
-    ? {
-        email: process.env.NEXT_PUBLIC_ALLOWED_USER,
-        // Add other user properties if needed
-      }
-    : user;
 
   // State to track if the component has mounted to prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
@@ -57,7 +41,7 @@ const Layout: React.FC<Props> = ({ children }) => {
     return null;
   }
 
-  return allowAccess ? (
+  return (
     <>
       <Head>
         <title>Entregas | ROHI Sommiers</title>
@@ -80,33 +64,11 @@ const Layout: React.FC<Props> = ({ children }) => {
               <Link href="/create">+ Agregar</Link>
             </Button>
           </div>
-          {isLoading ? (
-            <TablePlaceholder />
-          ) : error ? (
-            <div>{error.message}</div>
-          ) : (
-            <div>{children}</div>
-          )}
+          <div>{children}</div>
         </div>
       </main>
     </>
-  ) : (
-    <>
-      <main className="relative flex min-h-screen flex-col items-center justify-center">
-        <div className="bg-white/30 p-6 shadow-xl ring-1 ring-gray-900/5 rounded-lg backdrop-blur-lg max-w-xl mx-auto w-full">
-          <div className="text-center items-center mb-4">
-            <h2 className="text:md md:text-xl font-semibold mb-5">
-              Entregas - ROHI Sommiers
-            </h2>
-            <Button>
-              <Link href="/api/auth/login">Iniciar sesión</Link>
-            </Button>
-          </div>
-        </div>
-        <Footer />
-      </main>
-    </>
-  );
+  ) 
 };
 
 export default Layout;

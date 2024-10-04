@@ -12,7 +12,6 @@
   "author": "Tomás Malamud",
   "license": "MIT",
   "dependencies": {
-    "@auth0/nextjs-auth0": "^2.6.3",
     "@hookform/resolvers": "^3.3.4",
     "@prisma/client": "^5.20.0",
     "@radix-ui/react-alert-dialog": "^1.0.5",
