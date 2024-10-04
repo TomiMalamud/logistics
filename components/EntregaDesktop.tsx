@@ -12,58 +12,78 @@ import PaymentStatusDialog from "./PaymentStatusDialog";
 import PaymentStatusBadge from "./PaymentStatusBadge";
 import EstadoDialog from "./EstadoDialog";
 import FechaProgramadaAlertDialog from "./FechaProgramadaDialog";
-import { EntregaProps } from "../lib/types";
+
+interface Customer {
+  nombre: string;
+  domicilio: string;
+  celular?: string; // If celular is part of customers
+}
+
+interface Note {
+  id: number;
+  text: string;
+  created_at?: string;
+}
+
+interface Entrega {
+  id: number;
+  punto_venta: string;
+  fecha_venta: string;
+  producto: string;
+  customer_id: number;
+  pagado: boolean;
+  estado: string;
+  fecha_programada: string | null;
+  created_at: string;
+  created_by: string | null;
+  customers: Customer;
+  notes?: Note[];
+}
 
 const EntregaDesktop: React.FC<{
-  entrega: EntregaProps;
+  entrega: Entrega;
   fetchURL?: string;
 }> = ({ entrega, fetchURL }) => {
   const [fechaProgramada, setFechaProgramada] = useState(() => {
     if (!entrega.fecha_programada) return "";
-
-    // Extract the date and time
     const fecha = new Date(entrega.fecha_programada);
-    const dateString = fecha.toISOString().slice(0, 10); // Extract date
-    const timeString = fecha.toISOString().slice(11, 16); // Extract time
-
-    // Only include the time in the state if it's not "00:00"
-    return timeString !== "03:00" ? `${dateString}T${timeString}` : dateString;
+    return fecha.toISOString().slice(0, 10); // Only take the date part (YYYY-MM-DD)
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isEstadoUpdated, setIsEstadoUpdated] = useState(entrega.estado);
-  const [newNotas, setNewNotas] = useState(entrega.new_notas ?? []);
+  const [estado, setEstado] = useState(entrega.estado);
+  const [newNotas, setNewNotas] = useState<Note[]>(entrega.notes ?? []);
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isPagadoUpdating, setIsPagadoUpdating] = useState(false);
-  const [showEstadoAlertDialog, setShowEstadoAlertDialog] = useState(false); // New state for Estado AlertDialog visibility
+  const [showEstadoAlertDialog, setShowEstadoAlertDialog] = useState(false);
   const [dni, setDni] = useState("");
   const [dniError, setDniError] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null); // For user feedback
 
-  const handleDniChange = (e) => {
+  const handleDniChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDni(e.target.value);
-    setDniError(""); // Reset error message on new input
+    setDniError("");
   };
 
   const validateDni = () => {
     const length = dni.length;
     return length === 7 || length === 8 || length === 11;
   };
-  
-  const isToday = (someDate) => {
+
+  const isToday = (someDate: Date) => {
     const today = new Date();
-    
+
     const someDateUTC = someDate.toISOString().slice(0, 10);
     const todayUTC = today.toISOString().slice(0, 10);
-    
+
     return someDateUTC === todayUTC;
   };
-    
 
-  const updateField = async (fieldData) => {
+  const updateField = async (fieldData: Partial<Entrega>) => {
     try {
-      const response = await fetch(`/api/entregas/${entrega.id}`, {
+      const response = await fetch(`/api/delivery/${entrega.id}`, {
         method: "PUT",
         body: JSON.stringify(fieldData),
         headers: {
@@ -71,8 +91,8 @@ const EntregaDesktop: React.FC<{
         }
       });
 
-      if (response.status !== 200) {
-        throw new Error(`Failed to update`);
+      if (!response.ok) {
+        throw new Error(`Failed to update: ${response.statusText}`);
       }
 
       const updatedEntrega = await response.json();
@@ -81,129 +101,138 @@ const EntregaDesktop: React.FC<{
       throw error;
     }
   };
-  const togglePagado = () => {
+
+  const togglePagado = async () => {
     setIsPagadoUpdating(true);
+    setError(null);
 
     const newPagadoStatus = !entrega.pagado;
 
-    updateField({ pagado: newPagadoStatus })
-      .then(() => {
-        mutate(fetchURL);
-      })
-      .catch((error) => {
-        console.error("Error al cargar el estado de pago: ", error);
-      })
-      .finally(() => {
-        setIsPagadoUpdating(false);
-      });
+    try {
+      await updateField({ pagado: newPagadoStatus });
+      mutate(fetchURL);
+    } catch (error) {
+      console.error("Error al cargar el estado de pago:", error);
+      setError("No se pudo actualizar el estado de pago.");
+    } finally {
+      setIsPagadoUpdating(false);
+    }
   };
+
   const handleConfirmEstadoChange = async () => {
     if (!validateDni()) {
       setDniError("El DNI debe tener 7, 8 o 11 dígitos.");
-      return; // Prevent further action
+      return;
     }
-    setIsConfirming(true); // Start loading
+    setIsConfirming(true);
 
     try {
-      await toggleEstado(); // Assuming this is an async operation
-      setShowEstadoAlertDialog(false); // Close the dialog
+      await toggleEstado();
+      setShowEstadoAlertDialog(false);
     } catch (error) {
-      console.error("Failed to update estado: ", error);
+      console.error("Failed to update estado:", error);
+      setError("No se pudo actualizar el estado.");
     } finally {
-      setIsConfirming(false); // Stop loading
+      setIsConfirming(false);
     }
   };
 
   const toggleEstado = async () => {
-    const newEstado = !isEstadoUpdated;
-    setIsEstadoUpdated(newEstado);
+    const newEstado = estado === "delivered" ? "pending" : "delivered";
+    setEstado(newEstado);
 
     try {
-      const response = await updateField({ estado: newEstado }); // Assuming updateField is async
-      // Handle response if necessary
+      await updateField({ estado: newEstado });
       mutate(fetchURL);
     } catch (error) {
-      console.error("Error updating estado: ", error);
-      setIsEstadoUpdated(!newEstado); // Revert state in case of error
+      console.error("Error updating estado:", error);
+      setEstado(entrega.estado); // Revert on error
+      throw error;
     }
   };
-  const formatDate = (dateString) => {
-    // Create a date object interpreting the input as UTC
+
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
 
-    // Check if the date is valid
     if (isNaN(date.getTime())) {
-      return "Invalid Date";
+      return "Fecha inválida";
     }
 
-    // Format the date part in UTC
-    const formattedDate = date.toLocaleDateString("es-AR", {
+    return date.toLocaleDateString("es-AR", {
       weekday: "long",
       day: "numeric",
       month: "short",
       timeZone: "UTC"
     });
-
-    // Extract the time parts in UTC
-    const hours = date.getUTCHours().toString().padStart(2, "0");
-    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
-
-    // Append the UTC time to the formatted date string if it's not "00:00"
-    if (!(hours === "00" && minutes === "00")) {
-      const localTimeString = `a las ${hours}:${minutes}`;
-      return `${formattedDate} ${localTimeString}`;
-    }
-
-    return formattedDate;
   };
 
-  const handleDeleteFechaProgramada = async () => {
-    setIsUpdating(true); // Show loading state
+  const formatNoteDate = (dateString: string) => {
+    const date = new Date(dateString);
 
-    try {
-      await updateField({ fecha_programada: null }); // Update the backend
-      setFechaProgramada(null); // Clear the input field by setting an empty string
-      mutate(fetchURL); // Revalidate the data
-    } catch (error) {
-      console.error("Error deleting fecha_programada: ", error);
-      // Optionally handle error state
-    } finally {
-      setIsUpdating(false); // Stop showing loading state
+    if (isNaN(date.getTime())) {
+      return "Fecha inválida";
     }
+
+    return date.toLocaleDateString("es-AR", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false    });
   };
 
   const handleAddNote = async () => {
     setIsAddingNote(true);
+    setError(null);
 
-    const timestamp = formatDate(new Date().toISOString());
-    const updatedNote = `${newNote} | ${timestamp}`;
-
-    const updatedNotas = [...newNotas, { content: updatedNote }];
-    // @ts-ignore
-    setNewNotas(updatedNotas);
+    const updatedNoteText = `${newNote}`;
 
     try {
-      await updateField({ new_notas: [updatedNote] });
-      setNewNote("");
+      // Send a POST request to the new notes endpoint
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          delivery_id: entrega.id,
+          text: updatedNoteText
+        })
+      });
 
+      if (!response.ok) {
+        throw new Error(`Failed to add note: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      const newNoteData = result.data[0];
+      setNewNotas([
+        ...newNotas,
+        {
+          id: newNoteData.id,
+          text: newNoteData.text,
+          created_at: newNoteData.created_at
+        }
+      ]);
+      setNewNote("");
       mutate(fetchURL);
-    } catch (error) {
-      setNewNotas(newNotas);
-      console.error("Could not add note: ", error);
+    } catch (error: any) {
+      console.error("Could not add note:", error);
+      setError("No se pudo agregar la nota.");
     } finally {
       setIsAddingNote(false);
     }
   };
 
-  const formatArgentinePhoneNumber = (phoneNumber) => {
+  const formatArgentinePhoneNumber = (phoneNumber?: string) => {
+    if (!phoneNumber) return "Número no disponible";
+
     const parsedNumber = parsePhoneNumberFromString(phoneNumber, "AR");
     if (parsedNumber) {
-      // Format the number internationally
       let formattedNumber = parsedNumber.formatInternational();
-
-      // Remove '+54' and extra spaces if present
       formattedNumber = formattedNumber.replace("+54 ", "");
-
       return formattedNumber;
     }
     return "El número de teléfono es inválido";
@@ -211,11 +240,14 @@ const EntregaDesktop: React.FC<{
 
   const handleConfirmFechaProgramada = async () => {
     setIsUpdating(true);
+    setError(null);
+
     try {
       await updateField({ fecha_programada: fechaProgramada });
       mutate(fetchURL);
     } catch (error) {
-      console.error("Error updating fecha_programada: ", error);
+      console.error("Error updating fecha_programada:", error);
+      setError("No se pudo actualizar la fecha programada.");
     } finally {
       setIsUpdating(false);
     }
@@ -223,85 +255,102 @@ const EntregaDesktop: React.FC<{
 
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
-      <div className="flex justify-between text-sm pb-4 items-center text-slate-500  border-b">
-        
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex justify-between text-sm pb-4 items-center text-slate-500 border-b">
         <div className="flex items-center">
-          <p className="font-bold text-lg">{titleCase(entrega.nombre)}</p>
-          <span className="mx-2">|</span>
-          <p className="text-slate-600 text-sm">
-            {formatArgentinePhoneNumber(entrega.celular)}
+          <p className="font-bold text-lg">
+            {titleCase(entrega.customers.nombre)}
           </p>
           <span className="mx-2">|</span>
-          <a
-            className="text-blue-700 hover:text-blue-900"
-            href={`https://wa.me/54${entrega.celular}`}
-          >
-            WhatsApp
-          </a>
+          {entrega.customers.celular && (
+            <>
+              <p className="text-slate-600 text-sm">
+                {formatArgentinePhoneNumber(entrega.customers.celular)}
+              </p>
+              <span className="mx-2">|</span>
+              <a
+                className="text-blue-700 hover:text-blue-900"
+                href={`https://wa.me/54${entrega.customers.celular}`}
+              >
+                WhatsApp
+              </a>
+            </>
+          )}
         </div>
         <div className="flex items-center">
           <p>
-            Vendido en {entrega.punto_venta} el {formatDate(entrega.fecha)}
+            Vendido en {entrega.punto_venta} el{" "}
+            {formatDate(entrega.fecha_venta)}
           </p>
         </div>
       </div>
-      <div className="flex items-center py-4 justify-between">
-      {isUpdating ? (
-  <div>
-    <h1 className="font-medium text-slate-500">Actualizando fecha de entrega...</h1>
-    <p className="text-sm mt-1 text-slate-500">
-      Visitaremos el domicilio...
-    </p>
-  </div>
-) : entrega.fecha_programada ? (
-  <div>
-    <h1 className="font-medium">Entrega programada</h1>
-    <p className="text-sm mt-1 text-slate-500">
-      {isToday(new Date(entrega.fecha_programada)) ? (
-        <span>
-          Visitaremos el domicilio{" "}
-          <span className="font-bold text-black">
-            hoy, {formatDate(entrega.fecha_programada)}
-          </span>
-        </span>
-      ) : (
-        <span>
-          Visitaremos el domicilio el{" "}
-          <span className="font-bold">
-            {formatDate(entrega.fecha_programada)}
-          </span>
-        </span>
-      )}
-    </p>
-  </div>
-) : (
-  <div>
-    <h1 className="text-orange-500">Fecha de entrega no programada</h1>
-    <p className="text-sm mt-1 text-slate-500">
-      Coordinar cuanto antes con el cliente
-    </p>
-  </div>
-)}
 
-        <div className="space-x-2 flex"><Button variant="outline">
-          <FechaProgramadaAlertDialog
-            fechaProgramada={fechaProgramada}
-            setFechaProgramada={setFechaProgramada}
-            handleConfirmFechaProgramada={handleConfirmFechaProgramada}
-            isConfirming={isUpdating}
-            handleDeleteFechaProgramada={handleDeleteFechaProgramada}
-          /></Button>
+      <div className="flex items-center py-4 justify-between">
+        {isUpdating ? (
+          <div>
+            <h1 className="font-medium text-slate-500">
+              Actualizando fecha de entrega...
+            </h1>
+            <p className="text-sm mt-1 text-slate-500">
+              Visitaremos el domicilio...
+            </p>
+          </div>
+        ) : entrega.fecha_programada ? (
+          <div>
+            <h1 className="font-medium">Entrega programada</h1>
+            <p className="text-sm mt-1 text-slate-500">
+              {isToday(new Date(entrega.fecha_programada)) ? (
+                <span>
+                  Visitaremos el domicilio{" "}
+                  <span className="font-bold text-black">
+                    hoy, {formatDate(entrega.fecha_programada)}
+                  </span>
+                </span>
+              ) : (
+                <span>
+                  Visitaremos el domicilio el{" "}
+                  <span className="font-bold">
+                    {formatDate(entrega.fecha_programada)}
+                  </span>
+                </span>
+              )}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-orange-500">Fecha de entrega no programada</h1>
+            <p className="text-sm mt-1 text-slate-500">
+              Coordinar cuanto antes con el cliente
+            </p>
+          </div>
+        )}
+
+        <div className="space-x-2 flex">
+          <Button variant="outline">
+            <FechaProgramadaAlertDialog
+              fechaProgramada={fechaProgramada}
+              setFechaProgramada={setFechaProgramada}
+              handleConfirmFechaProgramada={handleConfirmFechaProgramada}
+              isConfirming={isUpdating}
+            />
+          </Button>
           <div className="w-24">
-          <EstadoDialog
-            isPaid={entrega.pagado}
-            isEstadoUpdated={isEstadoUpdated}
-            setShowEstadoAlertDialog={setShowEstadoAlertDialog}
-            dni={dni}
-            handleDniChange={handleDniChange}
-            dniError={dniError}
-            handleConfirmEstadoChange={handleConfirmEstadoChange}
-            isConfirming={isConfirming}
-          />
+            <EstadoDialog
+              isPaid={entrega.pagado}
+              estado={estado}
+              setEstado={setEstado}
+              setShowEstadoAlertDialog={setShowEstadoAlertDialog}
+              dni={dni}
+              handleDniChange={handleDniChange}
+              dniError={dniError}
+              handleConfirmEstadoChange={handleConfirmEstadoChange}
+              isConfirming={isConfirming}
+            />
           </div>
         </div>
       </div>
@@ -311,8 +360,11 @@ const EntregaDesktop: React.FC<{
       </Alert>
 
       <div className="flex py-2 items-center justify-between">
-        <p className="text-sm text-slate-600 mr-5">{entrega.domicilio}</p>
+        <p className="text-sm text-slate-600 mr-5">
+          {entrega.customers.domicilio}
+        </p>
       </div>
+
       <div className="pb-2">
         <PaymentStatusBadge isPaid={entrega.pagado} />
         <PaymentStatusDialog
@@ -321,21 +373,27 @@ const EntregaDesktop: React.FC<{
           onDisabled={isPagadoUpdating}
         />
       </div>
+
       <div className="border-t pt-4">
         <ul className="list-disc list-inside">
           {newNotas.map((note, index) => (
-            <li className="text-sm text-slate-600  leading-6" key={index}>
-              {/*// @ts-ignore*/}
-              {note.content}
+            <li className="text-sm text-slate-600 leading-6" key={index}>
+              {note.text} | {formatNoteDate(note.created_at)}
             </li>
           ))}
         </ul>
       </div>
+
       <div className="w-full space-x-2 pt-4 flex items-center justify-between">
         <Input
           type="text"
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === "Enter" && !isAddingNote && newNote.trim()) {
+              handleAddNote();
+            }
+          }}
           placeholder="Añadir nueva nota"
           disabled={isAddingNote}
         />

@@ -26,5 +26,5 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
-, "pages/api/auth/[...nextauth].js"  ]
+, "pages/api/auth/[...nextauth].js", "pages/_document.js", "pages/test.js"  ]
 }

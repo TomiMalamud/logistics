@@ -9,69 +9,35 @@ import {
   AlertDialogCancel,
   AlertDialogAction
 } from "./ui/alert-dialog";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "./ui/tooltip";
 
 const FechaProgramadaAlertDialog = ({
   fechaProgramada,
   setFechaProgramada,
   handleConfirmFechaProgramada,
-  handleDeleteFechaProgramada,
   isConfirming
 }) => {
   const handleFechaProgramadaChange = (e) => {
-    const localDateTime = new Date(e.target.value);
-    const adjustedDateTime = new Date(
-      localDateTime.getTime() - localDateTime.getTimezoneOffset() * 60000
-    );
-    setFechaProgramada(adjustedDateTime.toISOString());
+    const localDate = new Date(e.target.value);
+    setFechaProgramada(localDate.toISOString().split("T")[0]); // Keep only the date part (YYYY-MM-DD)
   };
   return (
     <AlertDialog>
-      <AlertDialogTrigger>
-        Actualizar Fecha de Entrega
-      </AlertDialogTrigger>
+      <AlertDialogTrigger>Actualizar Fecha de Entrega</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Actualizar Fecha de Entrega</AlertDialogTitle>
           <AlertDialogDescription>
-            Seleccioná la nueva fecha programada para la entrega. Si no hay hora
-            definida, ingresar 00:00.
+            Seleccioná la nueva fecha programada para la entrega.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Input
-          type="datetime-local"
-          value={fechaProgramada ? fechaProgramada.slice(0, 16) : ""}
+          type="date" 
+          value={fechaProgramada ? fechaProgramada.slice(0, 10) : ""} // Adjust the value to slice only the date part (YYYY-MM-DD)
           onChange={handleFechaProgramadaChange}
           required
         />
-        <AlertDialogFooter>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                {" "}
-                <AlertDialogAction
-                  className="bg-white border-0 shadow-none hover:bg-white focus:bg-white text-red-500 hover:text-red-700 focus:text-red-700"
-                  onClick={handleDeleteFechaProgramada}
-                  disabled={true}
-                >
-                  Eliminar fecha de entrega
-                </AlertDialogAction>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  Función en desarrollo. Avisar a Tomi para eliminar una fecha
-                  programada.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <AlertDialogFooter>          
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirmFechaProgramada}

@@ -1,63 +1,113 @@
-import prisma from '../../../lib/prisma';
+import { NextApiRequest, NextApiResponse } from "next";
+import { supabase } from "../../../lib/supabase";
 
-// Define the interface for your data object
-interface EntregaData {
-  punto_venta: any;
-  fecha: any;
-  producto: any;
-  domicilio: any;
-  nombre: any;
-  celular: any;
-  pagado: any;
-  new_notas?: {
-    create: {
-      content: string;
-    };
-  };
-  fecha_programada?: string; // Make 'fecha_programada' an optional property
+interface Customer {
+  id: string;
 }
 
-// POST /api/post
-export default async function handle(req, res) {
-  const { punto_venta, fecha, producto, domicilio, nombre, celular, pagado, newNotaContent, fecha_programada } = req.body;
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method === "POST") {
+    try {
+      const {
+        fecha,
+        producto,
+        nombre,
+        domicilio,
+        celular,
+        pagado,
+        fecha_programada,
+        newNotaContent
+      } = req.body;
+      
+      const pagadoValue = pagado === true || pagado === "true";
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-    });
-  };
-
-  const timestamp = formatDate(new Date().toISOString());
-  const appendedContent = `${newNotaContent} | ${timestamp}`;
-
-  // Use the EntregaData interface for the data object
-  const data: EntregaData = {
-    punto_venta: punto_venta,
-    fecha: fecha,
-    producto: producto,
-    domicilio: domicilio,
-    nombre: nombre,
-    celular: celular,
-    pagado: pagado,
-    new_notas: newNotaContent ? {
-      create: {
-        content: appendedContent
+      // Check for missing required fields
+      if (!fecha || !producto || !nombre || !domicilio || !celular) {
+        return res.status(400).json({ error: "Missing required fields" });
       }
-    } : undefined
-  };
 
-  // Add 'fecha_programada' to the data object if it's not an empty string
-  if (fecha_programada && fecha_programada.trim() !== '') {
-    data.fecha_programada = fecha_programada;
-  }
+      // Insert customer into 'customers' table if not already exists
+      const { data: customerData, error: customerError } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("nombre", nombre)
+        .eq("domicilio", domicilio)
+        .eq("celular", celular)
+        .maybeSingle();
 
-  const result = await prisma.entrega.create({
-    data: data,
-    include: {
-      new_notas: true
+      if (customerError) {
+        throw new Error(`Error fetching customer: ${customerError.message}`);
+      }
+
+      let customer_id;
+      if (customerData) {
+        customer_id = customerData.id;
+      } else {
+        const { data: newCustomer, error: newCustomerError } = await supabase
+          .from("customers")
+          .insert([{ nombre, domicilio, celular }])
+          .single();
+
+        if (newCustomerError) {
+          throw new Error(
+            `Error creating customer: ${newCustomerError.message}`
+          );
+        }
+
+        customer_id = (newCustomer as Customer).id;
+      }
+
+      // Ensure we have a valid customer_id before proceeding
+      if (!customer_id) {
+        throw new Error("Customer ID could not be determined");
+      }
+
+      // Insert delivery into 'deliveries' table with plain date strings
+      const { data: deliveryData, error: deliveryError } = await supabase
+        .from("deliveries")
+        .insert([
+          {
+            fecha_venta: fecha,  // Store plain date without time component
+            producto,
+            customer_id,
+            pagado: pagadoValue,
+            estado: "pending",
+            fecha_programada: fecha_programada || null  // Store plain date or null
+          }
+        ])
+        .select("*")
+        .single();
+
+      if (deliveryError) {
+        throw new Error(`Error creating delivery: ${deliveryError.message}`);
+      }
+
+      // Ensure we have valid delivery data
+      if (!deliveryData || !deliveryData.id) {
+        throw new Error(
+          "Delivery creation failed, delivery data is null or invalid"
+        );
+      }
+
+      if (newNotaContent && newNotaContent.trim() !== "") {
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert([{ text: newNotaContent, delivery_id: deliveryData.id }]);
+
+        if (noteError) {
+          throw new Error(`Error creating note: ${noteError.message}`);
+        }
+      }
+      res.status(200).json({ message: "Delivery created successfully" });
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      res.status(400).json({ error: error.message });
     }
-  });
-
-  res.json(result);
+  } else {
+    res.setHeader("Allow", ["POST"]);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
 }

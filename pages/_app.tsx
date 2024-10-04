@@ -1,13 +1,26 @@
-import { AppProps } from "next/app";
+import type { AppProps } from 'next/app'
+import { useRouter } from 'next/router'
+import { useAuth } from '../lib/useAuth'
 import '../styles/globals.css'
-import { UserProvider } from '@auth0/nextjs-auth0/client';
 
-const App = ({ Component, pageProps }: AppProps) => {
+const publicPages = ['/login']
+
+function MyApp({ Component, pageProps }: AppProps) {
+  const router = useRouter()
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  if (!user && !publicPages.includes(router.pathname)) {
+    router.push('/login')
+    return null
+  }
+
   return (
-    <UserProvider>
-    <Component {...pageProps} />
-  </UserProvider>
-  );
-};
+      <Component {...pageProps} />    
+  )
+}
 
-export default App;
+export default MyApp
