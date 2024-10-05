@@ -74,11 +74,7 @@ const EntregaDesktop: React.FC<{
 
   const isToday = (someDate: Date) => {
     const today = new Date();
-
-    const someDateUTC = someDate.toISOString().slice(0, 10);
-    const todayUTC = today.toISOString().slice(0, 10);
-
-    return someDateUTC === todayUTC;
+    return someDate === today;
   };
 
   const updateField = async (fieldData: Partial<Entrega>) => {
@@ -161,7 +157,8 @@ const EntregaDesktop: React.FC<{
     return date.toLocaleDateString("es-AR", {
       weekday: "long",
       day: "numeric",
-      month: "short"
+      month: "short",
+      timeZone: "UTC"
     });
   };
 
