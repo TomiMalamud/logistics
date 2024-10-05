@@ -20,14 +20,6 @@ export default function LoginPage() {
     router.push('/')
   }
 
-  async function signUp() {
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) {
-      console.error(error)
-    }
-    router.push('/')
-  }
-
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">

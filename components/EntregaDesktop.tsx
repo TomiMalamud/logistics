@@ -161,8 +161,7 @@ const EntregaDesktop: React.FC<{
     return date.toLocaleDateString("es-AR", {
       weekday: "long",
       day: "numeric",
-      month: "short",
-      timeZone: "UTC"
+      month: "short"
     });
   };
 

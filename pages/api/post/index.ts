@@ -29,7 +29,7 @@ export default async function handler(
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Insert customer into 'customers' table if not already exists
+      // Check if customer exists
       const { data: customerData, error: customerError } = await supabase
         .from("customers")
         .select("id")
@@ -42,30 +42,27 @@ export default async function handler(
         throw new Error(`Error fetching customer: ${customerError.message}`);
       }
 
-      let customer_id;
+      let customer_id: string;
+
       if (customerData) {
+        // Customer exists
         customer_id = customerData.id;
       } else {
+        // Insert new customer and retrieve the id
         const { data: newCustomer, error: newCustomerError } = await supabase
           .from("customers")
           .insert([{ nombre, domicilio, celular }])
+          .select("id") // Ensure the id is returned
           .single();
 
         if (newCustomerError) {
-          throw new Error(
-            `Error creating customer: ${newCustomerError.message}`
-          );
+          throw new Error(`Error creating customer: ${newCustomerError.message}`);
         }
 
-        customer_id = (newCustomer as Customer).id;
+        customer_id = newCustomer.id;
       }
 
-      // Ensure we have a valid customer_id before proceeding
-      if (!customer_id) {
-        throw new Error("Customer ID could not be determined");
-      }
-
-      // Insert delivery into 'deliveries' table with plain date strings
+      // Insert delivery with the obtained customer_id
       const { data: deliveryData, error: deliveryError } = await supabase
         .from("deliveries")
         .insert([
@@ -87,9 +84,7 @@ export default async function handler(
 
       // Ensure we have valid delivery data
       if (!deliveryData || !deliveryData.id) {
-        throw new Error(
-          "Delivery creation failed, delivery data is null or invalid"
-        );
+        throw new Error("Delivery creation failed, delivery data is null or invalid");
       }
 
       if (newNotaContent && newNotaContent.trim() !== "") {
@@ -101,10 +96,11 @@ export default async function handler(
           throw new Error(`Error creating note: ${noteError.message}`);
         }
       }
+
       res.status(200).json({ message: "Delivery created successfully" });
     } catch (error) {
       console.error("Unexpected error:", error);
-      res.status(400).json({ error: error.message });
+      res.status(400).json({ error: (error as Error).message });
     }
   } else {
     res.setHeader("Allow", ["POST"]);
