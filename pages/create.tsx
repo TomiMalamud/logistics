@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { Libraries, useLoadScript } from "@react-google-maps/api";
 import Router from "next/router";
 import { Input } from "../components/ui/input";
@@ -16,6 +16,7 @@ const libraries: Libraries = ["places"];
 interface CreateProps {
   user: User;
 }
+
 const Create: React.FC<CreateProps> = ({ user }) => {
   const [producto, setProducto] = useState("");
   const [domicilio, setDomicilio] = useState("");
@@ -32,11 +33,11 @@ const Create: React.FC<CreateProps> = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-
-  const autocompleteRef = useRef(null);
-  const clientListContainerRef = useRef<HTMLDivElement>(null); // Added ref
+  const [loadingClient, setLoadingClient] = useState(false);
+  const autocompleteRef = useRef<HTMLInputElement>(null);
+  const clientListContainerRef = useRef<HTMLDivElement>(null);
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     libraries
   });
 
@@ -51,93 +52,174 @@ const Create: React.FC<CreateProps> = ({ user }) => {
     setPagado(event.target.checked);
   };
 
+  const [inputFocused, setInputFocused] = useState(false); // To track input focus
+  const [activeIndex, setActiveIndex] = useState<number>(-1); // For keyboard navigation
+
+  const handleFocus = () => {
+    setInputFocused(true);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Check if blur event is related to the dropdown (using clientListContainerRef)
+    if (
+      clientListContainerRef.current &&
+      !clientListContainerRef.current.contains(e.relatedTarget as Node)
+    ) {
+      setInputFocused(false);
+      setActiveIndex(-1); // Reset active index when input loses focus
+    }
+  };
+
   const cleanPhoneNumber = (phone: string): string => {
     return phone.replace(/\D/g, "");
   };
 
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-  
+    setLoading(true); // Start loading state
+
     try {
       if (!validateCelular(celular)) {
         setCelularError(
           "Formato válido: 3541614107. Sin 0 ni 15, sin espacios ni guiones."
         );
+        setLoading(false); // Stop loading if validation fails
         return;
       }
-  
-      // Only use the date strings without converting to ISO
+
       const body = {
-        fecha,  // Use the date value as is
+        fecha,
         producto,
         domicilio,
         nombre,
         celular,
         pagado,
-        fecha_programada: fecha_programada || null,  // Use the value directly
-        newNotaContent: newNotas.length > 0 ? newNotas[0].content : "",
+        fecha_programada: fecha_programada || null,
+        newNotaContent: newNotas.length > 0 ? newNotas[0].content : ""
       };
       console.log("Body being sent:", body);
-  
+
       const response = await fetch("/api/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(body)
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "An error occurred while saving.");
       }
-  
+
       await Router.push("/");
     } catch (error) {
       console.error("Submit error:", error);
       setError(
         error instanceof Error ? error.message : "An unknown error occurred"
       );
+    } finally {
+      setLoading(false); // Stop loading after submission
     }
   };
-    
-  const handleClientSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNombre(e.target.value);
-    if (e.target.value.length > 2) {
-      setLoading(true);
+
+  // Debounce timer reference
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (nombre.length > 2) {
+      setLoadingClient(true); // Start loading client search
       setError(null);
 
-      try {
-        const response = await fetch(
-          `/api/search-client?filtro=${e.target.value}`
-        );
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `Error: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("API Response:", data); // Debugging the response
-
-        // Correctly access the 'Items' key
-        if (data && data.Items) {
-          setClients(data.Items);
-          console.log("Updated clients:", data.Items); // Check if clients data is correct
-        } else {
-          console.log("No Items key found in response");
-          setClients([]);
-        }
-      } catch (err) {
-        console.error("Error during client search:", err);
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-      } finally {
-        setLoading(false);
+      // Clear the previous debounce timer
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
       }
+
+      // Set a new debounce timer
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const response = await fetch(
+            `/api/search-client?filtro=${encodeURIComponent(nombre)}`
+          );
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Error: ${response.status}`);
+          }
+          const data = await response.json();
+          console.log("API Response:", data); // Debugging the response
+
+          // Correctly access the 'Items' key
+          if (data && data.Items) {
+            setClients(data.Items);
+            console.log("Updated clients:", data.Items); // Check if clients data is correct
+          } else {
+            console.log("No Items key found in response");
+            setClients([]);
+          }
+        } catch (err) {
+          console.error("Error during client search:", err);
+          setError(
+            err instanceof Error ? err.message : "An unknown error occurred"
+          );
+        } finally {
+          setLoadingClient(false); // Stop loading client search
+          setActiveIndex(-1); // Reset active index after search
+        }
+      }, 300); // 1 second debounce
     } else {
+      // If input length <= 2, clear clients
       setClients([]);
+      setLoadingClient(false);
+      setActiveIndex(-1); // Reset active index
+      // Clear any existing debounce timer
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    }
+
+    // Cleanup function to clear the timeout if the component unmounts or nombre changes
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [nombre]); // Run this effect whenever 'nombre' changes
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (clients.length === 0 && nombre.length > 2) {
+      // If no clients found, do nothing
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setActiveIndex((prevIndex) =>
+          prevIndex < clients.length - 1 ? prevIndex + 1 : 0
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setActiveIndex((prevIndex) =>
+          prevIndex > 0 ? prevIndex - 1 : clients.length - 1
+        );
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (activeIndex >= 0 && activeIndex < clients.length) {
+          handleClientSelect(clients[activeIndex]);
+        }
+        break;
+      case "Escape":
+        setClients([]);
+        setActiveIndex(-1);
+        break;
+      default:
+        break;
     }
   };
 
-  // *** Modified handleClientSelect Function ***
+  // Modified handleClientSelect Function
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
     setNombre(client.RazonSocial);
@@ -156,12 +238,13 @@ const Create: React.FC<CreateProps> = ({ user }) => {
     }
 
     setClients([]);
+    setActiveIndex(-1); // Reset active index after selection
   };
 
   useEffect(() => {
     if (isLoaded && typeof google !== "undefined") {
       const autocomplete = new google.maps.places.Autocomplete(
-        autocompleteRef.current,
+        autocompleteRef.current as HTMLInputElement,
         {
           types: ["address"]
         }
@@ -181,6 +264,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
         !clientListContainerRef.current.contains(event.target as Node)
       ) {
         setClients([]);
+        setActiveIndex(-1); // Reset active index when clicking outside
       }
     };
 
@@ -217,6 +301,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                       value={fecha.slice(0, 10)}
                       className="mb-4"
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -234,6 +319,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                         fecha_programada ? fecha_programada.slice(0, 10) : ""
                       }
                       className="mb-4 w-full"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -244,43 +330,59 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                   value={producto}
                   className="mb-4"
                   required
+                  disabled={loading}
                 />
                 <div className="mb-4 relative" ref={clientListContainerRef}>
                   <Label className="mt-2">Cliente</Label>
                   <Input
-                    onChange={handleClientSearch}
+                    onChange={(e) => setNombre(e.target.value)} // Update 'nombre' state directly
+                    onFocus={handleFocus} // Set input as focused
+                    onBlur={handleBlur} // Close dropdown if input loses focus
+                    onKeyDown={handleKeyDown} // Handle keyboard navigation
                     placeholder="Buscá un Cliente de Contabilium por nombre o DNI"
                     value={nombre}
                     required
+                    disabled={loading}
+                    autoComplete="off" // Disable browser autocomplete
                   />
                   <div id="customers_search" className="absolute z-10 w-full">
                     <div
                       className={`overflow-hidden transition-[max-height] mt-1 duration-300 ease-in-out ${
-                        loading || clients.length > 0 ? "max-h-60" : "max-h-0"
+                        (loadingClient || clients.length > 0 || (nombre.length > 2 && !loadingClient)) &&
+                        inputFocused
+                          ? "max-h-60"
+                          : "max-h-0"
                       }`}
                     >
-                      {loading ? (
+                      {loadingClient ? (
                         <ul className="border border-gray-300 rounded-md">
                           <li className="animate-pulse h-16 bg-gray-50 p-2"></li>
                         </ul>
                       ) : clients.length > 0 ? (
                         <ul className="bg-gray-50 rounded-md p-2 border border-gray-300">
-                          {clients.map((client) => (
+                          {clients.map((client, index) => (
                             <li
                               key={client.Id}
                               onClick={() => handleClientSelect(client)}
-                              className="cursor-pointer hover:bg-gray-200 p-2"
+                              className={`cursor-pointer hover:bg-gray-200 p-2 ${
+                                index === activeIndex ? "bg-gray-200" : ""
+                              }`}
+                              onMouseEnter={() => setActiveIndex(index)}
+                              onMouseLeave={() => setActiveIndex(-1)}
                             >
                               {client.RazonSocial}
                             </li>
                           ))}
                         </ul>
+                      ) : nombre.length > 2 ? ( // Show message only if a search was performed
+                        <ul className="bg-gray-50 rounded-md p-2 border border-gray-300">
+                          <li>No se encontraron clientes.</li>
+                        </ul>
                       ) : null}
                     </div>
-                    {error && (
-                      <p style={{ color: "red" }}>Error: {error}</p>
-                    )}
+                    {error && <p className="text-red-500 text-sm mt-2">Error: {error}</p>}
                   </div>
+
                   <span className="text-sm mt-2 text-gray-500">
                     Buscá clientes de Contabilium
                   </span>
@@ -294,6 +396,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                     value={domicilio}
                     className="mt-1"
                     required
+                    disabled={loading}
                   />
                   <span className="text-sm mt-2 text-gray-500">
                     Podés editarlo si no es correcto
@@ -307,6 +410,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                     value={celular}
                     className="mt-1"
                     required
+                    disabled={loading}
                   />
                   <span className="text-sm mt-2 text-gray-500">
                     Podés editarlo si no es correcto
@@ -318,14 +422,11 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                 <div className="mb-4">
                   <Label className="mt-2">Notas</Label>
                   <Input
-                    onChange={(e) =>
-                      setNewNotas([{ content: e.target.value }])
-                    }
+                    onChange={(e) => setNewNotas([{ content: e.target.value }])}
                     placeholder="Agregar saldos pendientes y entre qué calles está"
-                    value={
-                      newNotas.length > 0 ? newNotas[0].content : ""
-                    }
+                    value={newNotas.length > 0 ? newNotas[0].content : ""}
                     className="mt-1"
+                    disabled={loading} // Disable input during loading
                   />
                 </div>
                 <div className="items-top mt-4 bg-slate-50 p-4 rounded-md flex space-x-2">
@@ -335,6 +436,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                     checked={pagado}
                     onChange={handleCheckboxChange}
                     className="h-4 w-4"
+                    disabled={loading}
                   />
                   <div className="grid gap-1.5 leading-none">
                     <label
@@ -357,8 +459,8 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" value="Create">
-                    Guardar
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Loading..." : "Guardar"}
                   </Button>
                 </div>
               </div>
