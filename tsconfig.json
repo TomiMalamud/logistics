@@ -20,9 +20,9 @@
     "incremental": true,
     "baseUrl": ".",             // Set base URL to the project root
     "paths": {
-      "@components/*": ["components/*"],   // Aliasing @components to components folder
-      "@lib/*": ["lib/*"],                 // Example alias for lib folder
-      "@utils/*": ["utils/*"]              // Example alias for utils folder
+      "@components/*": ["components/*"],   
+      "@lib/*": ["lib/*"],                 
+      "@utils/*": ["utils/*"]              
     }
   },
   "exclude": [
