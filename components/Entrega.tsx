@@ -1,7 +1,7 @@
 // Entrega.tsx
 
 import React from "react";
-import { useEntregaLogic } from "../lib/useEntregaLogic";
+import { useEntregaLogic } from "@lib/useEntregaLogic";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,44 +13,21 @@ import {
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
-import { Calendar, Navigation, Phone } from "lucide-react";
+import { Navigation, Phone } from "lucide-react";
 import { Input } from "./ui/input";
 import { titleCase } from "title-case";
 import EstadoDialog from "./EstadoDialog";
-import FechaProgramadaAlertDialog from "./FechaProgramadaDialog";
+import { DeliveryProps } from "types/types"
 
-interface Customer {
-  nombre: string;
-  domicilio: string;
-  celular?: string;
-}
-
-interface Note {
-  id: number;
-  text: string;
-  created_at?: string;
-}
-
-interface EntregaType {
-  id: number;
-  punto_venta: string;
-  fecha_venta: string;
-  producto: string;
-  customer_id: number;
-  pagado: boolean;
-  estado: string;
-  fecha_programada: string | null;
-  created_at: string;
-  created_by: string | null;
-  customers: Customer;
-  notes?: Note[];
-}
-
-const Entrega: React.FC<{
-  entrega: EntregaType;
-  fetchURL?: string;
-}> = ({ entrega, fetchURL }) => {
-  const entregaLogic = useEntregaLogic({ entrega, fetchURL });
+const Entrega: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
+  
+  const entregaLogic = useEntregaLogic({ 
+    entrega: {
+      ...entrega,
+      created_by: typeof entrega.created_by === 'string' ? entrega.created_by : entrega.created_by.id
+    }, 
+    fetchURL 
+  });
 
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
@@ -65,7 +42,7 @@ const Entrega: React.FC<{
       <div className="pb-4 border-b">
         <div className="flex space-x-2 items-center justify-between">
           <p className="text-slate-500 text-xs">
-            Vendido en {entrega.punto_venta} | {titleCase(entrega.customers.nombre)}
+            {titleCase(entrega.customers.nombre)}
           </p>
           <DropdownMenu>
             <DropdownMenuTrigger>

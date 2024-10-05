@@ -17,6 +17,10 @@ export default async function handle(req, res) {
           id,
           text,
           created_at
+        ),
+        created_by:profiles (
+          email,
+          name
         )
       `)
       .order('fecha_programada', { ascending: true })

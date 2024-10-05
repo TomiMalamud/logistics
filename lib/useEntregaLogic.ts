@@ -3,38 +3,8 @@
 import { useState } from "react";
 import { mutate } from "swr";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { Note, Delivery, UseEntregaLogicParams } from "types/types";
 
-interface Customer {
-  nombre: string;
-  domicilio: string;
-  celular?: string;
-}
-
-interface Note {
-  id: number;
-  text: string;
-  created_at?: string;
-}
-
-interface EntregaType {
-  id: number;
-  punto_venta: string;
-  fecha_venta: string;
-  producto: string;
-  customer_id: number;
-  pagado: boolean;
-  estado: string;
-  fecha_programada: string | null;
-  created_at: string;
-  created_by: string | null;
-  customers: Customer;
-  notes?: Note[];
-}
-
-interface UseEntregaLogicParams {
-  entrega: EntregaType;
-  fetchURL?: string;
-}
 
 export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) => {
   // State variables
@@ -68,11 +38,10 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
   };
 
   const isToday = (someDate: Date) => {
-    const today = new Date();
-    return someDate.toDateString() === today.toDateString();
+    return new Date().toISOString().split('T')[0] === new Date(someDate).toISOString().split('T')[0]
   };
 
-  const updateField = async (fieldData: Partial<EntregaType>) => {
+  const updateField = async (fieldData: Partial<Delivery>) => {
     try {
       const response = await fetch(`/api/delivery/${entrega.id}`, {
         method: "PUT",
@@ -141,11 +110,16 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Invalid Date";
+
+    if (isNaN(date.getTime())) {
+      return "Fecha inválida";
+    }
+
     return date.toLocaleDateString("es-AR", {
       weekday: "long",
       day: "numeric",
       month: "short",
+      timeZone: "UTC"
     });
   };
 

@@ -95,7 +95,8 @@ const Create: React.FC<CreateProps> = ({ user }) => {
         celular,
         pagado,
         fecha_programada: fecha_programada || null,
-        newNotaContent: newNotas.length > 0 ? newNotas[0].content : ""
+        newNotaContent: newNotas.length > 0 ? newNotas[0].content : "",
+        created_by: user.id
       };
       console.log("Body being sent:", body);
 

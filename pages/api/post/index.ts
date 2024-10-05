@@ -1,10 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "../../../lib/supabase";
 
-interface Customer {
-  id: string;
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -19,7 +15,8 @@ export default async function handler(
         celular,
         pagado,
         fecha_programada,
-        newNotaContent
+        newNotaContent,
+        created_by        
       } = req.body;
       
       const pagadoValue = pagado === true || pagado === "true";
@@ -72,7 +69,8 @@ export default async function handler(
             customer_id,
             pagado: pagadoValue,
             estado: "pending",
-            fecha_programada: fecha_programada || null  // Store plain date or null
+            fecha_programada: fecha_programada || null,
+            created_by: created_by            
           }
         ])
         .select("*")

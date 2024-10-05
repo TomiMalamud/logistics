@@ -17,7 +17,7 @@ import { SelectGroup } from "@radix-ui/react-select"
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs"
 import type { User } from '@supabase/supabase-js'
 import type { GetServerSidePropsContext } from 'next'
-
+import type { Profile } from 'types/types'
 import { createClient } from '@utils/supabase/server-props'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -25,9 +25,10 @@ const apiURL = "/api/feed"
 
 interface IndexProps {
   user: User
+  profile: Profile
 }
 
-const Index: React.FC<IndexProps> = ({ user }) => {
+const Index: React.FC<IndexProps> = ({ user, profile }) => {
   const { data } = useSWR<any[]>(apiURL, fetcher)
   const [filterPagado, setFilterPagado] = useState("all") // 'all', 'paid', 'notPaid'
   const [filterFechaProgramada, setFilterFechaProgramada] = useState("all") // 'all', 'hasDate', 'noDate'
@@ -76,8 +77,8 @@ const Index: React.FC<IndexProps> = ({ user }) => {
 
   return (
     <Layout>
-      <p className="text-gray-500">Hola {user.email.split('@')[0]}!</p>
-      <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <p className="text-yellow-800 font-medium ">Hola {profile ? profile.name : user.email.split('@')[0]}!</p>
+        <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Tabs
           defaultValue="pending"
           className="w-full mb-4 mt-6"
@@ -169,6 +170,7 @@ export default Index
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const supabase = createClient(context)
 
+  // Fetch the authenticated user
   const { data, error } = await supabase.auth.getUser()
 
   if (error || !data.user) {
@@ -180,9 +182,29 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }
   }
 
+  const user = data.user
+
+  // Fetch the profile associated with the user.id
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('name')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profileData) {
+    console.error('Error fetching profile:', profileError)
+    return {
+      props: {
+        user,
+        profile: null, // Handle this case as needed
+      },
+    }
+  }
+
   return {
     props: {
-      user: data.user,
+      user,
+      profile: profileData,
     },
   }
 }

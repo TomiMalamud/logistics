@@ -13,11 +13,10 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
-// Define TypeScript interfaces for props
 interface EstadoDialogProps {
   isPaid: boolean;
-  estado: string; // Changed from boolean to string
-  setEstado: (newEstado: string) => void; // Function to update estado in parent
+  estado: string; 
+  setEstado: (newEstado: string) => void; 
   setShowEstadoAlertDialog: (show: boolean) => void;
   dni: string;
   handleDniChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
