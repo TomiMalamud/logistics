@@ -76,11 +76,11 @@ const Index: React.FC<IndexProps> = ({ user }) => {
 
   return (
     <Layout>
-      <p> {user.email}</p>
+      <p className="text-gray-500">Hola {user.email.split('@')[0]}!</p>
       <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Tabs
           defaultValue="pending"
-          className="w-full mb-10 mt-4"
+          className="w-full mb-4 mt-6"
           onValueChange={setFilterEstado}
         >
           <TabsList aria-label="Filter by estado">

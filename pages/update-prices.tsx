@@ -13,6 +13,12 @@ import { Button } from "../components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { Upload } from "lucide-react";
 
+import type { User } from "@supabase/supabase-js";
+import type { GetServerSidePropsContext } from "next";
+
+import { createClient } from "@utils/supabase/server-props";
+
+
 interface ERPRow {
   SKU: string;
   "Precio Final": number;
@@ -25,7 +31,7 @@ interface EcommerceRow {
   [key: string]: string;
 }
 
-export default function UpdatePrices() {
+export default function UpdatePrices({ user }: { user: User }) {
   const [erpData, setErpData] = useState<ERPRow[]>([]);
   const [ecommerceData, setEcommerceData] = useState<EcommerceRow[]>([]);
   const [result, setResult] = useState<string>("");
@@ -281,4 +287,25 @@ export default function UpdatePrices() {
 
     </div>
   );
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const supabase = createClient(context);
+
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false
+      }
+    };
+  }
+
+  return {
+    props: {
+      user: data.user
+    }
+  };
 }

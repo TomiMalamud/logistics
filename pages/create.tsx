@@ -6,10 +6,17 @@ import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { Client } from "../types/api";
+import type { User } from "@supabase/supabase-js";
+import type { GetServerSidePropsContext } from "next";
+
+import { createClient } from "@utils/supabase/server-props";
 
 const libraries: Libraries = ["places"];
 
-const Create: React.FC = () => {
+interface CreateProps {
+  user: User;
+}
+const Create: React.FC<CreateProps> = ({ user }) => {
   const [producto, setProducto] = useState("");
   const [domicilio, setDomicilio] = useState("");
   const [nombre, setNombre] = useState("");
@@ -364,3 +371,24 @@ const Create: React.FC = () => {
 };
 
 export default Create;
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const supabase = createClient(context);
+
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false
+      }
+    };
+  }
+
+  return {
+    props: {
+      user: data.user
+    }
+  };
+}
