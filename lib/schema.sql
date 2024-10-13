@@ -19,7 +19,6 @@ CREATE TABLE
     fecha_venta DATE NOT NULL,
     producto VARCHAR(255) NOT NULL,
     customer_id INTEGER NOT NULL REFERENCES Customers (id),
-    pagado BOOLEAN DEFAULT FALSE,
     estado delivery_status DEFAULT 'pending',
     fecha_programada DATE,
     created_by UUID REFERENCES auth.users (id),

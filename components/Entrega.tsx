@@ -1,7 +1,7 @@
 // Entrega.tsx
 
 import React from "react";
-import { useEntregaLogic } from "@lib/useEntregaLogic";
+import { useEntregaLogic } from "@/lib/useEntregaLogic";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -185,7 +185,6 @@ const Entrega: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
       {/* Estado Dialog */}
       <div className="pt-2">
         <EstadoDialog
-          isPaid={entrega.pagado}
           estado={entregaLogic.estado}
           setEstado={entregaLogic.setEstado}
           setShowEstadoAlertDialog={entregaLogic.setShowEstadoAlertDialog}

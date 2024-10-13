@@ -5,7 +5,7 @@ export interface TokenResponse {
 }
 
 // Define the Client interface based on ERP API response
-export interface Client {
+export interface Customer {
   Id: number;
   RazonSocial: string;
   NombreFantasia: string;
@@ -30,7 +30,56 @@ export interface Client {
 }
 
 // If the API returns a list of clients
-export interface GetClientByDocResponse {
-  clients: Client[];
+export interface GetClientByIdResponse {
+  clients: Customer[];
   total: number;
+}
+
+export interface Comprobante {
+  Id: number;
+  IdComprobanteAsociado: number;
+  IdUsuarioAdicional: number;
+  IdCliente: number;
+  RazonSocial: string;
+  FechaAlta: string;
+  FechaEmision: string;
+  FechaServDesde: string | null;
+  FechaServHasta: string | null;
+  Numero: string;
+  TipoFc: string;
+  Modo: string;
+  Cae: string | null;
+  ImporteTotalNeto: string;
+  ImporteTotalBruto: string;
+  Saldo: string;
+  PuntoVenta: number;
+  Inventario: number;
+  CondicionVenta: string;
+  FechaVencimiento: string;
+  Items: any | null;
+  Tributos: any | null;
+  Observaciones: string;
+  Canal: string;
+  TipoConcepto: number;
+  Pagos: any | null;
+  Descuento: any | null;
+  Recargo: any | null;
+  IDIntegracion: string | null;
+  Origen: string;
+  IDVentaIntegracion: string;
+  IDCondicionVenta: number | null;
+  IDTurno: number | null;
+  IDMoneda: number;
+  TipoDeCambio: number;
+  PercepcionIIBB: any | null;
+  IDJurisdiccion: number | null;
+  RefExterna: string;
+  fceMiPYME: boolean;
+  IDVendedor: number;
+}
+
+export interface SearchComprobanteResponse {
+  Items: Comprobante[];
+  TotalPage: number;
+  TotalItems: number;
 }

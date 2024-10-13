@@ -6,7 +6,7 @@ import Entrega from "../components/Entrega";
 import type { User } from "@supabase/supabase-js";
 import type { GetServerSidePropsContext } from "next";
 
-import { createClient } from "@utils/supabase/server-props";
+import { createClient } from "@/utils/supabase/server-props";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const apiURL = "/api/feed";
@@ -26,7 +26,7 @@ const Expedition: React.FC<ExpeditionProps> = ({ user }) => {
     );
 
   const filteredData = data.filter((entrega) => {
-    return entrega.pagado === true && entrega.estado === "pending";
+    return entrega.estado === "pending";
   });
 
   return (

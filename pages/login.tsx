@@ -1,9 +1,9 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { createClient } from '@utils/supabase/component'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@components/ui/card"
-import { Input } from "@components/ui/input"
-import { Button } from "@components/ui/button"
+import { createClient } from '@/utils/supabase/component'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 export default function LoginPage() {
   const router = useRouter()

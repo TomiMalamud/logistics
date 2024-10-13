@@ -34,13 +34,15 @@ export interface Customer {
     fecha_venta: string;
     producto: string;
     customer_id: number;
-    pagado: boolean;
     estado: string;
     fecha_programada: string | null;
     created_at: string;
     created_by: Profile | string | null;
     customers: Customer | null;
     notes?: Note[] | null;
+    comprobante: string | null,
+    id_comprobante: number | null,
+    saldo: number | null,
   }
   
   // Props for Entrega Component
@@ -54,4 +56,3 @@ export interface Customer {
     entrega: Delivery;
     fetchURL?: string;
   }
-  

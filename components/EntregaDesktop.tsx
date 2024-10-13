@@ -1,19 +1,18 @@
 // EntregaDesktop.tsx
 
 import React from "react";
-import { useEntregaLogic } from "@lib/useEntregaLogic";
+import { useEntregaLogic } from "@/lib/useEntregaLogic";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Input } from "./ui/input";
 import { titleCase } from "title-case";
-
-import PaymentStatusDialog from "./PaymentStatusDialog";
-import PaymentStatusBadge from "./PaymentStatusBadge";
 import EstadoDialog from "./EstadoDialog";
 import FechaProgramadaAlertDialog from "./FechaProgramadaDialog";
 import { DeliveryProps, Profile } from "types/types";
+import Saldo from "./Saldo";
 
 const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
+  
   const entregaLogic = useEntregaLogic({
     entrega: {
       ...entrega,
@@ -115,7 +114,6 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
           </Button>
           <div className="w-24">
             <EstadoDialog
-              isPaid={entrega.pagado}
               estado={entregaLogic.estado}
               setEstado={entregaLogic.setEstado}
               setShowEstadoAlertDialog={
@@ -144,17 +142,7 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
           {entrega.customers.domicilio}
         </p>
       </div>
-
-      {/* Payment Status */}
-      <div className="pb-2">
-        <PaymentStatusBadge isPaid={entrega.pagado} />
-        <PaymentStatusDialog
-          isPaid={entrega.pagado}
-          onConfirm={entregaLogic.togglePagado}
-          onDisabled={entregaLogic.isPagadoUpdating}
-        />
-      </div>
-
+      {entrega.estado === 'pending' && <Saldo id_comprobante={entrega.id_comprobante}/>}
       {/* Notes Section */}
       <div className="border-t pt-4">
         <ul className="list-disc list-inside">

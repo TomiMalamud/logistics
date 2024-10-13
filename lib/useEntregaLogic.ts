@@ -19,7 +19,6 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
   const [newNotas, setNewNotas] = useState<Note[]>(entrega.notes ?? []);
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [isPagadoUpdating, setIsPagadoUpdating] = useState(false);
   const [showEstadoAlertDialog, setShowEstadoAlertDialog] = useState(false);
   const [dni, setDni] = useState("");
   const [dniError, setDniError] = useState("");
@@ -59,22 +58,6 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
     }
   };
 
-  const togglePagado = async () => {
-    setIsPagadoUpdating(true);
-    setError(null);
-
-    const newPagadoStatus = !entrega.pagado;
-
-    try {
-      await updateField({ pagado: newPagadoStatus });
-      mutate(fetchURL);
-    } catch (error) {
-      console.error("Error updating payment status:", error);
-      setError("Unable to update payment status.");
-    } finally {
-      setIsPagadoUpdating(false);
-    }
-  };
 
   const handleConfirmEstadoChange = async () => {
     if (!validateDni()) {
@@ -217,7 +200,6 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
     newNote,
     setNewNote,
     isAddingNote,
-    isPagadoUpdating,
     showEstadoAlertDialog,
     setShowEstadoAlertDialog,
     dni,
@@ -235,7 +217,6 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
     formatArgentinePhoneNumber,
 
     // Action handlers
-    togglePagado,
     handleAddNote,
     handleConfirmFechaProgramada,
     handleDeleteFechaProgramada,

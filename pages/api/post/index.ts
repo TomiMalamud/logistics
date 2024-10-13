@@ -1,3 +1,4 @@
+// pages/api/post/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "../../../lib/supabase";
 
@@ -10,16 +11,17 @@ export default async function handler(
       const {
         fecha,
         producto,
+        comprobante,
+        id_comprobante,
+        saldo,
         nombre,
         domicilio,
         celular,
-        pagado,
         fecha_programada,
         newNotaContent,
         created_by        
       } = req.body;
       
-      const pagadoValue = pagado === true || pagado === "true";
 
       // Check for missing required fields
       if (!fecha || !producto || !nombre || !domicilio || !celular) {
@@ -67,10 +69,12 @@ export default async function handler(
             fecha_venta: fecha,  // Store plain date without time component
             producto,
             customer_id,
-            pagado: pagadoValue,
             estado: "pending",
             fecha_programada: fecha_programada || null,
-            created_by: created_by            
+            created_by: created_by,
+            comprobante,
+            id_comprobante,
+            saldo            
           }
         ])
         .select("*")

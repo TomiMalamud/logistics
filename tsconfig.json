@@ -20,9 +20,10 @@
     "incremental": true,
     "baseUrl": ".",             // Set base URL to the project root
     "paths": {
-      "@components/*": ["components/*"],   
-      "@lib/*": ["lib/*"],                 
-      "@utils/*": ["utils/*"]              
+      "@/components/*": ["components/*"],   
+      "@/lib/*": ["lib/*"],                 
+      "@/utils/*": ["utils/*"],
+      "@/types/*": ["types/*"]
     }
   },
   "exclude": [

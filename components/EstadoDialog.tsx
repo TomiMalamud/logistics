@@ -14,7 +14,6 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
 interface EstadoDialogProps {
-  isPaid: boolean;
   estado: string; 
   setEstado: (newEstado: string) => void; 
   setShowEstadoAlertDialog: (show: boolean) => void;
@@ -26,7 +25,6 @@ interface EstadoDialogProps {
 }
 
 const EstadoDialog: React.FC<EstadoDialogProps> = ({
-  isPaid,
   estado,
   setEstado,
   setShowEstadoAlertDialog,
@@ -41,14 +39,7 @@ const EstadoDialog: React.FC<EstadoDialogProps> = ({
     if (estado === "delivered") {
       // If already delivered, no action needed
       return;
-    }
-
-    if (!isPaid) {
-      alert(
-        "El cliente no pagó. Marcar primero el estado de pago y luego marcar la entrega."
-      );
-      return; // Exit the function, preventing the dialog from showing
-    }
+    }    
 
     setShowEstadoAlertDialog(true); // Show the dialog if conditions are met
   };
@@ -65,7 +56,7 @@ const EstadoDialog: React.FC<EstadoDialogProps> = ({
           {toggleEstadoLabel()}
         </Button>
       </DialogTrigger>
-      {isPaid && (
+      
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Ingresar DNI de quien recibe</DialogTitle>
@@ -102,7 +93,6 @@ const EstadoDialog: React.FC<EstadoDialogProps> = ({
             </Button>
           </DialogFooter>
         </DialogContent>
-      )}
     </Dialog>
   );
 };

@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs"
 import type { User } from '@supabase/supabase-js'
 import type { GetServerSidePropsContext } from 'next'
 import type { Profile } from 'types/types'
-import { createClient } from '@utils/supabase/server-props'
+import { createClient } from '@/utils/supabase/server-props'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 const apiURL = "/api/feed"
@@ -30,7 +30,6 @@ interface IndexProps {
 
 const Index: React.FC<IndexProps> = ({ user, profile }) => {
   const { data } = useSWR<any[]>(apiURL, fetcher)
-  const [filterPagado, setFilterPagado] = useState("all") // 'all', 'paid', 'notPaid'
   const [filterFechaProgramada, setFilterFechaProgramada] = useState("all") // 'all', 'hasDate', 'noDate'
   const [searchQuery, setSearchQuery] = useState("")
   const [filterEstado, setFilterEstado] = useState("pending") // 'all', 'delivered', 'pending', etc.
@@ -43,9 +42,6 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
     )
 
   const filteredData = data.filter((entrega) => {
-    // Filter by 'pagado'
-    if (filterPagado === "paid" && !entrega.pagado) return false
-    if (filterPagado === "notPaid" && entrega.pagado) return false
 
     // Filter by 'fecha_programada'
     if (filterFechaProgramada === "hasDate" && !entrega.fecha_programada)
@@ -86,10 +82,10 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
         >
           <TabsList aria-label="Filter by estado">
             <TabsTrigger value="pending">
-              Pendientes {estadoPendingCount}
+              Pendientes<span className="text-gray-500 font-light ml-2">{estadoPendingCount}</span> 
             </TabsTrigger>
             <TabsTrigger value="delivered">
-              Entregadas {estadoDeliveredCount}
+              Entregadas<span className="text-gray-500 font-light ml-2">{estadoDeliveredCount}</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -105,27 +101,7 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex w-auto">
-              <Select
-                value={filterPagado}
-                onValueChange={(value) => setFilterPagado(value)}
-              >
-                <SelectTrigger
-                  aria-label="Filter"
-                  className="bg-white text-black"
-                >
-                  <SelectValue placeholder="Filtrar por 'pagado'" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Estado del Pago</SelectLabel>
-                    <SelectItem value="all">Estado del Pago: Todos</SelectItem>
-                    <SelectItem value="paid">Pagados</SelectItem>
-                    <SelectItem value="notPaid">No Pagados</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
+            
             <div className="flex w-auto">
               <Select
                 value={filterFechaProgramada}
