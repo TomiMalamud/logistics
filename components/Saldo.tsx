@@ -23,18 +23,7 @@ const Saldo: React.FC<SaldoProps> = ({ id_comprobante }) => {
 
           const data = await response.json();
 
-          // Parse the saldo string to a number
-          // Replace comma with dot for proper parsing
-          const parsedSaldo = parseFloat(data.Saldo.replace(',', '.'));
-
-          if (isNaN(parsedSaldo)) {
-            throw new Error('Saldo is not a valid number');
-          }
-
-          // Round the saldo to the nearest integer
-          const roundedSaldo = Math.round(parsedSaldo);
-
-          setSaldo(roundedSaldo.toString()); // Set the rounded Saldo as a string
+          setSaldo(data.Saldo.toString()); // Set the rounded Saldo as a string
         } catch (err) {
           console.error('Error fetching Saldo:', err);
           setError('Failed to fetch Saldo.');
