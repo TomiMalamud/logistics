@@ -33,7 +33,8 @@ const initialFormData: FormData = {
 const Create: React.FC<CreateProps> = ({ user }) => {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [selectedComprobante, setSelectedComprobante] = useState<Comprobante | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // For form submission
+  const [fieldsLoading, setFieldsLoading] = useState(false); // For field updates
   const [error, setError] = useState<string | null>(null);
   const [celularError, setCelularError] = useState("");
 
@@ -56,6 +57,13 @@ const Create: React.FC<CreateProps> = ({ user }) => {
 
   const handleComprobanteSelect = async (comprobante: Comprobante) => {
     setSelectedComprobante(comprobante);
+    setFieldsLoading(true); // Start loading
+    // Reset the fields to show "Cargando..."
+    setFormData(prev => ({
+      ...prev,
+      domicilio: "Cargando...",
+      celular: "Cargando..."
+    }));
     if (comprobante?.IdCliente) {
       try {
         const res = await fetch(`/api/customer/${comprobante.IdCliente}`);
@@ -70,7 +78,16 @@ const Create: React.FC<CreateProps> = ({ user }) => {
         }));
       } catch (error) {
         console.error("Error fetching customer data:", error);
+        setFormData(prev => ({
+          ...prev,
+          domicilio: "",
+          celular: ""
+        }));
+      } finally {
+        setFieldsLoading(false); // End loading
       }
+    } else {
+      setFieldsLoading(false); // End loading if no IdCliente
     }
   };
 
@@ -134,17 +151,54 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                     <Alert className="text-yellow-600 mt-3">
                       <AlertTitle>Factura adeudada</AlertTitle>
                       <AlertDescription>
-                        Saldo: $ {parseFloat(selectedComprobante?.Saldo.replace(',', '.')) || 0}. Recordá
+                        Saldo: $ {selectedComprobante?.Saldo || 'No se pudo obtener el saldo. Aclarar en Notas si la factura está adeudada.'}. Recordá
                         registrar la cobranza cuando cobremos.
                       </AlertDescription>
                     </Alert>
                   )}
                 </FormField>
-                <FormField label="Domicilio" name="domicilio" value={formData.domicilio} onChange={handleInputChange} disabled={loading || !selectedComprobante} placeholder="Se completa con Contabilium"/>
-                <FormField label="Celular" name="celular" value={formData.celular} onChange={handleInputChange} disabled={loading || !selectedComprobante} error={celularError} placeholder="Se completa con Contabilium"/>
-                <FormField label="Producto" name="producto" value={formData.producto} onChange={handleInputChange} disabled={loading} isTextarea placeholder="Euro 140x190 + 2 Almohadas ZIP + 2 Bases 70x190" />
-                <FormField label="Fecha de Entrega Programada (opcional)" name="fecha_programada" value={formData.fecha_programada} onChange={handleInputChange} disabled={loading} type="date" />
-                <FormField label="Notas" name="newNotaContent" value={formData.newNotaContent} onChange={handleInputChange} disabled={loading} placeholder="Agregar notas y entre qué calles está" />
+                <FormField
+                  label="Domicilio"
+                  name="domicilio"
+                  value={fieldsLoading ? "Cargando..." : formData.domicilio}
+                  onChange={handleInputChange}
+                  disabled={loading || fieldsLoading || !selectedComprobante}
+                  placeholder="Se completa con Contabilium"
+                />
+                <FormField
+                  label="Celular"
+                  name="celular"
+                  value={fieldsLoading ? "Cargando..." : formData.celular}
+                  onChange={handleInputChange}
+                  disabled={loading || fieldsLoading || !selectedComprobante}
+                  error={celularError}
+                  placeholder="Se completa con Contabilium"
+                />
+                <FormField
+                  label="Producto"
+                  name="producto"
+                  value={formData.producto}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  isTextarea
+                  placeholder="Euro 140x190 + 2 Almohadas ZIP + 2 Bases 70x190"
+                />
+                <FormField
+                  label="Fecha de Entrega Programada (opcional)"
+                  name="fecha_programada"
+                  value={formData.fecha_programada}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  type="date"
+                />
+                <FormField
+                  label="Notas"
+                  name="newNotaContent"
+                  value={formData.newNotaContent}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  placeholder="Agregar notas y entre qué calles está"
+                />
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
@@ -152,7 +206,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                 Cancelar
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? "Loading..." : "Guardar"}
+                {loading ? "Cargando..." : "Guardar"}
               </Button>
             </CardFooter>
             {error && <p className="text-sm text-red-500">{error}</p>}

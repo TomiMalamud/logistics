@@ -43,7 +43,7 @@ const FormField: React.FC<{
       {error && <p className="text-sm text-red-500">{error}</p>}
       {(name === "domicilio" || name === "celular") && (
         <span className="text-sm mt-2 text-gray-500">
-          Después podés editarlo si no es correcto
+          Podés editarlo si no es correcto
         </span>
       )}
     </div>
