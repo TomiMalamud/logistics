@@ -34,7 +34,7 @@ const FormField: React.FC<{
             onChange={onChange}
             type={type || "text"}
             className="mt-1"
-            required={name !== 'fecha_programada'}
+            required={name !== 'fecha_programada' && name !== 'newNotaContent'}
             disabled={disabled}
             placeholder={placeholder}
           />
