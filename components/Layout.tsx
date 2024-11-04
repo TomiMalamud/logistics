@@ -4,6 +4,7 @@ import Head from "next/head";
 import { Button } from "./ui/button";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/component";
 
 type Props = {
   children: ReactNode;
@@ -25,10 +26,6 @@ const Layout: React.FC<Props> = ({ children }) => {
     linkText = "Ir a Expedición";
   }
 
-  // Determine if the environment is development
-  const isDevelopment = process.env.NODE_ENV === "development";
-
-
   // State to track if the component has mounted to prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
 
@@ -41,34 +38,50 @@ const Layout: React.FC<Props> = ({ children }) => {
     return null;
   }
 
+  // Sign-Out Handler
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error.message);
+      // Optionally, display an error message to the user
+    } else {
+      // Redirect the user after sign-out
+      router.push("/login"); // Change "/login" to your desired redirect path
+    }
+  };
+
   return (
     <>
       <Head>
         <title>Entregas | ROHI Sommiers</title>
       </Head>
       <main className="p-4 md:p-10 mx-auto max-w-7xl">
-        <div>
-          <div className="flex justify-between">
-            <Button variant="link" className="-ml-4 text-gray-500">
-              <Link href={linkHref}>{linkText}</Link>
-            </Button>
-            <Button variant="link" className="hidden md:block">
+        <div className="flex justify-between">
+          <Button variant="link" className="-ml-2 text-gray-600">
+            <Link href={linkHref}>{linkText}</Link>
+          </Button>
+          <div className="flex items-center gap-x-2 -mr-2 ">
+            <Button variant="link" className="hidden text-gray-600 md:block">
               <Link href="/update-prices">Actualizar Precios</Link>
             </Button>
-          </div>
-          <div className="flex mt-2 justify-between items-center">
-            <h1 className="text-2xl font-bold tracking-tight">
-              Entregas de ROHI Sommiers
-            </h1>
-            <Button className="hidden md:block">
-              <Link href="/create">+ Agregar</Link>
+            <Button variant="link" className="text-gray-600" onClick={handleSignOut}>
+              Cerrar Sesión
             </Button>
           </div>
-          <div>{children}</div>
         </div>
+        <div className="flex mt-4 justify-between items-center">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Entregas de ROHI Sommiers
+          </h1>
+          <Button className="hidden md:block">
+            <Link href="/create">+ Agregar</Link>
+          </Button>
+        </div>
+        <div className="">{children}</div>
       </main>
     </>
-  ) 
+  );
 };
 
 export default Layout;
