@@ -1,4 +1,4 @@
-// EstadoDialog.tsx
+// StateDialog.tsx
 
 import React from "react";
 import {
@@ -13,47 +13,47 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
-interface EstadoDialogProps {
-  estado: string; 
-  setEstado: (newEstado: string) => void; 
-  setShowEstadoAlertDialog: (show: boolean) => void;
+interface StateDialogProps {
+  state: string; 
+  setState: (newState: string) => void; 
+  setShowStateAlertDialog: (show: boolean) => void;
   dni: string;
   handleDniChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   dniError: string;
-  handleConfirmEstadoChange: () => void;
+  handleConfirmStateChange: () => void;
   isConfirming: boolean;
 }
 
-const EstadoDialog: React.FC<EstadoDialogProps> = ({
-  estado,
-  setEstado,
-  setShowEstadoAlertDialog,
+const StateDialog: React.FC<StateDialogProps> = ({
+  state,
+  setState: setState,
+  setShowStateAlertDialog: setShowStateAlertDialog,
   dni,
   handleDniChange,
   dniError,
-  handleConfirmEstadoChange,
+  handleConfirmStateChange: handleConfirmStateChange,
   isConfirming
 }) => {
   // Function to handle the DialogTrigger click
   const handleDialogTriggerClick = () => {
-    if (estado === "delivered") {
+    if (state === "delivered") {
       // If already delivered, no action needed
       return;
     }    
 
-    setShowEstadoAlertDialog(true); // Show the dialog if conditions are met
+    setShowStateAlertDialog(true); // Show the dialog if conditions are met
   };
 
-  // Function to handle estado toggle (optional, depending on desired behavior)
-  const toggleEstadoLabel = () => {
-    return estado === "delivered" ? "Pendiente" : "Entregado";
+  // Function to handle state toggle (optional, depending on desired behavior)
+  const toggleStateLabel = () => {
+    return state === "delivered" ? "Pendiente" : "Entregado";
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button className="w-full" onClick={handleDialogTriggerClick}>
-          {toggleEstadoLabel()}
+          {toggleStateLabel()}
         </Button>
       </DialogTrigger>
       
@@ -77,7 +77,6 @@ const EstadoDialog: React.FC<EstadoDialogProps> = ({
             <Input
               type="text"
               placeholder="Parentesco con cliente (Opcional)"
-              // You can manage this field's state similarly if needed
             />
             {dniError && (
               <p className="text-red-500 text-sm mt-1">{dniError}</p>
@@ -85,7 +84,7 @@ const EstadoDialog: React.FC<EstadoDialogProps> = ({
           </div>
           <DialogFooter>
             <Button
-              onClick={handleConfirmEstadoChange}
+              onClick={handleConfirmStateChange}
               disabled={isConfirming}
               className="w-full"
             >
@@ -97,4 +96,4 @@ const EstadoDialog: React.FC<EstadoDialogProps> = ({
   );
 };
 
-export default EstadoDialog;
+export default StateDialog;

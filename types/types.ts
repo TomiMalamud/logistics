@@ -2,9 +2,9 @@
 
 // Customer Interface
 export interface Customer {
-    nombre: string;
-    domicilio: string;
-    celular?: string;
+    name: string;
+    address: string;
+    phone?: string;
   }
   
   // Note Interface
@@ -30,29 +30,28 @@ export interface Customer {
   // Delivery Interface
   export interface Delivery {
     id: number;
-    punto_venta: string;
-    fecha_venta: string;
-    producto: string;
+    order_date: string;
+    products: string;
     customer_id: number;
-    estado: string;
-    fecha_programada: string | null;
+    state: string;
+    scheduled_date: string | null;
     created_at: string;
     created_by: Profile | string | null;
     customers: Customer | null;
     notes?: Note[] | null;
-    comprobante: string | null,
-    id_comprobante: number | null,
-    saldo: number | null,
+    invoice_number: string | null,
+    invoice_id: number | null,
+    balance: number | null,
   }
   
-  // Props for Entrega Component
+  // Props for Delivery Component
   export interface DeliveryProps {
-    entrega: Delivery;
+    delivery: Delivery;
     fetchURL?: string;
   }
   
-  // Parameters for useEntregaLogic Hook
-  export interface UseEntregaLogicParams {
-    entrega: Delivery;
+  // Parameters for useDeliveryLogic Hook
+  export interface UseDeliveryLogicParams {
+    delivery: Delivery;
     fetchURL?: string;
   }

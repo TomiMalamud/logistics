@@ -11,15 +11,15 @@ import {
 } from "./ui/alert-dialog";
 import { Input } from "./ui/input";
 
-const FechaProgramadaAlertDialog = ({
-  fechaProgramada,
-  setFechaProgramada,
-  handleConfirmFechaProgramada,
+const ScheduledDateAlertDialog = ({
+  scheduledDate,
+  setScheduledDate,
+  handleConfirmScheduledDate,
   isConfirming
 }) => {
-  const handleFechaProgramadaChange = (e) => {
+  const handleScheduledDateChange = (e) => {
     const localDate = new Date(e.target.value);
-    setFechaProgramada(localDate.toISOString().split("T")[0]); // Keep only the date part (YYYY-MM-DD)
+    setScheduledDate(localDate.toISOString().split("T")[0]); // Keep only the date part (YYYY-MM-DD)
   };
   return (
     <AlertDialog>
@@ -33,14 +33,14 @@ const FechaProgramadaAlertDialog = ({
         </AlertDialogHeader>
         <Input
           type="date" 
-          value={fechaProgramada ? fechaProgramada.slice(0, 10) : ""} // Adjust the value to slice only the date part (YYYY-MM-DD)
-          onChange={handleFechaProgramadaChange}
+          value={scheduledDate ? scheduledDate.slice(0, 10) : ""} // Adjust the value to slice only the date part (YYYY-MM-DD)
+          onChange={handleScheduledDateChange}
           required
         />
         <AlertDialogFooter>          
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleConfirmFechaProgramada}
+            onClick={handleConfirmScheduledDate}
             disabled={isConfirming}
           >
             {isConfirming ? "Cargando..." : "Actualizar"}
@@ -51,4 +51,4 @@ const FechaProgramadaAlertDialog = ({
   );
 };
 
-export default FechaProgramadaAlertDialog;
+export default ScheduledDateAlertDialog;

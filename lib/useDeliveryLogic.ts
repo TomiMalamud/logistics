@@ -1,25 +1,25 @@
-// useEntregaLogic.ts
+// useDeliveryLogic.ts
 
 import { useState } from "react";
 import { mutate } from "swr";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-import { Note, Delivery, UseEntregaLogicParams } from "types/types";
+import { Note, Delivery, UseDeliveryLogicParams } from "types/types";
 
 
-export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) => {
+export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLogicParams) => {
   // State variables
-  const [fechaProgramada, setFechaProgramada] = useState(() => {
-    if (!entrega.fecha_programada) return "";
-    const fecha = new Date(entrega.fecha_programada);
-    return fecha.toISOString().slice(0, 10);
+  const [scheduledDate, setScheduledDate] = useState(() => {
+    if (!delivery.scheduled_date) return "";
+    const date = new Date(delivery.scheduled_date);
+    return date.toISOString().slice(0, 10);
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
-  const [estado, setEstado] = useState(entrega.estado);
-  const [newNotas, setNewNotas] = useState<Note[]>(entrega.notes ?? []);
+  const [state, setState] = useState(delivery.state);
+  const [newNotas, setNewNotas] = useState<Note[]>(delivery.notes ?? []);
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [showEstadoAlertDialog, setShowEstadoAlertDialog] = useState(false);
+  const [showStateAlertDialog, setShowStateAlertDialog] = useState(false);
   const [dni, setDni] = useState("");
   const [dniError, setDniError] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
@@ -42,7 +42,7 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
 
   const updateField = async (fieldData: Partial<Delivery>) => {
     try {
-      const response = await fetch(`/api/delivery/${entrega.id}`, {
+      const response = await fetch(`/api/delivery/${delivery.id}`, {
         method: "PUT",
         body: JSON.stringify(fieldData),
         headers: { "Content-Type": "application/json" },
@@ -59,7 +59,7 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
   };
 
 
-  const handleConfirmEstadoChange = async () => {
+  const handleConfirmStateChange = async () => {
     if (!validateDni()) {
       setDniError("DNI must be 7, 8, or 11 digits.");
       return;
@@ -67,26 +67,26 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
     setIsConfirming(true);
 
     try {
-      await toggleEstado();
-      setShowEstadoAlertDialog(false);
+      await toggleState();
+      setShowStateAlertDialog(false);
     } catch (error) {
-      console.error("Failed to update estado:", error);
+      console.error("Failed to update state:", error);
       setError("Unable to update status.");
     } finally {
       setIsConfirming(false);
     }
   };
 
-  const toggleEstado = async () => {
-    const newEstado = estado === "delivered" ? "pending" : "delivered";
-    setEstado(newEstado);
+  const toggleState = async () => {
+    const newState = state === "delivered" ? "pending" : "delivered";
+    setState(newState);
 
     try {
-      await updateField({ estado: newEstado });
+      await updateField({ state: newState });
       mutate(fetchURL);
     } catch (error) {
-      console.error("Error updating estado:", error);
-      setEstado(entrega.estado);
+      console.error("Error updating state:", error);
+      setState(delivery.state);
       throw error;
     }
   };
@@ -128,7 +128,7 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          delivery_id: entrega.id,
+          delivery_id: delivery.id,
           text: newNote,
         }),
       });
@@ -159,12 +159,12 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
       : "Invalid phone number";
   };
 
-  const handleConfirmFechaProgramada = async () => {
+  const handleConfirmScheduledDate = async () => {
     setIsUpdating(true);
     setError(null);
 
     try {
-      await updateField({ fecha_programada: fechaProgramada });
+      await updateField({ scheduled_date: scheduledDate });
       mutate(fetchURL);
     } catch (error) {
       console.error("Error updating scheduled date:", error);
@@ -174,12 +174,12 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
     }
   };
 
-  const handleDeleteFechaProgramada = async () => {
+  const handleDeleteScheduledDate = async () => {
     setIsUpdating(true);
 
     try {
-      await updateField({ fecha_programada: null });
-      setFechaProgramada("");
+      await updateField({ scheduled_date: null });
+      setScheduledDate("");
       mutate(fetchURL);
     } catch (error) {
       console.error("Error deleting scheduled date:", error);
@@ -191,21 +191,21 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
 
   return {
     // State variables
-    fechaProgramada,
-    setFechaProgramada,
+    scheduledDate,
+    setScheduledDate,
     isUpdating,
-    estado,
-    setEstado,
+    state,
+    setState,
     newNotas,
     newNote,
     setNewNote,
     isAddingNote,
-    showEstadoAlertDialog,
-    setShowEstadoAlertDialog,
+    showStateAlertDialog,
+    setShowStateAlertDialog,
     dni,
     dniError,
     handleDniChange,
-    handleConfirmEstadoChange,
+    handleConfirmStateChange,
     isConfirming,
     error,
     setError,
@@ -218,14 +218,14 @@ export const useEntregaLogic = ({ entrega, fetchURL }: UseEntregaLogicParams) =>
 
     // Action handlers
     handleAddNote,
-    handleConfirmFechaProgramada,
-    handleDeleteFechaProgramada,
+    handleConfirmScheduledDate,
+    handleDeleteScheduledDate,
     openInGoogleMaps: () => {
-      if (!entrega.customers.domicilio) {
+      if (!delivery.customers.address) {
         alert("No registered address available");
         return;
       }
-      const encodedAddress = encodeURIComponent(entrega.customers.domicilio);
+      const encodedAddress = encodeURIComponent(delivery.customers.address);
       window.open(
         `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`,
         "_blank"

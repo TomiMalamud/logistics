@@ -1,25 +1,25 @@
-// EntregaDesktop.tsx
+// Delivery.tsx
 
 import React from "react";
-import { useEntregaLogic } from "@/lib/useEntregaLogic";
+import { useDeliveryLogic } from "@/lib/useDeliveryLogic";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Input } from "./ui/input";
 import { titleCase } from "title-case";
-import EstadoDialog from "./EstadoDialog";
-import FechaProgramadaAlertDialog from "./FechaProgramadaDialog";
+import StateDialog from "./StateDialog";
+import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
-import Saldo from "./Saldo";
+import Balance from "./Balance";
 
-const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
+const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => {
   
-  const entregaLogic = useEntregaLogic({
-    entrega: {
-      ...entrega,
+  const deliveryLogic = useDeliveryLogic({
+    delivery: {
+      ...delivery,
       created_by:
-        typeof entrega.created_by === "string"
-          ? entrega.created_by
-          : entrega.created_by?.id ?? null,
+        typeof delivery.created_by === "string"
+          ? delivery.created_by
+          : delivery.created_by?.id ?? null,
     },
     fetchURL,
   });
@@ -27,9 +27,9 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
       {/* Error Alert */}
-      {entregaLogic.error && (
+      {deliveryLogic.error && (
         <Alert variant="destructive">
-          <AlertDescription>{entregaLogic.error}</AlertDescription>
+          <AlertDescription>{deliveryLogic.error}</AlertDescription>
         </Alert>
       )}
 
@@ -37,14 +37,14 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
       <div className="flex justify-between text-sm pb-4 items-center text-slate-500 border-b">
         <div className="flex items-center">
           <p className="font-bold text-lg">
-            {titleCase(entrega.customers.nombre)}
+            {titleCase(delivery.customers.name)}
           </p>
           <span className="mx-2">|</span>
-          {entrega.customers.celular && (
+          {delivery.customers.phone && (
             <>
               <p className="text-slate-600 text-sm">
-                {entregaLogic.formatArgentinePhoneNumber(
-                  entrega.customers.celular
+                {deliveryLogic.formatArgentinePhoneNumber(
+                  delivery.customers.phone
                 )}
               </p>
             </>
@@ -52,17 +52,17 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
         </div>
         <div className="flex items-center">
           <p>
-            {(entrega.created_by as Profile)?.name ??
+            {(delivery.created_by as Profile)?.name ??
               "Revisar Vendedor en Contabilium"}
           </p>
           <span className="mx-2">|</span>
-          <p>{entregaLogic.formatDate(entrega.fecha_venta)}</p>
+          <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
         </div>
       </div>
 
       {/* Delivery Date Section */}
       <div className="flex items-center py-4 justify-between">
-        {entregaLogic.isUpdating ? (
+        {deliveryLogic.isUpdating ? (
           <div>
             <h1 className="font-medium text-slate-500">
               Actualizando fecha de entrega...
@@ -71,22 +71,22 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
               Visitaremos el domicilio...
             </p>
           </div>
-        ) : entrega.fecha_programada ? (
+        ) : delivery.scheduled_date ? (
           <div>
             <h1 className="font-medium">Entrega programada</h1>
             <p className="text-sm mt-1 text-slate-500">
-              {entregaLogic.isToday(new Date(entrega.fecha_programada)) ? (
+              {deliveryLogic.isToday(new Date(delivery.scheduled_date)) ? (
                 <span>
                   Visitaremos el domicilio{" "}
                   <span className="font-bold text-black">
-                    hoy, {entregaLogic.formatDate(entrega.fecha_programada)}
+                    hoy, {deliveryLogic.formatDate(delivery.scheduled_date)}
                   </span>
                 </span>
               ) : (
                 <span>
                   Visitaremos el domicilio el{" "}
                   <span className="font-bold">
-                    {entregaLogic.formatDate(entrega.fecha_programada)}
+                    {deliveryLogic.formatDate(delivery.scheduled_date)}
                   </span>
                 </span>
               )}
@@ -103,29 +103,29 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
 
         <div className="space-x-2 flex">
           <Button variant="outline">
-            <FechaProgramadaAlertDialog
-              fechaProgramada={entregaLogic.fechaProgramada}
-              setFechaProgramada={entregaLogic.setFechaProgramada}
-              handleConfirmFechaProgramada={
-                entregaLogic.handleConfirmFechaProgramada
+            <ScheduledDateDialog
+              scheduledDate={deliveryLogic.scheduledDate}
+              setScheduledDate={deliveryLogic.setScheduledDate}
+              handleConfirmScheduledDate={
+                deliveryLogic.handleConfirmScheduledDate
               }
-              isConfirming={entregaLogic.isUpdating}
+              isConfirming={deliveryLogic.isUpdating}
             />
           </Button>
           <div className="w-24">
-            <EstadoDialog
-              estado={entregaLogic.estado}
-              setEstado={entregaLogic.setEstado}
-              setShowEstadoAlertDialog={
-                entregaLogic.setShowEstadoAlertDialog
+            <StateDialog
+              state={deliveryLogic.state}
+              setState={deliveryLogic.setState}
+              setShowStateAlertDialog={
+                deliveryLogic.setShowStateAlertDialog
               }
-              dni={entregaLogic.dni}
-              handleDniChange={entregaLogic.handleDniChange}
-              dniError={entregaLogic.dniError}
-              handleConfirmEstadoChange={
-                entregaLogic.handleConfirmEstadoChange
+              dni={deliveryLogic.dni}
+              handleDniChange={deliveryLogic.handleDniChange}
+              dniError={deliveryLogic.dniError}
+              handleConfirmStateChange={
+                deliveryLogic.handleConfirmStateChange
               }
-              isConfirming={entregaLogic.isConfirming}
+              isConfirming={deliveryLogic.isConfirming}
             />
           </div>
         </div>
@@ -133,25 +133,26 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
 
       {/* Product Alert */}
       <Alert className="bg-slate-50">
-        <AlertDescription>{titleCase(entrega.producto)}</AlertDescription>
+        <AlertDescription>{titleCase(delivery.products)}</AlertDescription>
       </Alert>
 
       {/* Address */}
       <div className="flex py-2 items-center justify-between">
         <p className="text-sm text-slate-600 mr-5">
-          {entrega.customers.domicilio}
+          {delivery.customers.address}
         </p>
       </div>
-      {entrega.estado === 'pending' && <Saldo id_comprobante={entrega.id_comprobante}/>}
+      {delivery.state === 'pending' && <Balance invoice_id={delivery.invoice_id}/>}
+      
       {/* Notes Section */}
       <div className="border-t pt-4">
         <ul className="list-disc list-inside">
-          {entregaLogic.newNotas.map((note, index) => (
+          {deliveryLogic.newNotas.map((note, index) => (
             <li
               className="text-sm text-slate-600 leading-6"
               key={note.id || index}
             >
-              {note.text} | {entregaLogic.formatNoteDate(note.created_at || "")}
+              {note.text} | {deliveryLogic.formatNoteDate(note.created_at || "")}
             </li>
           ))}
         </ul>
@@ -161,32 +162,32 @@ const EntregaDesktop: React.FC<DeliveryProps> = ({ entrega, fetchURL }) => {
       <div className="w-full space-x-2 pt-4 flex items-center justify-between">
         <Input
           type="text"
-          value={entregaLogic.newNote}
-          onChange={(e) => entregaLogic.setNewNote(e.target.value)}
+          value={deliveryLogic.newNote}
+          onChange={(e) => deliveryLogic.setNewNote(e.target.value)}
           onKeyPress={(e) => {
             if (
               e.key === "Enter" &&
-              !entregaLogic.isAddingNote &&
-              entregaLogic.newNote.trim()
+              !deliveryLogic.isAddingNote &&
+              deliveryLogic.newNote.trim()
             ) {
-              entregaLogic.handleAddNote();
+              deliveryLogic.handleAddNote();
             }
           }}
           placeholder="Añadir nueva nota"
-          disabled={entregaLogic.isAddingNote}
+          disabled={deliveryLogic.isAddingNote}
         />
         <Button
           variant="outline"
-          onClick={entregaLogic.handleAddNote}
+          onClick={deliveryLogic.handleAddNote}
           disabled={
-            entregaLogic.isAddingNote || !entregaLogic.newNote.trim()
+            deliveryLogic.isAddingNote || !deliveryLogic.newNote.trim()
           }
         >
-          {entregaLogic.isAddingNote ? "Guardando..." : "Guardar"}
+          {deliveryLogic.isAddingNote ? "Guardando..." : "Guardar"}
         </Button>
       </div>
     </div>
   );
 };
 
-export default EntregaDesktop;
+export default Delivery;

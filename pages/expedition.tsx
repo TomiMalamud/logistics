@@ -2,7 +2,7 @@ import React from "react";
 import useSWR from "swr";
 import Layout from "../components/Layout";
 import TablePlaceholder from "../components/TablePlaceholder";
-import Entrega from "../components/Entrega";
+import DeliveryMobile from "../components/DeliveryMobile";
 import type { User } from "@supabase/supabase-js";
 import type { GetServerSidePropsContext } from "next";
 
@@ -25,8 +25,8 @@ const Expedition: React.FC<ExpeditionProps> = ({ user }) => {
       </Layout>
     );
 
-  const filteredData = data.filter((entrega) => {
-    return entrega.estado === "pending";
+  const filteredData = data.filter((delivery) => {
+    return delivery.state === "pending";
   });
 
   return (
@@ -34,11 +34,11 @@ const Expedition: React.FC<ExpeditionProps> = ({ user }) => {
       <p className="text-gray-600 text-sm my-4">
         Hay{" "}
         <span className="font-bold text-blue-400">{filteredData.length}</span>{" "}
-        Entregas pendientes con pago recibido
+        deliverys pendientes con pago recibido
       </p>
-      {filteredData.map((entrega: any) => (
-        <div className="py-4" key={entrega.id}>
-          <Entrega entrega={entrega} fetchURL={apiURL} />
+      {filteredData.map((delivery: any) => (
+        <div className="py-4" key={delivery.id}>
+          <DeliveryMobile delivery={delivery} fetchURL={apiURL} />
         </div>
       ))}
     </Layout>

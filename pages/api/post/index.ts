@@ -9,22 +9,22 @@ export default async function handler(
   if (req.method === "POST") {
     try {
       const {
-        fecha,
-        producto,
-        comprobante,
-        id_comprobante,
-        saldo,
-        nombre,
-        domicilio,
-        celular,
-        fecha_programada,
-        newNotaContent,
+        order_date,
+        products,
+        invoice_number,
+        invoice_id,
+        balance,
+        name,
+        address,
+        phone,
+        scheduled_date,
+        notes,
         created_by        
       } = req.body;
       
 
       // Check for missing required fields
-      if (!fecha || !producto || !nombre || !domicilio || !celular) {
+      if (!order_date || !products || !name || !address || !phone) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -32,9 +32,9 @@ export default async function handler(
       const { data: customerData, error: customerError } = await supabase
         .from("customers")
         .select("id")
-        .eq("nombre", nombre)
-        .eq("domicilio", domicilio)
-        .eq("celular", celular)
+        .eq("name", name)
+        .eq("address", address)
+        .eq("phone", phone)
         .maybeSingle();
 
       if (customerError) {
@@ -50,7 +50,7 @@ export default async function handler(
         // Insert new customer and retrieve the id
         const { data: newCustomer, error: newCustomerError } = await supabase
           .from("customers")
-          .insert([{ nombre, domicilio, celular }])
+          .insert([{ name, address, phone }])
           .select("id") // Ensure the id is returned
           .single();
 
@@ -66,15 +66,15 @@ export default async function handler(
         .from("deliveries")
         .insert([
           {
-            fecha_venta: fecha,  // Store plain date without time component
-            producto,
+            order_date,
+            products,
             customer_id,
-            estado: "pending",
-            fecha_programada: fecha_programada || null,
+            state: "pending",
+            scheduled_date: scheduled_date || null,
             created_by: created_by,
-            comprobante,
-            id_comprobante,
-            saldo            
+            invoice_number,
+            invoice_id,
+            balance            
           }
         ])
         .select("*")
@@ -89,10 +89,10 @@ export default async function handler(
         throw new Error("Delivery creation failed, delivery data is null or invalid");
       }
 
-      if (newNotaContent && newNotaContent.trim() !== "") {
+      if (notes && notes.trim() !== "") {
         const { error: noteError } = await supabase
           .from("notes")
-          .insert([{ text: newNotaContent, delivery_id: deliveryData.id }]);
+          .insert([{ text: notes, delivery_id: deliveryData.id }]);
 
         if (noteError) {
           throw new Error(`Error creating note: ${noteError.message}`);

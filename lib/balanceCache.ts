@@ -1,11 +1,11 @@
 // saldoCache.ts
 
 interface CacheEntry {
-  saldo: string; // Changed to string to match component state
-  timestamp: number; // Unix timestamp in milliseconds
+  saldo: string; 
+  timestamp: number;
 }
 
-// Keys will be the id_comprobante
+// Keys will be the invoice_id
 const saldoCache: Record<number, CacheEntry> = {};
 
 // Constants for TTL (Time To Live)
@@ -14,11 +14,11 @@ const CACHE_TTL_SALDO_POSITIVE = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 /**
  * Get Saldo from Cache
- * @param id_comprobante
+ * @param invoice_id
  * @returns saldo if cached and valid, else undefined
  */
-export const getSaldoFromCache = (id_comprobante: number): string | undefined => {
-  const entry = saldoCache[id_comprobante];
+export const getSaldoFromCache = (invoice_id: number): string | undefined => {
+  const entry = saldoCache[invoice_id];
   if (!entry) return undefined;
 
   const now = Date.now();
@@ -29,28 +29,28 @@ export const getSaldoFromCache = (id_comprobante: number): string | undefined =>
     return entry.saldo;
   } else {
     // Cache expired
-    delete saldoCache[id_comprobante];
-    removeFromPersistentCache(id_comprobante);
+    delete saldoCache[invoice_id];
+    removeFromPersistentCache(invoice_id);
     return undefined;
   }
 };
 
 /**
  * Set Saldo in Cache
- * @param id_comprobante
+ * @param invoice_id
  * @param saldo
  */
-export const setSaldoInCache = (id_comprobante: number, saldo: string): void => {
+export const setSaldoInCache = (invoice_id: number, saldo: string): void => {
   const entry: CacheEntry = {
     saldo,
     timestamp: Date.now(),
   };
-  saldoCache[id_comprobante] = entry;
+  saldoCache[invoice_id] = entry;
 
   if (saldo === "0,00") {
     // Persist in localStorage for long-term caching
     const persistentEntry = JSON.stringify(entry);
-    localStorage.setItem(`saldo_${id_comprobante}`, persistentEntry);
+    localStorage.setItem(`saldo_${invoice_id}`, persistentEntry);
   }
 };
 
@@ -62,12 +62,12 @@ export const loadPersistentCache = (): void => {
 
   Object.keys(localStorage).forEach((key) => {
     if (key.startsWith('saldo_')) {
-      const id_comprobante = parseInt(key.replace('saldo_', ''), 10);
+      const invoice_id = parseInt(key.replace('saldo_', ''), 10);
       const data = localStorage.getItem(key);
       if (data) {
         try {
           const entry: CacheEntry = JSON.parse(data);
-          saldoCache[id_comprobante] = entry;
+          saldoCache[invoice_id] = entry;
         } catch (error) {
           console.error(`Failed to parse cache for ${key}:`, error);
           localStorage.removeItem(key);
@@ -79,8 +79,8 @@ export const loadPersistentCache = (): void => {
 
 /**
  * Remove entry from persistent cache
- * @param id_comprobante
+ * @param invoice_id
  */
-const removeFromPersistentCache = (id_comprobante: number): void => {
-  localStorage.removeItem(`saldo_${id_comprobante}`);
+const removeFromPersistentCache = (invoice_id: number): void => {
+  localStorage.removeItem(`saldo_${invoice_id}`);
 };

@@ -34,14 +34,14 @@ const FormField: React.FC<{
             onChange={onChange}
             type={type || "text"}
             className="mt-1"
-            required={name !== 'fecha_programada' && name !== 'newNotaContent'}
+            required={name !== 'scheduled_date' && name !== 'notes'}
             disabled={disabled}
             placeholder={placeholder}
           />
         )
       )}
       {error && <p className="text-sm text-red-500">{error}</p>}
-      {(name === "domicilio" || name === "celular") && (
+      {(name === "address" || name === "phone") && (
         <span className="text-sm mt-2 text-gray-500">
           Podés editarlo si no es correcto
         </span>

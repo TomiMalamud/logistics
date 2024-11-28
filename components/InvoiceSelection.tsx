@@ -13,11 +13,11 @@ import {
 import { SearchComprobanteResponse, Comprobante } from '@/types/api';
 
 interface ComprobantesSelectProps {
-  onSelect?: (comprobante: Comprobante) => void;
+  onSelect?: (invoice_number: Comprobante) => void;
   placeholder?: string;
 }
 
-const ComprobantesSelect: React.FC<ComprobantesSelectProps> = ({ onSelect, placeholder = 'Select a comprobante' }) => {
+const ComprobantesSelect: React.FC<ComprobantesSelectProps> = ({ onSelect, placeholder = 'Select a invoice_number' }) => {
   const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,9 +67,9 @@ const ComprobantesSelect: React.FC<ComprobantesSelectProps> = ({ onSelect, place
           {loading ? (
             <SelectItem value="loading">Cargando...</SelectItem>
           ) : (
-            comprobantes.map((comprobante) => (
-              <SelectItem key={comprobante.Id} value={String(comprobante.Id)}>
-                {comprobante.TipoFc} {comprobante.Numero} | {comprobante.RazonSocial}
+            comprobantes.map((invoice_number) => (
+              <SelectItem key={invoice_number.Id} value={String(invoice_number.Id)}>
+                {invoice_number.TipoFc} {invoice_number.Numero} | {invoice_number.RazonSocial}
               </SelectItem>
             ))
           )}

@@ -2,29 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { getSaldoFromCache, setSaldoInCache } from '@/lib/saldoCache';
+import { getSaldoFromCache, setSaldoInCache } from '@/lib/balanceCache';
 
 interface SaldoProps {
-  id_comprobante: number;
+  invoice_id: number;
 }
 
-const Saldo: React.FC<SaldoProps> = ({ id_comprobante }) => {
-  const [saldo, setSaldo] = useState<string | null>(null); // State to store the fetched Saldo
+const Saldo: React.FC<SaldoProps> = ({ invoice_id }) => {
+  const [balance, setSaldo] = useState<string | null>(null); // State to store the fetched Saldo
   const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
     const fetchAndSetSaldo = async () => {
-      if (!id_comprobante) return;
+      if (!invoice_id) return;
 
-      // Check if saldo is cached
-      const cachedSaldo = getSaldoFromCache(id_comprobante);
+      // Check if balance is cached
+      const cachedSaldo = getSaldoFromCache(invoice_id);
       if (cachedSaldo !== undefined) {
         setSaldo(cachedSaldo);
         return;
       }
 
       try {
-        const response = await fetch(`/api/get-comprobante?id_comprobante=${id_comprobante}`);
+        const response = await fetch(`/api/get-invoice_number?invoice_id=${invoice_id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -34,14 +34,14 @@ const Saldo: React.FC<SaldoProps> = ({ id_comprobante }) => {
 
         const fetchedSaldo = data.Saldo.toString();
         setSaldo(fetchedSaldo);
-        setSaldoInCache(id_comprobante, fetchedSaldo);
+        setSaldoInCache(invoice_id, fetchedSaldo);
       } catch (err) {        
         setError('No se encontró la factura. Probá recargando la página.');
       }
     };
 
     fetchAndSetSaldo(); // Call the async function
-  }, [id_comprobante]); // This effect will run whenever id_comprobante changes
+  }, [invoice_id]); // This effect will run whenever invoice_id changes
 
   if (error) {
     return <p className="text-red-500">{error}</p>;
@@ -49,11 +49,11 @@ const Saldo: React.FC<SaldoProps> = ({ id_comprobante }) => {
 
   return (
     <>
-      {saldo && saldo !== "0,00" && 
+      {balance && balance !== "0,00" && 
         <Alert variant='destructive' className="mt-3">
           <AlertTitle>Factura adeudada</AlertTitle>
           <AlertDescription>
-            Saldo: $ {saldo}. Recordá registrar la cobranza en Contabilium si cobramos en contraentrega.
+            Saldo: $ {balance}. Recordá registrar la cobranza en Contabilium si cobramos en contraentrega.
           </AlertDescription>
         </Alert>
       }

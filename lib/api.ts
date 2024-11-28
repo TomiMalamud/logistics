@@ -220,9 +220,9 @@ export const getClientById = async (id: number): Promise<Customer> => {
 
 /**
  * **NEW FUNCTION**
- * Fetches a single comprobante by its ID.
+ * Fetches a single invoice_number by its ID.
  *
- * @param id - The ID of the comprobante to fetch.
+ * @param id - The ID of the invoice_number to fetch.
  * @returns The Comprobante object.
  */
 export const getComprobanteById = async (id: number): Promise<Comprobante> => {
@@ -240,8 +240,8 @@ export const getComprobanteById = async (id: number): Promise<Comprobante> => {
 
   if (!response.ok) {
     const errorData = await response.json();
-    console.error('Error fetching comprobante by ID:', errorData);
-    throw new Error(errorData.message || 'Error fetching comprobante by ID');
+    console.error('Error fetching invoice_number by ID:', errorData);
+    throw new Error(errorData.message || 'Error fetching invoice_number by ID');
   }
 
   const data: Comprobante = await response.json();

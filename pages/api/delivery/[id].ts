@@ -9,13 +9,13 @@ export default async function handler(
 ) {
   if (req.method === "PUT") {
     const { id } = req.query;
-    const { estado, fecha_programada } = req.body;
+    const { state, scheduled_date } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Missing delivery ID" });
     }
 
-    if (!estado && !fecha_programada) {
+    if (!state && !scheduled_date) {
       return res.status(400).json({ error: "No fields provided to update" });
     }
 
@@ -37,11 +37,11 @@ export default async function handler(
 
       // Prepare updates
       const updates: any = {};
-      if (estado && (estado === "pending" || estado === "delivered")) {
-        updates.estado = estado;
+      if (state && (state === "pending" || state === "delivered")) {
+        updates.state = state;
       }
-      if (fecha_programada) {
-        updates.fecha_programada = fecha_programada;
+      if (scheduled_date) {
+        updates.scheduled_date = scheduled_date;
       }
 
       // Update delivery
@@ -57,9 +57,9 @@ export default async function handler(
 
       const deliveryId = parseInt(id as string, 10);
 
-      // Check if 'estado' has changed
-      if (estado && estado !== existingDelivery.estado) {
-        const noteText = `Estado cambiado de ${existingDelivery.estado} a ${estado}`;
+      // Check if 'state' has changed
+      if (state && state !== existingDelivery.state) {
+        const noteText = `Estado cambiado de ${existingDelivery.state} a ${state}`;
 
         const { data: noteData, error: noteError } = await supabase
           .from("notes")
@@ -69,7 +69,7 @@ export default async function handler(
           throw new Error(`Error adding note: ${noteError.message}`);
         }
 
-        console.log("Note added due to 'estado' change:", noteData);
+        console.log("Note added due to 'state' change:", noteData);
       }
 
 

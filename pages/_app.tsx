@@ -1,6 +1,6 @@
 import { AppProps } from "next/app";
 import '../styles/globals.css'
-import { loadPersistentCache } from '@/lib/saldoCache'; 
+import { loadPersistentCache } from '@/lib/balanceCache'; 
 import { useEffect } from 'react';
 
 const App = ({ Component, pageProps }: AppProps) => {

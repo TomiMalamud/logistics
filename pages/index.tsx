@@ -1,91 +1,112 @@
-import React, { useState } from "react"
-import useSWR from "swr"
-import Layout from "../components/Layout"
-import EntregaDesktop from "../components/EntregaDesktop"
-import TablePlaceholder from "../components/TablePlaceholder"
-import { Input } from "../components/ui/input"
-import { Search } from "lucide-react"
+import React, { useState } from "react";
+import useSWR from "swr";
+import Layout from "../components/Layout";
+import Delivery from "../components/Delivery";
+import TablePlaceholder from "../components/TablePlaceholder";
+import { Input } from "../components/ui/input";
+import { Search } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue,
-} from "../components/ui/select"
-import { SelectGroup } from "@radix-ui/react-select"
-import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs"
-import type { User } from '@supabase/supabase-js'
-import type { GetServerSidePropsContext } from 'next'
-import type { Profile } from 'types/types'
-import { createClient } from '@/utils/supabase/server-props'
+  SelectValue
+} from "../components/ui/select";
+import { SelectGroup } from "@radix-ui/react-select";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import type { User } from "@supabase/supabase-js";
+import type { GetServerSidePropsContext } from "next";
+import type { Profile } from "types/types";
+import { createClient } from "@/utils/supabase/server-props";
+import { useDeliveryCounts } from "@/lib/useDeliveryCounts";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
-const apiURL = "/api/feed"
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const apiURL = "/api/feed";
 
 interface IndexProps {
-  user: User
-  profile: Profile
+  user: User;
+  profile: Profile;
 }
 
+interface FeedResponse {
+  feed: any[];
+  page: number;
+  totalPages: number;
+  totalItems: number;
+}
 const Index: React.FC<IndexProps> = ({ user, profile }) => {
-  const { data } = useSWR<any[]>(apiURL, fetcher)
-  const [filterFechaProgramada, setFilterFechaProgramada] = useState("all") // 'all', 'hasDate', 'noDate'
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filterEstado, setFilterEstado] = useState("pending") // 'all', 'delivered', 'pending', etc.
+  const [page, setPage] = useState(1);
+  const [filterEstado, setFilterEstado] = useState("pending");
+
+  const { data } = useSWR<FeedResponse>(
+    `/api/feed?state=${filterEstado}&page=${page}`,
+    fetcher
+  );
+
+  const [filterScheduledDate, setFilterScheduledDate] = useState("all"); // 'all', 'hasDate', 'noDate'
+  const [searchQuery, setSearchQuery] = useState("");
+  const { counts } = useDeliveryCounts();
 
   if (!data)
     return (
       <Layout>
         <TablePlaceholder />
       </Layout>
-    )
+    );
 
-  const filteredData = data.filter((entrega) => {
-
-    // Filter by 'fecha_programada'
-    if (filterFechaProgramada === "hasDate" && !entrega.fecha_programada)
-      return false
-    if (filterFechaProgramada === "noDate" && entrega.fecha_programada)
-      return false
+  const filteredData = data.feed.filter((delivery) => {
+    // Filter by 'scheduled_date'
+    if (filterScheduledDate === "hasDate" && !delivery.scheduled_date)
+      return false;
+    if (filterScheduledDate === "noDate" && delivery.scheduled_date)
+      return false;
 
     // Search Filter
     if (
       searchQuery &&
-      !entrega.customers.nombre?.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !entrega.customers.domicilio?.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !entrega.producto?.toLowerCase().includes(searchQuery.toLowerCase())
+      !delivery.customer.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) &&
+      !delivery.customer.address
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) &&
+      !delivery.products?.toLowerCase().includes(searchQuery.toLowerCase())
     )
-      return false
+      return false;
 
-    // Filter by 'estado' as string
-    if (filterEstado !== "all" && entrega.estado !== filterEstado) return false
+    return true;
+  });
 
-    return true
-  })
-
-  const estadoDeliveredCount = data.filter(
-    (entrega) => entrega.estado === "delivered"
-  ).length
-  const estadoPendingCount = data.filter(
-    (entrega) => entrega.estado === "pending"
-  ).length
+  const handleTabChange = (value: string) => {
+    setFilterEstado(value);
+    setPage(1); // Reset page when switching tabs
+  };
 
   return (
     <Layout>
-        <p className="text-yellow-800 font-medium ">Hola {profile ? profile.name : user.email.split('@')[0]}!</p>
-        <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <p className="text-yellow-800 font-medium ">
+        Hola {profile ? profile.name : user.email.split("@")[0]}!
+      </p>
+      <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Tabs
           defaultValue="pending"
           className="w-full mb-4 mt-6"
-          onValueChange={setFilterEstado}
+          onValueChange={handleTabChange}
+          value={filterEstado}
         >
-          <TabsList aria-label="Filter by estado">
+          <TabsList aria-label="Filter by state">
             <TabsTrigger value="pending">
-              Pendientes<span className="text-gray-500 font-light ml-2">{estadoPendingCount}</span> 
+              Pendientes
+              <span className="text-gray-500 font-light ml-2">
+                {counts?.pending ?? "-"}
+              </span>
             </TabsTrigger>
             <TabsTrigger value="delivered">
-              Entregadas<span className="text-gray-500 font-light ml-2">{estadoDeliveredCount}</span>
+              Entregadas
+              <span className="text-gray-500 font-light ml-2">
+                {counts?.delivered ?? "-"}
+              </span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -95,17 +116,17 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
             <div className="relative w-full pb-2">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre, domicilio o producto"
+                placeholder="Buscar por nombre, domicilio o productos"
                 className="pl-8 bg-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <div className="flex w-auto">
               <Select
-                value={filterFechaProgramada}
-                onValueChange={(value) => setFilterFechaProgramada(value)}
+                value={filterScheduledDate}
+                onValueChange={(value) => setFilterScheduledDate(value)}
               >
                 <SelectTrigger
                   aria-label="Filter"
@@ -116,15 +137,9 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Fecha Programada</SelectLabel>
-                    <SelectItem value="all">
-                      Fecha Programada: Todas
-                    </SelectItem>
-                    <SelectItem value="hasDate">
-                      Fecha programada
-                    </SelectItem>
-                    <SelectItem value="noDate">
-                      Fecha no programada
-                    </SelectItem>
+                    <SelectItem value="all">Fecha Programada: Todas</SelectItem>
+                    <SelectItem value="hasDate">Fecha programada</SelectItem>
+                    <SelectItem value="noDate">Fecha no programada</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -132,55 +147,55 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
           </div>
         </form>
       </div>
-      {filteredData.map((entrega: any) => (
-        <div className="py-2" key={entrega.id}>
-          <EntregaDesktop entrega={entrega} fetchURL={apiURL} />
+      {filteredData.map((delivery: any) => (
+        <div className="py-2" key={delivery.id}>
+          <Delivery delivery={delivery} fetchURL={apiURL} />
         </div>
       ))}
     </Layout>
-  )
-}
+  );
+};
 
-export default Index
+export default Index;
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const supabase = createClient(context)
+  const supabase = createClient(context);
 
   // Fetch the authenticated user
-  const { data, error } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
     return {
       redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    }
+        destination: "/login",
+        permanent: false
+      }
+    };
   }
 
-  const user = data.user
+  const user = data.user;
 
   // Fetch the profile associated with the user.id
   const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('name')
-    .eq('id', user.id)
-    .single()
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .single();
 
   if (profileError || !profileData) {
-    console.error('Error fetching profile:', profileError)
+    console.error("Error fetching profile:", profileError);
     return {
       props: {
         user,
-        profile: null, // Handle this case as needed
-      },
-    }
+        profile: null // Handle this case as needed
+      }
+    };
   }
 
   return {
     props: {
       user,
-      profile: profileData,
-    },
-  }
+      profile: profileData
+    }
+  };
 }

@@ -5,7 +5,7 @@ import { Comprobante } from "../types/api";
 import type { User } from "@supabase/supabase-js";
 import type { GetServerSidePropsContext } from "next";
 import { createClient } from "@/utils/supabase/server-props";
-import ComprobantesSelect from "@/components/ComprobantesSelect";
+import ComprobantesSelect from "@/components/InvoiceSelection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import FormField from "@/components/FormField";
@@ -15,90 +15,112 @@ interface CreateProps {
 }
 
 interface FormData {
-  producto: string;
-  domicilio: string;
-  celular: string;
-  fecha_programada: string;
-  newNotaContent: string;
+  products: string;
+  address: string;
+  phone: string;
+  scheduled_date: string;
+  notes: string;
 }
 
 const initialFormData: FormData = {
-  producto: "",
-  domicilio: "",
-  celular: "",
-  fecha_programada: "",
-  newNotaContent: "",
+  products: "",
+  address: "",
+  phone: "",
+  scheduled_date: "",
+  notes: "",
 };
+
+// Pure function to sanitize phone number
+const sanitizePhoneNumber = (phone: string): string => 
+  phone.replace(/[^0-9]/g, '');
+
+// Pure function to validate phone number
+const validatePhoneNumber = (phone: string): boolean => 
+  /^\d{10}$/.test(phone);
 
 const Create: React.FC<CreateProps> = ({ user }) => {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [selectedComprobante, setSelectedComprobante] = useState<Comprobante | null>(null);
-  const [loading, setLoading] = useState(false); // For form submission
-  const [fieldsLoading, setFieldsLoading] = useState(false); // For field updates
+  const [loading, setLoading] = useState(false);
+  const [fieldsLoading, setFieldsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [celularError, setCelularError] = useState("");
-
-  const validateCelular = (value: string) => /^\d{10}$/.test(value);
+  const [phoneError, setPhoneError] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    if (name === 'celular') {
-      if (!value) {
-        setCelularError("");
-      } else if (!validateCelular(value)) {
-        setCelularError("Formato válido: 3541614107. Sin 0 ni 15, sin espacios ni guiones.");
+    
+    if (name === 'phone') {
+      const sanitizedPhone = sanitizePhoneNumber(value);
+      setFormData(prev => ({ ...prev, phone: sanitizedPhone }));
+      
+      if (!sanitizedPhone) {
+        setPhoneError("");
+      } else if (!validatePhoneNumber(sanitizedPhone)) {
+        setPhoneError("El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones.");
       } else {
-        setCelularError("");
+        setPhoneError("");
       }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleComprobanteSelect = async (comprobante: Comprobante) => {
-    setSelectedComprobante(comprobante);
-    setFieldsLoading(true); // Start loading
-    // Reset the fields to show "Cargando..."
+  const handleComprobanteSelect = async (invoice_number: Comprobante) => {
+    setSelectedComprobante(invoice_number);
+    setFieldsLoading(true);
     setFormData(prev => ({
       ...prev,
-      domicilio: "Cargando...",
-      celular: "Cargando..."
+      address: "Cargando...",
+      phone: "Cargando..."
     }));
-    if (comprobante?.IdCliente) {
+
+    if (invoice_number?.IdCliente) {
       try {
-        const res = await fetch(`/api/customer/${comprobante.IdCliente}`);
+        const res = await fetch(`/api/customer/${invoice_number.IdCliente}`);
         if (!res.ok) throw new Error("Failed to fetch customer data");
         const customer = await res.json();
+        
+        const sanitizedPhone = sanitizePhoneNumber(customer.Telefono || "");
+        
         setFormData(prev => ({
           ...prev,
-          domicilio: customer.Ciudad !== "VILLA CARLOS PAZ" && customer.Ciudad !== "SIN IDENTIFICAR" && customer.Ciudad !== ""
+          address: customer.Ciudad !== "VILLA CARLOS PAZ" && customer.Ciudad !== "SIN IDENTIFICAR" && customer.Ciudad !== ""
             ? `${customer.Domicilio} - ${customer.Ciudad}`
             : customer.Domicilio,
-          celular: customer.Telefono || ""
+          phone: sanitizedPhone
         }));
+        
+        // Validate the sanitized phone number
+        if (sanitizedPhone && !validatePhoneNumber(sanitizedPhone)) {
+          setPhoneError("El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones.");
+        } else {
+          setPhoneError("");
+        }
       } catch (error) {
         console.error("Error fetching customer data:", error);
         setFormData(prev => ({
           ...prev,
-          domicilio: "",
-          celular: ""
+          address: "",
+          phone: ""
         }));
       } finally {
-        setFieldsLoading(false); // End loading
+        setFieldsLoading(false);
       }
     } else {
-      setFieldsLoading(false); // End loading if no IdCliente
+      setFieldsLoading(false);
     }
   };
 
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!selectedComprobante) {
-      setError("No comprobante selected.");
+      setError("No invoice_number selected.");
       return;
     }
-    if (!validateCelular(formData.celular)) {
-      setCelularError("Formato válido: 3541614107. Sin 0 ni 15, sin espacios ni guiones.");
+    
+    const sanitizedPhone = sanitizePhoneNumber(formData.phone);
+    if (!validatePhoneNumber(sanitizedPhone)) {
+      setPhoneError("El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones.");
       return;
     }
 
@@ -106,11 +128,12 @@ const Create: React.FC<CreateProps> = ({ user }) => {
     try {
       const body = {
         ...formData,
-        fecha: new Date(selectedComprobante.FechaAlta).toISOString().split('T')[0],
-        comprobante: `${selectedComprobante.TipoFc} ${selectedComprobante.Numero}`,
-        id_comprobante: selectedComprobante.Id,
-        saldo: parseFloat(selectedComprobante.Saldo.replace(',', '.')) || 0,
-        nombre: selectedComprobante.RazonSocial,
+        phone: sanitizedPhone,
+        order_date: new Date(selectedComprobante.FechaAlta).toISOString().split('T')[0],
+        invoice_number: `${selectedComprobante.TipoFc} ${selectedComprobante.Numero}`,
+        invoice_id: selectedComprobante.Id,
+        balance: parseFloat(selectedComprobante.Saldo.replace(',', '.')) || 0,
+        name: selectedComprobante.RazonSocial,
         created_by: user.id,
       };
 
@@ -151,7 +174,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                     <Alert className="text-yellow-600 mt-3">
                       <AlertTitle>Factura adeudada</AlertTitle>
                       <AlertDescription>
-                        Saldo: $ {selectedComprobante?.Saldo || 'No se pudo obtener el saldo. Aclarar en Notas si la factura está adeudada.'}. Recordá
+                        Saldo: $ {selectedComprobante?.Saldo || 'No se pudo obtener el balance. Aclarar en Notas si la factura está adeudada.'}. Recordá
                         registrar la cobranza cuando cobremos.
                       </AlertDescription>
                     </Alert>
@@ -159,25 +182,25 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                 </FormField>
                 <FormField
                   label="Domicilio"
-                  name="domicilio"
-                  value={fieldsLoading ? "Cargando..." : formData.domicilio}
+                  name="address"
+                  value={fieldsLoading ? "Cargando..." : formData.address}
                   onChange={handleInputChange}
                   disabled={loading || fieldsLoading || !selectedComprobante}
                   placeholder="Se completa con Contabilium"
                 />
                 <FormField
                   label="Celular"
-                  name="celular"
-                  value={fieldsLoading ? "Cargando..." : formData.celular}
+                  name="phone"
+                  value={fieldsLoading ? "Cargando..." : formData.phone}
                   onChange={handleInputChange}
                   disabled={loading || fieldsLoading || !selectedComprobante}
-                  error={celularError}
+                  error={phoneError}
                   placeholder="Se completa con Contabilium"
                 />
                 <FormField
                   label="Producto"
-                  name="producto"
-                  value={formData.producto}
+                  name="products"
+                  value={formData.products}
                   onChange={handleInputChange}
                   disabled={loading}
                   isTextarea
@@ -185,16 +208,16 @@ const Create: React.FC<CreateProps> = ({ user }) => {
                 />
                 <FormField
                   label="Fecha de Entrega Programada (opcional)"
-                  name="fecha_programada"
-                  value={formData.fecha_programada}
+                  name="scheduled_date"
+                  value={formData.scheduled_date}
                   onChange={handleInputChange}
                   disabled={loading}
                   type="date"
                 />
                 <FormField
                   label="Notas"
-                  name="newNotaContent"
-                  value={formData.newNotaContent}
+                  name="notes"
+                  value={formData.notes}
                   onChange={handleInputChange}
                   disabled={loading}
                   placeholder="Agregar notas y entre qué calles está"

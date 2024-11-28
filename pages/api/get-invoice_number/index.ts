@@ -1,4 +1,4 @@
-// pages/api/get-comprobante/index.ts
+// pages/api/get-invoice_number/index.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getComprobanteById } from '../../../lib/api';
@@ -20,26 +20,26 @@ export default async function handler(
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
-  const { id_comprobante } = req.query;
+  const { invoice_id } = req.query;
 
-  // Validate the id_comprobante parameter
-  if (!id_comprobante || Array.isArray(id_comprobante)) {
-    return res.status(400).json({ error: 'Invalid or missing id_comprobante parameter' });
+  // Validate the invoice_id parameter
+  if (!invoice_id || Array.isArray(invoice_id)) {
+    return res.status(400).json({ error: 'Invalid or missing invoice_id parameter' });
   }
 
-  const id = parseInt(id_comprobante, 10);
+  const id = parseInt(invoice_id, 10);
   if (isNaN(id)) {
-    return res.status(400).json({ error: 'id_comprobante must be a valid number' });
+    return res.status(400).json({ error: 'invoice_id must be a valid number' });
   }
 
   try {
-    // Fetch the comprobante using the provided ID
-    const comprobante = await getComprobanteById(id);
+    // Fetch the invoice_number using the provided ID
+    const invoice_number = await getComprobanteById(id);
 
     // Return the Saldo field
-    return res.status(200).json({ Saldo: comprobante.Saldo });
+    return res.status(200).json({ Saldo: invoice_number.Saldo });
   } catch (error: any) {
-    console.error('Error fetching comprobante:', error);
+    console.error('Error fetching invoice_number:', error);
     return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
 }
