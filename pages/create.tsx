@@ -5,7 +5,7 @@ import { Comprobante } from "../types/api";
 import type { User } from "@supabase/supabase-js";
 import type { GetServerSidePropsContext } from "next";
 import { createClient } from "@/utils/supabase/server-props";
-import ComprobantesSelect from "@/components/InvoiceSelection";
+import InvoiceSelection from "@/components/InvoiceSelection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import FormField from "@/components/FormField";
@@ -166,7 +166,7 @@ const Create: React.FC<CreateProps> = ({ user }) => {
             <CardContent className="w-full md:w-[540px] px-2 py-6 md:px-6 md:py-8">
               <div className="max-w-xl space-y-3">
                 <FormField label="Factura">
-                  <ComprobantesSelect
+                  <InvoiceSelection
                     onSelect={handleComprobanteSelect}
                     placeholder="Seleccioná un comprobante"
                   />

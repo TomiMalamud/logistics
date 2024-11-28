@@ -1,4 +1,4 @@
-// components/ComprobantesSelect.tsx
+// components/InvoiceSelection.tsx
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -17,38 +17,38 @@ interface ComprobantesSelectProps {
   placeholder?: string;
 }
 
-const ComprobantesSelect: React.FC<ComprobantesSelectProps> = ({ onSelect, placeholder = 'Select a invoice_number' }) => {
-  const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
+const InvoiceSelection: React.FC<ComprobantesSelectProps> = ({ onSelect, placeholder = 'Select a invoice_number' }) => {
+  const [invoices, setInvoices] = useState<Comprobante[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchComprobantes = async () => {
+    const fetchInvoices = async () => {
       try {
-        const response = await fetch('/api/search-comprobantes');
+        const response = await fetch('/api/search-invoices');
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to fetch comprobantes');
+          throw new Error(errorData.message || 'Failed to fetch invoices');
         }
         const data: SearchComprobanteResponse = await response.json();
-        setComprobantes(data.Items);
+        setInvoices(data.Items);
         setLoading(false);
       } catch (err: any) {
-        console.error('Error fetching comprobantes:', err);
+        console.error('Error fetching invoices:', err);
         setError(err.message || 'Unknown error');
         setLoading(false);
       }
     };
 
-    fetchComprobantes();
+    fetchInvoices();
   }, []);
 
   const handleSelect = (value: string) => {
     setSelected(value);
-    const selectedComprobante = comprobantes.find((c) => c.Id === Number(value));
-    if (selectedComprobante && onSelect) {
-      onSelect(selectedComprobante);
+    const selectedInvoice = invoices.find((c) => c.Id === Number(value));
+    if (selectedInvoice && onSelect) {
+      onSelect(selectedInvoice);
     }
   };
 
@@ -67,7 +67,7 @@ const ComprobantesSelect: React.FC<ComprobantesSelectProps> = ({ onSelect, place
           {loading ? (
             <SelectItem value="loading">Cargando...</SelectItem>
           ) : (
-            comprobantes.map((invoice_number) => (
+            invoices.map((invoice_number) => (
               <SelectItem key={invoice_number.Id} value={String(invoice_number.Id)}>
                 {invoice_number.TipoFc} {invoice_number.Numero} | {invoice_number.RazonSocial}
               </SelectItem>
@@ -79,4 +79,4 @@ const ComprobantesSelect: React.FC<ComprobantesSelectProps> = ({ onSelect, place
   );
 };
 
-export default ComprobantesSelect;
+export default InvoiceSelection;

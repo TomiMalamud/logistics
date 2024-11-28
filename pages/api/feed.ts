@@ -8,10 +8,15 @@ type SortConfig = {
   ascending: boolean
 }
 
+type SearchParams = {
+  query?: string
+}
+
 type QueryConfig = {
   state: 'pending' | 'delivered'
   page: number
   pageSize: number
+  search: SearchParams
 }
 
 type FeedResponse = {
@@ -42,31 +47,6 @@ const getPaginationRange = (page: number, pageSize: number) => ({
   end: (page - 1) * pageSize + pageSize - 1
 })
 
-// Pure function to build the query
-const buildQuery = (config: QueryConfig) => {
-  const { state, page, pageSize } = config
-  const { start, end } = getPaginationRange(page, pageSize)
-  const sortConfig = getSortConfig(state)
-  
-  let query = supabase
-    .from('deliveries')
-    .select(`
-      *,
-      customers (name, address, phone),
-      notes (id, text, created_at),
-      created_by:profiles (email, name)
-    `, { count: 'exact' })
-    .eq('state', state)
-    .range(start, end)
-  
-  // Apply sort configurations
-  sortConfig.forEach(({ field, ascending }) => {
-    query = query.order(field, { ascending })
-  })
-  
-  return query
-}
-
 // Pure function to format response
 const formatResponse = (data: any[], count: number, page: number, pageSize: number): FeedResponse => ({
   feed: data,
@@ -74,6 +54,53 @@ const formatResponse = (data: any[], count: number, page: number, pageSize: numb
   totalPages: Math.ceil(count / pageSize),
   totalItems: count
 })
+
+// Pure function to sanitize search terms
+const sanitizeSearchTerm = (term: string): string => {
+  return term.replace(/[%_]/g, '\\$&').toLowerCase();
+};
+
+// Query builder
+const buildQuery = (config: QueryConfig) => {
+  const { state, page, pageSize, search } = config;
+  const { start, end } = getPaginationRange(page, pageSize);
+  const sortConfig = getSortConfig(state);
+  
+  let query = supabase
+    .from('deliveries')
+    .select(`
+      *,
+      customers!inner (
+        name,
+        address,
+        phone
+      ),
+      notes (
+        id,
+        text,
+        created_at
+      ),
+      created_by:profiles (
+        email,
+        name
+      )
+    `, { count: 'exact' })
+    .eq('state', state)
+    .range(start, end);
+
+  // Apply search filter for customer name
+  if (search.query) {
+    const searchTerm = sanitizeSearchTerm(search.query);
+    query = query.ilike('customers.name', `%${searchTerm}%`);
+  }
+  
+  // Apply sort configurations
+  sortConfig.forEach(({ field, ascending }) => {
+    query = query.order(field, { ascending });
+  });
+  
+  return query;
+};
 
 // Main handler
 export default async function handler(
@@ -87,7 +114,8 @@ export default async function handler(
   const { 
     state = 'pending', 
     page = '1', 
-    pageSize = '10' 
+    pageSize = '40',
+    search = ''
   } = req.query
 
   if (!['pending', 'delivered'].includes(state as string)) {
@@ -98,7 +126,10 @@ export default async function handler(
     const query = buildQuery({
       state: state as 'pending' | 'delivered',
       page: Number(page),
-      pageSize: Number(pageSize)
+      pageSize: Number(pageSize),
+      search: {
+        query: search as string
+      }
     })
     
     const { data: feed, error, count } = await query
@@ -108,9 +139,10 @@ export default async function handler(
       return res.status(500).json({ error: 'Failed to fetch deliveries.' })
     }
 
-    if (!count) {
+    if (count === null || count === undefined) {
       return res.status(500).json({ error: 'Count not available' })
     }
+    
 
     const response = formatResponse(feed, count, Number(page), Number(pageSize))
     return res.status(200).json(response)

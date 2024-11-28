@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import useSWR from "swr";
 import Layout from "../components/Layout";
-import Delivery from "../components/Delivery";
+import DeliveryList from "@/components/DeliveryList";
 import TablePlaceholder from "../components/TablePlaceholder";
 import { Input } from "../components/ui/input";
 import { Search } from "lucide-react";
@@ -20,9 +20,9 @@ import type { GetServerSidePropsContext } from "next";
 import type { Profile } from "types/types";
 import { createClient } from "@/utils/supabase/server-props";
 import { useDeliveryCounts } from "@/lib/useDeliveryCounts";
+import { debounce } from "lodash";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-const apiURL = "/api/feed";
 
 interface IndexProps {
   user: User;
@@ -35,123 +35,166 @@ interface FeedResponse {
   totalPages: number;
   totalItems: number;
 }
+
+// Pure function to build URL with search params
+const buildSearchUrl = ({
+  state,
+  page,
+  search,
+  scheduledDate
+}: {
+  state: string;
+  page: number;
+  search: string;
+  scheduledDate: string;
+}) => {
+  const params = new URLSearchParams({
+    state,
+    page: page.toString(),
+    search,
+    scheduledDate
+  });
+  return `/api/feed?${params.toString()}`;
+};
+
 const Index: React.FC<IndexProps> = ({ user, profile }) => {
   const [page, setPage] = useState(1);
   const [filterEstado, setFilterEstado] = useState("pending");
-
-  const { data } = useSWR<FeedResponse>(
-    `/api/feed?state=${filterEstado}&page=${page}`,
-    fetcher
-  );
-
-  const [filterScheduledDate, setFilterScheduledDate] = useState("all"); // 'all', 'hasDate', 'noDate'
+  const [filterScheduledDate, setFilterScheduledDate] = useState("all");
+  const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const { counts } = useDeliveryCounts();
+  
+  // Create a ref for the debounced search function
+  const debouncedSearchRef = useRef(
+    debounce((value: string, callback: (value: string) => void) => {
+      callback(value);
+    }, 500)
+  );
 
-  if (!data)
-    return (
-      <Layout>
-        <TablePlaceholder />
-      </Layout>
-    );
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value);
+    setPage(1);
+  }, []);
 
-  const filteredData = data.feed.filter((delivery) => {
-    // Filter by 'scheduled_date'
-    if (filterScheduledDate === "hasDate" && !delivery.scheduled_date)
-      return false;
-    if (filterScheduledDate === "noDate" && delivery.scheduled_date)
-      return false;
+  // Cleanup on unmount
+  useEffect(() => {
+    const debouncedFn = debouncedSearchRef.current;
+    return () => {
+      debouncedFn.cancel();
+    };
+  }, []);
 
-    // Search Filter
-    if (
-      searchQuery &&
-      !delivery.customer.name
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) &&
-      !delivery.customer.address
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) &&
-      !delivery.products?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-      return false;
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    debouncedSearchRef.current(value, handleSearch);
+  }, [handleSearch]);
 
-    return true;
+  const handleTabChange = useCallback((value: string) => {
+    setFilterEstado(value);
+    setPage(1);
+  }, []);
+
+  const handleScheduledDateChange = useCallback((value: string) => {
+    setFilterScheduledDate(value);
+    setPage(1);
+  }, []);
+
+  // Memoize URL building
+  const searchUrl = useMemo(() => 
+    buildSearchUrl({
+      state: filterEstado,
+      page,
+      search: searchQuery,
+      scheduledDate: filterScheduledDate,
+    }),
+    [filterEstado, page, searchQuery, filterScheduledDate]
+  );
+
+  const { data, error } = useSWR<FeedResponse>(searchUrl, fetcher, {
+    keepPreviousData: true,
+    revalidateOnFocus: false
   });
 
-  const handleTabChange = (value: string) => {
-    setFilterEstado(value);
-    setPage(1); // Reset page when switching tabs
-  };
+  const headerContent = useMemo(() => (
+    <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <Tabs
+        defaultValue="pending"
+        className="w-full mb-4 mt-6"
+        onValueChange={handleTabChange}
+        value={filterEstado}
+      >
+        <TabsList aria-label="Filter by state">
+          <TabsTrigger value="pending">
+            Pendientes
+            <span className="text-gray-500 font-light ml-2">
+              {counts?.pending ?? "-"}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="delivered">
+            Entregadas
+            <span className="text-gray-500 font-light ml-2">
+              {counts?.delivered ?? "-"}
+            </span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <form onSubmit={(e) => e.preventDefault()}>
+        <div className="flex space-x-2">
+          <div className="relative w-full pb-2">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre, domicilio o productos"
+              className="pl-8 bg-white"
+              value={inputValue}
+              onChange={handleSearchChange}
+            />
+          </div>
+
+          <div className="flex w-auto">
+            <Select
+              value={filterScheduledDate}
+              onValueChange={handleScheduledDateChange}
+            >
+              <SelectTrigger aria-label="Filter" className="bg-white text-black">
+                <SelectValue placeholder="Filtrar por 'fecha programada'" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Fecha Programada</SelectLabel>
+                  <SelectItem value="all">Fecha Programada: Todas</SelectItem>
+                  <SelectItem value="hasDate">Fecha programada</SelectItem>
+                  <SelectItem value="noDate">Fecha no programada</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </form>
+    </div>
+  ), [filterEstado, inputValue, filterScheduledDate, counts, handleSearchChange, handleTabChange, handleScheduledDateChange]);
+
+  if (error) {
+    return (
+      <Layout>
+        <p className="text-red-500">Error loading deliveries</p>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <p className="text-yellow-800 font-medium ">
+      <p className="text-yellow-800 font-medium">
         Hola {profile ? profile.name : user.email.split("@")[0]}!
       </p>
-      <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <Tabs
-          defaultValue="pending"
-          className="w-full mb-4 mt-6"
-          onValueChange={handleTabChange}
-          value={filterEstado}
-        >
-          <TabsList aria-label="Filter by state">
-            <TabsTrigger value="pending">
-              Pendientes
-              <span className="text-gray-500 font-light ml-2">
-                {counts?.pending ?? "-"}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="delivered">
-              Entregadas
-              <span className="text-gray-500 font-light ml-2">
-                {counts?.delivered ?? "-"}
-              </span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <form>
-          <div className="flex space-x-2">
-            <div className="relative w-full pb-2">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre, domicilio o productos"
-                className="pl-8 bg-white"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div className="flex w-auto">
-              <Select
-                value={filterScheduledDate}
-                onValueChange={(value) => setFilterScheduledDate(value)}
-              >
-                <SelectTrigger
-                  aria-label="Filter"
-                  className="bg-white text-black "
-                >
-                  <SelectValue placeholder="Filtrar por 'fecha programada'" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Fecha Programada</SelectLabel>
-                    <SelectItem value="all">Fecha Programada: Todas</SelectItem>
-                    <SelectItem value="hasDate">Fecha programada</SelectItem>
-                    <SelectItem value="noDate">Fecha no programada</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </form>
-      </div>
-      {filteredData.map((delivery: any) => (
-        <div className="py-2" key={delivery.id}>
-          <Delivery delivery={delivery} fetchURL={apiURL} />
-        </div>
-      ))}
+      {headerContent}
+      {!data ? (
+        <TablePlaceholder />
+      ) : (
+        <DeliveryList data={data} searchUrl={searchUrl} />
+      )}
     </Layout>
   );
 };
@@ -161,7 +204,6 @@ export default Index;
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const supabase = createClient(context);
 
-  // Fetch the authenticated user
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
@@ -175,7 +217,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const user = data.user;
 
-  // Fetch the profile associated with the user.id
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")
     .select("name")
@@ -187,7 +228,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return {
       props: {
         user,
-        profile: null // Handle this case as needed
+        profile: null
       }
     };
   }
