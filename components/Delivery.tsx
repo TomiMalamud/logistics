@@ -1,6 +1,6 @@
 // Delivery.tsx
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useDeliveryLogic } from "@/lib/useDeliveryLogic";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
@@ -10,11 +10,48 @@ import StateDialog from "./StateDialog";
 import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
 import Balance from "./Balance";
+import { MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import CostCarrierDialog from "./CostCarrierDialog";
+
+type Carrier = {
+  id: number;
+  name: string;
+};
+
+const useCarriers = () => {
+  const [carriers, setCarriers] = useState<Carrier[]>([]);
+
+  useEffect(() => {
+    const fetchCarriers = async () => {
+      try {
+        const response = await fetch("/api/carriers");
+        const data = await response.json();
+        setCarriers(data);
+      } catch (error) {
+        console.error("Failed to fetch carriers:", error);
+        setCarriers([]);
+      }
+    };
+
+    fetchCarriers();
+  }, []);
+
+  return carriers;
+};
 
 const Delivery: React.FC<DeliveryProps> = ({
   delivery: delivery,
   fetchURL
 }) => {
+  const carriers = useCarriers();
+
   const deliveryLogic = useDeliveryLogic({
     delivery: {
       ...delivery,
@@ -25,6 +62,7 @@ const Delivery: React.FC<DeliveryProps> = ({
     },
     fetchURL
   });
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
@@ -64,7 +102,7 @@ const Delivery: React.FC<DeliveryProps> = ({
       </div>
 
       {/* Delivery Date Section */}
-      <div className="flex items-center py-4 justify-between">        
+      <div className="flex items-center py-4 justify-between">
         {deliveryLogic.isUpdating ? (
           <div>
             <h1 className="font-medium text-slate-500">
@@ -76,13 +114,19 @@ const Delivery: React.FC<DeliveryProps> = ({
           </div>
         ) : delivery.scheduled_date ? (
           <div>
-            {new Date(delivery.scheduled_date).toISOString().split('T')[0] < new Date().toISOString().split('T')[0] ? (
+            {new Date(delivery.scheduled_date).toISOString().split("T")[0] <
+            new Date().toISOString().split("T")[0] ? (
               <div>
-                <h1 className="font-medium text-red-500">!!! Entrega atrasada</h1>
+                <h1 className="font-medium text-red-500">
+                  !!! Entrega atrasada
+                </h1>
                 <p className="text-sm mt-1 text-red-500">
                   Teníamos que entregar el{" "}
-                  <span className="font-bold">{deliveryLogic.formatDate(delivery.scheduled_date)}</span>,
-                  reprogramá la entrega con el cliente y actualizá la fecha acá
+                  <span className="font-bold">
+                    {deliveryLogic.formatDate(delivery.scheduled_date)}
+                  </span>
+                  , reprogramá la entrega con el cliente y actualizá la fecha
+                  acá
                 </p>
               </div>
             ) : (
@@ -117,16 +161,6 @@ const Delivery: React.FC<DeliveryProps> = ({
           </div>
         )}
         <div className="space-x-2 flex">
-          <Button variant="outline" className="md:block hidden">
-            <ScheduledDateDialog
-              scheduledDate={deliveryLogic.scheduledDate}
-              setScheduledDate={deliveryLogic.setScheduledDate}
-              handleConfirmScheduledDate={
-                deliveryLogic.handleConfirmScheduledDate
-              }
-              isConfirming={deliveryLogic.isUpdating}
-            />
-          </Button>
           <div className="w-24">
             <StateDialog
               state={deliveryLogic.state}
@@ -138,6 +172,36 @@ const Delivery: React.FC<DeliveryProps> = ({
               isConfirming={deliveryLogic.isConfirming}
             />
           </div>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <ScheduledDateDialog
+                  scheduledDate={deliveryLogic.scheduledDate}
+                  setScheduledDate={deliveryLogic.setScheduledDate}
+                  handleConfirmScheduledDate={() => {
+                    deliveryLogic.handleConfirmScheduledDate();
+                    setDropdownOpen(false);
+                  }}
+                  isConfirming={deliveryLogic.isUpdating}
+                />
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <CostCarrierDialog
+                  initialDeliveryCost={delivery.delivery_cost}
+                  initialCarrierId={delivery.carrier_id}
+                  carriers={carriers}
+                  onConfirm={deliveryLogic.handleUpdateDeliveryDetails}
+                  isUpdating={deliveryLogic.isUpdatingDeliveryDetails}                 
+                />
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

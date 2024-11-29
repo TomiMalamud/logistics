@@ -142,7 +142,7 @@ const StateDialog: React.FC<StateDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Marcar como Entregada</DialogTitle>
           <DialogDescription>
-            Ingresá el DNI de quien recibió, el costo de envío y el transportista.
+            Ingresá el DNI de quien recibió, el costo de envío y el transporte.
           </DialogDescription>
         </DialogHeader>
         
@@ -176,14 +176,14 @@ const StateDialog: React.FC<StateDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Transportista</label>
+            <label className="text-sm font-medium">Transporte</label>
             <Select 
               value={selectedCarrierId?.toString()} 
               onValueChange={(value) => setSelectedCarrierId(parseInt(value))}
               required
             >
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar transportista" />
+                <SelectValue placeholder="Seleccionar transporte" />
               </SelectTrigger>
               <SelectContent>
                 {carriers.map((carrier) => (

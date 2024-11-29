@@ -5,8 +5,10 @@ import { mutate } from "swr";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { Note, Delivery, UseDeliveryLogicParams } from "types/types";
 
-
-export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLogicParams) => {
+export const useDeliveryLogic = ({
+  delivery: delivery,
+  fetchURL
+}: UseDeliveryLogicParams) => {
   // State variables
   const [scheduledDate, setScheduledDate] = useState(() => {
     if (!delivery.scheduled_date) return "";
@@ -24,6 +26,33 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
   const [dniError, setDniError] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUpdatingDeliveryDetails, setIsUpdatingDeliveryDetails] =
+    useState(false);
+  const handleUpdateDeliveryDetails = async (data: {
+    delivery_cost: number;
+    carrier_id: number;
+  }) => {
+    setIsUpdatingDeliveryDetails(true);
+    try {
+      const response = await fetch(`/api/delivery/${delivery.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error("Failed to update delivery details");
+
+      // Refresh the delivery data
+      if (fetchURL) {
+        await mutate(fetchURL);
+      }
+    } catch (error) {
+      console.error("Error updating delivery details:", error);
+      setError("Error al actualizar los detalles de envío");
+    } finally {
+      setIsUpdatingDeliveryDetails(false);
+    }
+  };
 
   // Handlers and utility functions
   const handleDniChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,13 +60,11 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
     setDniError("");
   };
 
-  const validateDni = () => {
-    const length = dni.length;
-    return length === 7 || length === 8 || length === 11;
-  };
-
   const isToday = (someDate: Date) => {
-    return new Date().toISOString().split('T')[0] === new Date(someDate).toISOString().split('T')[0]
+    return (
+      new Date().toISOString().split("T")[0] ===
+      new Date(someDate).toISOString().split("T")[0]
+    );
   };
 
   const updateField = async (fieldData: Partial<Delivery>) => {
@@ -45,7 +72,7 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
       const response = await fetch(`/api/delivery/${delivery.id}`, {
         method: "PUT",
         body: JSON.stringify(fieldData),
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       });
 
       if (!response.ok) {
@@ -67,7 +94,7 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
 
     try {
       const newState = state === "delivered" ? "pending" : "delivered";
-      
+
       // Prepare update data
       const updateData = {
         state: newState,
@@ -90,7 +117,6 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
     }
   };
 
- 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
 
@@ -115,7 +141,7 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: false
     });
   };
 
@@ -129,8 +155,8 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           delivery_id: delivery.id,
-          text: newNote,
-        }),
+          text: newNote
+        })
       });
 
       if (!response.ok) {
@@ -209,13 +235,15 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
     isConfirming,
     error,
     setError,
+    isUpdatingDeliveryDetails,
+
 
     // Utility functions
     isToday,
     formatDate,
     formatNoteDate,
     formatArgentinePhoneNumber,
-    
+
     // Action handlers
     handleAddNote,
     handleConfirmScheduledDate,
@@ -231,5 +259,6 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
         "_blank"
       );
     },
+    handleUpdateDeliveryDetails,      
   };
 };
