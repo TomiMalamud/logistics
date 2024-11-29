@@ -71,7 +71,7 @@ export const getAccessToken = async (): Promise<string> => {
 /**
  * Internal function to search comprobantes for a specific page.
  */
-const _searchComprobantes = async (
+const _searchInvoices = async (
   fechaDesde: string,
   fechaHasta: string,
   filtro?: string,
@@ -118,7 +118,7 @@ const fetchAllComprobantes = async (
 
   while (page <= totalPages) {
     try {
-      const response = await _searchComprobantes(fechaDesde, fechaHasta, filtro, page);
+      const response = await _searchInvoices(fechaDesde, fechaHasta, filtro, page);
       allItems.push(...response.Items);
 
       // Calculate total pages based on TotalItems and items per page

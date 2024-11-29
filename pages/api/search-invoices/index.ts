@@ -1,4 +1,4 @@
-// pages/api/search-comprobantes/index.ts
+// pages/api/search-invoices/index.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { searchComprobantes } from '@/lib/api';

@@ -1,6 +1,6 @@
 // pages/api/post/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default async function handler(
   req: NextApiRequest,

@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  useRef
+} from "react";
 import useSWR from "swr";
 import Layout from "../components/Layout";
 import DeliveryList from "@/components/DeliveryList";
@@ -64,7 +70,7 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const { counts } = useDeliveryCounts();
-  
+
   // Create a ref for the debounced search function
   const debouncedSearchRef = useRef(
     debounce((value: string, callback: (value: string) => void) => {
@@ -85,11 +91,14 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
     };
   }, []);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-    debouncedSearchRef.current(value, handleSearch);
-  }, [handleSearch]);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setInputValue(value);
+      debouncedSearchRef.current(value, handleSearch);
+    },
+    [handleSearch]
+  );
 
   const handleTabChange = useCallback((value: string) => {
     setFilterEstado(value);
@@ -102,13 +111,14 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
   }, []);
 
   // Memoize URL building
-  const searchUrl = useMemo(() => 
-    buildSearchUrl({
-      state: filterEstado,
-      page,
-      search: searchQuery,
-      scheduledDate: filterScheduledDate,
-    }),
+  const searchUrl = useMemo(
+    () =>
+      buildSearchUrl({
+        state: filterEstado,
+        page,
+        search: searchQuery,
+        scheduledDate: filterScheduledDate
+      }),
     [filterEstado, page, searchQuery, filterScheduledDate]
   );
 
@@ -117,64 +127,78 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
     revalidateOnFocus: false
   });
 
-  const headerContent = useMemo(() => (
-    <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <Tabs
-        defaultValue="pending"
-        className="w-full mb-4 mt-6"
-        onValueChange={handleTabChange}
-        value={filterEstado}
-      >
-        <TabsList aria-label="Filter by state">
-          <TabsTrigger value="pending">
-            Pendientes
-            <span className="text-gray-500 font-light ml-2">
-              {counts?.pending ?? "-"}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="delivered">
-            Entregadas
-            <span className="text-gray-500 font-light ml-2">
-              {counts?.delivered ?? "-"}
-            </span>
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+  const headerContent = useMemo(
+    () => (
+      <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <Tabs
+          defaultValue="pending"
+          className="w-full mb-4 mt-6"
+          onValueChange={handleTabChange}
+          value={filterEstado}
+        >
+          <TabsList aria-label="Filter by state">
+            <TabsTrigger value="pending">
+              Pendientes
+              <span className="text-gray-500 font-light ml-2">
+                {counts?.pending ?? "-"}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="delivered">
+              Entregadas
+              <span className="text-gray-500 font-light ml-2">
+                {counts?.delivered ?? "-"}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      <form onSubmit={(e) => e.preventDefault()}>
-        <div className="flex space-x-2">
-          <div className="relative w-full pb-2">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre o domicilio del cliente"
-              className="pl-8 bg-white"
-              value={inputValue}
-              onChange={handleSearchChange}
-            />
-          </div>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="flex space-x-2">
+            <div className="relative w-full pb-2">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nombre o domicilio del cliente"
+                className="pl-8 bg-white"
+                value={inputValue}
+                onChange={handleSearchChange}
+              />
+            </div>
 
-          <div className="flex w-auto">
-            <Select
-              value={filterScheduledDate}
-              onValueChange={handleScheduledDateChange}
-            >
-              <SelectTrigger aria-label="Filter" className="bg-white text-black">
-                <SelectValue placeholder="Filtrar por 'fecha programada'" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Fecha Programada</SelectLabel>
-                  <SelectItem value="all">Fecha Programada: Todas</SelectItem>
-                  <SelectItem value="hasDate">Fecha programada</SelectItem>
-                  <SelectItem value="noDate">Fecha no programada</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <div className="flex w-auto">
+              <Select
+                value={filterScheduledDate}
+                onValueChange={handleScheduledDateChange}
+              >
+                <SelectTrigger
+                  aria-label="Filter"
+                  className="bg-white text-black"
+                >
+                  <SelectValue placeholder="Filtrar por 'fecha programada'" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Fecha Programada</SelectLabel>
+                    <SelectItem value="all">Fecha Programada: Todas</SelectItem>
+                    <SelectItem value="hasDate">Fecha programada</SelectItem>
+                    <SelectItem value="noDate">Fecha no programada</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-      </form>
-    </div>
-  ), [filterEstado, inputValue, filterScheduledDate, counts, handleSearchChange, handleTabChange, handleScheduledDateChange]);
+        </form>
+      </div>
+    ),
+    [
+      filterEstado,
+      inputValue,
+      filterScheduledDate,
+      counts,
+      handleSearchChange,
+      handleTabChange,
+      handleScheduledDateChange
+    ]
+  );
 
   if (error) {
     return (
@@ -193,7 +217,12 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
       {!data ? (
         <TablePlaceholder />
       ) : (
-        <DeliveryList data={data} searchUrl={searchUrl} />
+        <DeliveryList
+          data={data}
+          searchUrl={searchUrl}
+          onPageChange={setPage}
+          currentPage={page}
+        />
       )}
     </Layout>
   );
