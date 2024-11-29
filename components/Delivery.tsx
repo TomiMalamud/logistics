@@ -11,17 +11,19 @@ import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
 import Balance from "./Balance";
 
-const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => {
-  
+const Delivery: React.FC<DeliveryProps> = ({
+  delivery: delivery,
+  fetchURL
+}) => {
   const deliveryLogic = useDeliveryLogic({
     delivery: {
       ...delivery,
       created_by:
         typeof delivery.created_by === "string"
           ? delivery.created_by
-          : delivery.created_by?.id ?? null,
+          : delivery.created_by?.id ?? null
     },
-    fetchURL,
+    fetchURL
   });
 
   return (
@@ -34,31 +36,29 @@ const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => 
       )}
 
       {/* Header Section */}
-      <div className="flex justify-between text-sm pb-4 items-center text-slate-500 border-b">
-        <div className="flex items-center">
-          <p className="font-bold text-lg">
-            {titleCase(delivery.customers.name)}
-          </p>
-          <span className="mx-2">|</span>
-          {delivery.customers.phone && (
-            <>
-              <p className="text-slate-600 text-sm">
-                {deliveryLogic.formatArgentinePhoneNumber(
-                  delivery.customers.phone
-                )}
-              </p>
-            </>
-          )}
-        </div>
-        <div className="flex items-center">
-          <p>
-            {(delivery.created_by as Profile)?.name ??
-              "Revisar Vendedor en Contabilium"}
-          </p>
-          <span className="mx-2">|</span>
-          <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
-        </div>
+      <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
+      <div className="flex items-center">
+        <p className="font-bold text-lg">
+          {titleCase(delivery.customers.name)}
+        </p>
+        {delivery.customers.phone && (
+          <>
+            <span className="mx-2">|</span>
+            <p className="text-slate-600 text-sm">
+              {deliveryLogic.formatArgentinePhoneNumber(delivery.customers.phone)}
+            </p>
+          </>
+        )}
       </div>
+      
+      <div id='user_date' className="flex items-center mt-2 md:mt-0">
+        <p>
+          {(delivery.created_by as Profile)?.name ?? "Revisar Vendedor en Contabilium"}
+        </p>
+        <span className="mx-2">|</span>
+        <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
+      </div>
+    </div>
 
       {/* Delivery Date Section */}
       <div className="flex items-center py-4 justify-between">
@@ -116,15 +116,11 @@ const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => 
             <StateDialog
               state={deliveryLogic.state}
               setState={deliveryLogic.setState}
-              setShowStateAlertDialog={
-                deliveryLogic.setShowStateAlertDialog
-              }
+              setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
               dni={deliveryLogic.dni}
               handleDniChange={deliveryLogic.handleDniChange}
               dniError={deliveryLogic.dniError}
-              handleConfirmStateChange={
-                deliveryLogic.handleConfirmStateChange
-              }
+              handleConfirmStateChange={deliveryLogic.handleConfirmStateChange}
               isConfirming={deliveryLogic.isConfirming}
             />
           </div>
@@ -142,8 +138,10 @@ const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => 
           {delivery.customers.address}
         </p>
       </div>
-      {delivery.state === 'pending' && <Balance invoice_id={delivery.invoice_id}/>}
-      
+      {delivery.state === "pending" && (
+        <Balance invoice_id={delivery.invoice_id} />
+      )}
+
       {/* Notes Section */}
       <div className="border-t pt-4">
         <ul className="list-disc list-inside">
@@ -152,7 +150,8 @@ const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => 
               className="text-sm text-slate-600 leading-6"
               key={note.id || index}
             >
-              {note.text} | {deliveryLogic.formatNoteDate(note.created_at || "")}
+              {note.text} |{" "}
+              {deliveryLogic.formatNoteDate(note.created_at || "")}
             </li>
           ))}
         </ul>
@@ -179,9 +178,7 @@ const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => 
         <Button
           variant="outline"
           onClick={deliveryLogic.handleAddNote}
-          disabled={
-            deliveryLogic.isAddingNote || !deliveryLogic.newNote.trim()
-          }
+          disabled={deliveryLogic.isAddingNote || !deliveryLogic.newNote.trim()}
         >
           {deliveryLogic.isAddingNote ? "Guardando..." : "Guardar"}
         </Button>
