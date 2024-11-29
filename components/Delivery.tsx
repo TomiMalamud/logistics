@@ -36,32 +36,35 @@ const Delivery: React.FC<DeliveryProps> = ({
       )}
 
       {/* Header Section */}
-    <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
-      <div className="flex items-center">
-        <p className="font-bold text-lg">
-          {titleCase(delivery.customers.name)}
-        </p>
-        {delivery.customers.phone && (
-          <>
-            <span className="mx-2">|</span>
-            <p className="text-slate-600 text-sm">
-              {deliveryLogic.formatArgentinePhoneNumber(delivery.customers.phone)}
-            </p>
-          </>
-        )}
+      <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
+        <div className="flex items-center">
+          <p className="font-bold text-lg">
+            {titleCase(delivery.customers.name)}
+          </p>
+          {delivery.customers.phone && (
+            <>
+              <span className="mx-2">|</span>
+              <p className="text-slate-600 text-sm">
+                {deliveryLogic.formatArgentinePhoneNumber(
+                  delivery.customers.phone
+                )}
+              </p>
+            </>
+          )}
+        </div>
+
+        <div id="user_date" className="flex items-center mt-2 md:mt-0">
+          <p>
+            {(delivery.created_by as Profile)?.name ??
+              "Revisar Vendedor en Contabilium"}
+          </p>
+          <span className="mx-2">|</span>
+          <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
+        </div>
       </div>
-      
-      <div id='user_date' className="flex items-center mt-2 md:mt-0">
-        <p>
-          {(delivery.created_by as Profile)?.name ?? "Revisar Vendedor en Contabilium"}
-        </p>
-        <span className="mx-2">|</span>
-        <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
-      </div>
-    </div>
 
       {/* Delivery Date Section */}
-      <div className="flex items-center py-4 justify-between">
+      <div className="flex items-center py-4 justify-between">        
         {deliveryLogic.isUpdating ? (
           <div>
             <h1 className="font-medium text-slate-500">
@@ -73,24 +76,37 @@ const Delivery: React.FC<DeliveryProps> = ({
           </div>
         ) : delivery.scheduled_date ? (
           <div>
-            <h1 className="font-medium">Entrega programada</h1>
-            <p className="text-sm mt-1 text-slate-500">
-              {deliveryLogic.isToday(new Date(delivery.scheduled_date)) ? (
-                <span>
-                  Visitaremos el domicilio{" "}
-                  <span className="font-bold text-black">
-                    hoy, {deliveryLogic.formatDate(delivery.scheduled_date)}
-                  </span>
-                </span>
-              ) : (
-                <span>
-                  Visitaremos el domicilio el{" "}
-                  <span className="font-bold">
-                    {deliveryLogic.formatDate(delivery.scheduled_date)}
-                  </span>
-                </span>
-              )}
-            </p>
+            {new Date(delivery.scheduled_date).toISOString().split('T')[0] < new Date().toISOString().split('T')[0] ? (
+              <div>
+                <h1 className="font-medium text-red-500">!!! Entrega atrasada</h1>
+                <p className="text-sm mt-1 text-red-500">
+                  Teníamos que entregar el{" "}
+                  <span className="font-bold">{deliveryLogic.formatDate(delivery.scheduled_date)}</span>,
+                  reprogramá la entrega con el cliente y actualizá la fecha acá
+                </p>
+              </div>
+            ) : (
+              <div>
+                <h1 className="font-medium">Entrega programada</h1>
+                <p className="text-sm mt-1 text-slate-500">
+                  {deliveryLogic.isToday(new Date(delivery.scheduled_date)) ? (
+                    <span>
+                      Visitaremos el domicilio{" "}
+                      <span className="font-bold text-black">
+                        hoy, {deliveryLogic.formatDate(delivery.scheduled_date)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span>
+                      Visitaremos el domicilio el{" "}
+                      <span className="font-bold">
+                        {deliveryLogic.formatDate(delivery.scheduled_date)}
+                      </span>
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div>
@@ -100,7 +116,6 @@ const Delivery: React.FC<DeliveryProps> = ({
             </p>
           </div>
         )}
-
         <div className="space-x-2 flex">
           <Button variant="outline" className="md:block hidden">
             <ScheduledDateDialog
@@ -113,15 +128,15 @@ const Delivery: React.FC<DeliveryProps> = ({
             />
           </Button>
           <div className="w-24">
-          <StateDialog
-          state={deliveryLogic.state}
-          setState={deliveryLogic.setState}
-          setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
-          initialDeliveryCost={delivery.delivery_cost}
-          initialCarrierId={delivery.carrier_id}
-          onConfirm={deliveryLogic.handleConfirmStateChange}
-          isConfirming={deliveryLogic.isConfirming}
-        />
+            <StateDialog
+              state={deliveryLogic.state}
+              setState={deliveryLogic.setState}
+              setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
+              initialDeliveryCost={delivery.delivery_cost}
+              initialCarrierId={delivery.carrier_id}
+              onConfirm={deliveryLogic.handleConfirmStateChange}
+              isConfirming={deliveryLogic.isConfirming}
+            />
           </div>
         </div>
       </div>
