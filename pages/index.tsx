@@ -146,7 +146,7 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
           <div className="relative w-full pb-2">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre, domicilio o productos"
+              placeholder="Buscar por nombre o domicilio del cliente"
               className="pl-8 bg-white"
               value={inputValue}
               onChange={handleSearchChange}

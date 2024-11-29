@@ -1,23 +1,5 @@
-// pages/api/feed.ts
-import { supabase } from '../../lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type { NextApiRequest, NextApiResponse } from 'next'
-
-// Type definitions
-type SortConfig = {
-  field: string
-  ascending: boolean
-}
-
-type SearchParams = {
-  query?: string
-}
-
-type QueryConfig = {
-  state: 'pending' | 'delivered'
-  page: number
-  pageSize: number
-  search: SearchParams
-}
 
 type FeedResponse = {
   feed: any[]
@@ -30,79 +12,6 @@ type ErrorResponse = {
   error: string
 }
 
-// Pure function to generate sort configuration
-const getSortConfig = (state: 'pending' | 'delivered'): SortConfig[] => ({
-  pending: [
-    { field: 'scheduled_date', ascending: true },
-    { field: 'order_date', ascending: true }
-  ],
-  delivered: [
-    { field: 'order_date', ascending: false }
-  ]
-}[state])
-
-// Pure function to calculate pagination
-const getPaginationRange = (page: number, pageSize: number) => ({
-  start: (page - 1) * pageSize,
-  end: (page - 1) * pageSize + pageSize - 1
-})
-
-// Pure function to format response
-const formatResponse = (data: any[], count: number, page: number, pageSize: number): FeedResponse => ({
-  feed: data,
-  page: Number(page),
-  totalPages: Math.ceil(count / pageSize),
-  totalItems: count
-})
-
-// Pure function to sanitize search terms
-const sanitizeSearchTerm = (term: string): string => {
-  return term.replace(/[%_]/g, '\\$&').toLowerCase();
-};
-
-// Query builder
-const buildQuery = (config: QueryConfig) => {
-  const { state, page, pageSize, search } = config;
-  const { start, end } = getPaginationRange(page, pageSize);
-  const sortConfig = getSortConfig(state);
-  
-  let query = supabase
-    .from('deliveries')
-    .select(`
-      *,
-      customers!inner (
-        name,
-        address,
-        phone
-      ),
-      notes (
-        id,
-        text,
-        created_at
-      ),
-      created_by:profiles (
-        email,
-        name
-      )
-    `, { count: 'exact' })
-    .eq('state', state)
-    .range(start, end);
-
-  // Apply search filter for customer name
-  if (search.query) {
-    const searchTerm = sanitizeSearchTerm(search.query);
-    query = query.ilike('customers.name', `%${searchTerm}%`);
-  }
-  
-  // Apply sort configurations
-  sortConfig.forEach(({ field, ascending }) => {
-    query = query.order(field, { ascending });
-  });
-  
-  return query;
-};
-
-// Main handler
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<FeedResponse | ErrorResponse>
@@ -115,25 +24,69 @@ export default async function handler(
     state = 'pending', 
     page = '1', 
     pageSize = '40',
-    search = ''
+    search = '',
+    scheduledDate = 'all'
   } = req.query
 
   if (!['pending', 'delivered'].includes(state as string)) {
     return res.status(400).json({ error: 'Invalid state parameter' })
   }
 
+  if (!['all', 'hasDate', 'noDate'].includes(scheduledDate as string)) {
+    return res.status(400).json({ error: 'Invalid scheduledDate parameter' })
+  }
+
   try {
-    const query = buildQuery({
-      state: state as 'pending' | 'delivered',
-      page: Number(page),
-      pageSize: Number(pageSize),
-      search: {
-        query: search as string
-      }
-    })
-    
-    const { data: feed, error, count } = await query
-    
+    const start = (Number(page) - 1) * Number(pageSize)
+    const end = start + Number(pageSize) - 1
+
+    let query = supabase
+      .from('deliveries')
+      .select(`
+        *,
+        customers!inner (
+          name,
+          address,
+          phone
+        ),
+        notes (
+          id,
+          text,
+          created_at
+        ),
+        created_by:profiles (
+          email,
+          name
+        )`, { count: 'exact' })
+      .eq('state', state)
+      .range(start, end)
+
+    // Apply search if present
+    if (search) {
+      const searchTerm = `*${search}*`
+      query = query.or(`name.ilike.${searchTerm},address.ilike.${searchTerm}`, { 
+        referencedTable: 'customers' 
+      })
+    }
+
+    // Apply scheduled date filter
+    if (scheduledDate === 'hasDate') {
+      query = query.not('scheduled_date', 'is', null)
+    } else if (scheduledDate === 'noDate') {
+      query = query.is('scheduled_date', null)
+    }
+
+    // Apply sorting
+    if (state === 'pending') {
+      query = query
+        .order('scheduled_date', { ascending: true, nullsFirst: false })
+        .order('order_date', { ascending: true })
+    } else {
+      query = query.order('order_date', { ascending: false })
+    }
+
+    const { data, error, count } = await query
+
     if (error) {
       console.error(`Error fetching ${state} deliveries:`, error)
       return res.status(500).json({ error: 'Failed to fetch deliveries.' })
@@ -142,11 +95,13 @@ export default async function handler(
     if (count === null || count === undefined) {
       return res.status(500).json({ error: 'Count not available' })
     }
-    
 
-    const response = formatResponse(feed, count, Number(page), Number(pageSize))
-    return res.status(200).json(response)
-    
+    return res.status(200).json({
+      feed: data,
+      page: Number(page),
+      totalPages: Math.ceil(count / Number(pageSize)),
+      totalItems: count
+    })
   } catch (err) {
     console.error('Unexpected error:', err)
     return res.status(500).json({ error: 'An unexpected error occurred.' })
