@@ -1,16 +1,20 @@
-// components/Layout.tsx
-
 import React from "react";
 import Head from "next/head";
 import { Button } from "./ui/button";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 interface LayoutProps {
   children: React.ReactNode;
   title?: string;
+}
+
+interface NavItem {
+  path: string;
+  label: string;
+  showOnMobile: boolean;
 }
 
 const Layout = ({ 
@@ -19,8 +23,12 @@ const Layout = ({
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
   
+  const navItems: NavItem[] = useMemo(() => [
+    { path: "/", label: "Entregas", showOnMobile: false },
+    { path: "/carriers", label: "Transportes", showOnMobile: true },
+    { path: "/update-prices", label: "Actualizar Precios", showOnMobile: false }
+  ], []);
 
-  // Memoize sign-out handler
   const handleSignOut = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -31,6 +39,27 @@ const Layout = ({
     }
   }, [router]);
 
+  const getNavButtonClasses = useCallback((path: string, showOnMobile: boolean): string => {
+    const baseClasses = "text-gray-600";
+    const mobileClasses = showOnMobile ? "" : "hidden md:block";
+    const activeClasses = router.pathname === path ? "font-bold" : "";
+    
+    return `${baseClasses} ${mobileClasses} ${activeClasses}`.trim();
+  }, [router.pathname]);
+
+  const renderNavButtons = useCallback(() => 
+    navItems.map(({ path, label, showOnMobile }) => (
+      <Button 
+        key={path}
+        variant="link" 
+        className={getNavButtonClasses(path, showOnMobile)}
+        asChild
+      >
+        <Link href={path}>{label}</Link>
+      </Button>
+    ))
+  , [navItems, getNavButtonClasses]);
+
   return (
     <>
       <Head>
@@ -39,32 +68,18 @@ const Layout = ({
       </Head>
 
       <main className="p-4 md:p-10 mx-auto max-w-7xl">
-        <nav className="flex justify-between -mx-4">
-            <Button 
-              variant="link" 
-              className="hidden text-gray-600 md:block"
-              asChild
-            >
-              <Link href="/update-prices">Actualizar Precios</Link>
-            </Button>
-            <Button 
-              variant="link" 
-              className="text-gray-600" 
-              onClick={handleSignOut}
-            >
-              Cerrar Sesión
-            </Button>
-        </nav>
-
-        <header className="flex mt-4 justify-between items-center">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Entregas de ROHI Sommiers
-          </h1>
-          <Button asChild className="hidden md:block">
-            <Link href="/create">+ Agregar</Link>
+        <nav className="flex justify-between -mx-4 mb-4">
+          <div className="flex items-center space-x-2">
+            {renderNavButtons()}
+          </div>
+          <Button 
+            variant="link" 
+            className="text-gray-600" 
+            onClick={handleSignOut}
+          >
+            Cerrar Sesión
           </Button>
-        </header>
-
+        </nav>
         <section>
           {children}
         </section>

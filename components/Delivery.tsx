@@ -36,7 +36,7 @@ const Delivery: React.FC<DeliveryProps> = ({
       )}
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
+    <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
       <div className="flex items-center">
         <p className="font-bold text-lg">
           {titleCase(delivery.customers.name)}
@@ -113,16 +113,15 @@ const Delivery: React.FC<DeliveryProps> = ({
             />
           </Button>
           <div className="w-24">
-            <StateDialog
-              state={deliveryLogic.state}
-              setState={deliveryLogic.setState}
-              setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
-              dni={deliveryLogic.dni}
-              handleDniChange={deliveryLogic.handleDniChange}
-              dniError={deliveryLogic.dniError}
-              handleConfirmStateChange={deliveryLogic.handleConfirmStateChange}
-              isConfirming={deliveryLogic.isConfirming}
-            />
+          <StateDialog
+          state={deliveryLogic.state}
+          setState={deliveryLogic.setState}
+          setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
+          initialDeliveryCost={delivery.delivery_cost}
+          initialCarrierId={delivery.carrier_id}
+          onConfirm={deliveryLogic.handleConfirmStateChange}
+          isConfirming={deliveryLogic.isConfirming}
+        />
           </div>
         </div>
       </div>

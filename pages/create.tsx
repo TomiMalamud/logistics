@@ -9,6 +9,7 @@ import InvoiceSelection from "@/components/InvoiceSelection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import FormField from "@/components/FormField";
+import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/phone";
 
 interface CreateProps {
   user: User;
@@ -29,14 +30,6 @@ const initialFormData: FormData = {
   scheduled_date: "",
   notes: "",
 };
-
-// Pure function to sanitize phone number
-const sanitizePhoneNumber = (phone: string): string => 
-  phone.replace(/[^0-9]/g, '');
-
-// Pure function to validate phone number
-const validatePhoneNumber = (phone: string): boolean => 
-  /^\d{10}$/.test(phone);
 
 const Create: React.FC<CreateProps> = ({ user }) => {
   const [formData, setFormData] = useState<FormData>(initialFormData);

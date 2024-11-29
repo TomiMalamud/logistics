@@ -42,6 +42,8 @@ export interface Customer {
     invoice_number: string | null,
     invoice_id: number | null,
     balance: number | null,
+    delivery_cost: number | null,
+    carrier_id: number | null,
   }
   
   // Props for Delivery Component

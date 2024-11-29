@@ -3,7 +3,6 @@
 import {
   TokenResponse,
   Customer,
-  GetClientByIdResponse,
   Comprobante,
   SearchComprobanteResponse,
 } from '@/types/api';

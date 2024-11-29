@@ -27,6 +27,8 @@ import type { Profile } from "types/types";
 import { createClient } from "@/utils/supabase/server-props";
 import { useDeliveryCounts } from "@/lib/useDeliveryCounts";
 import { debounce } from "lodash";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -129,73 +131,93 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
 
   const headerContent = useMemo(
     () => (
-      <div className="bg-gray-100">
-        <Tabs
-          defaultValue="pending"
-          className="w-full mb-4 mt-6"
-          onValueChange={handleTabChange}
-          value={filterEstado}
-        >
-          <TabsList aria-label="Filter by state">
-            <TabsTrigger value="pending">
-              Pendientes
-              <span className="text-gray-500 font-light ml-2">
-                {counts?.pending ?? "-"}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="delivered">
-              Entregadas
-              <span className="text-gray-500 font-light ml-2">
-                {counts?.delivered ?? "-"}
-              </span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <>
+        <header className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Entregas de ROHI Sommiers
+          </h1>
+          <Button asChild className="hidden md:block">
+            <Link href="/create">+ Agregar</Link>
+          </Button>
+        </header>
+        <p className="text-yellow-800 font-medium">
+          Hola {profile ? profile.name : user.email.split("@")[0]}!
+        </p>
+        <div className="bg-gray-100">
+          <Tabs
+            defaultValue="pending"
+            className="w-full mb-4 mt-6"
+            onValueChange={handleTabChange}
+            value={filterEstado}
+          >
+            <TabsList aria-label="Filter by state">
+              <TabsTrigger value="pending">
+                Pendientes
+                <span className="text-gray-500 font-light ml-2">
+                  {counts?.pending ?? "-"}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="delivered">
+                Entregadas
+                <span className="text-gray-500 font-light ml-2">
+                  {counts?.delivered ?? "-"}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        <form onSubmit={(e) => e.preventDefault()}>
-          <div className="flex space-x-2">
-            <div className="relative w-full pb-2">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre o domicilio del cliente"
-                className="pl-8 bg-white"
-                value={inputValue}
-                onChange={handleSearchChange}
-              />
-            </div>
+          <form onSubmit={(e) => e.preventDefault()}>
+            <div className="flex space-x-2">
+              <div className="relative w-full pb-2">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nombre o domicilio del cliente"
+                  className="pl-8 bg-white"
+                  value={inputValue}
+                  onChange={handleSearchChange}
+                />
+              </div>
 
-            <div className="flex w-auto">
-              <Select
-                value={filterScheduledDate}
-                onValueChange={handleScheduledDateChange}
-              >
-                <SelectTrigger
-                  aria-label="Filter"
-                  className="bg-white text-black"
+              <div className="flex w-auto">
+                <Select
+                  value={filterScheduledDate}
+                  onValueChange={handleScheduledDateChange}
                 >
-                  <SelectValue placeholder="Filtrar por 'fecha programada'" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Fecha Programada</SelectLabel>
-                    <SelectItem value="all">Fecha Programada: Todas</SelectItem>
-                    <SelectItem value="hasDate">Fecha programada</SelectItem>
-                    <SelectItem value="noDate">Fecha no programada</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                  <SelectTrigger
+                    aria-label="Filter"
+                    className="bg-white text-black"
+                  >
+                    <SelectValue placeholder="Filtrar por 'fecha programada'" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Fecha Programada</SelectLabel>
+                      <SelectItem value="all">
+                        Fecha Programada: Todas
+                      </SelectItem>
+                      <SelectItem value="hasDate">Fecha programada</SelectItem>
+                      <SelectItem value="noDate">
+                        Fecha no programada
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      </>
     ),
     [
-      filterEstado,
-      inputValue,
-      filterScheduledDate,
-      counts,
-      handleSearchChange,
+      profile,
+      user.email,
       handleTabChange,
+      filterEstado,
+      counts?.pending,
+      counts?.delivered,
+      inputValue,
+      handleSearchChange,
+      filterScheduledDate,
       handleScheduledDateChange
     ]
   );
@@ -210,9 +232,6 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
 
   return (
     <Layout>
-      <p className="text-yellow-800 font-medium">
-        Hola {profile ? profile.name : user.email.split("@")[0]}!
-      </p>
       {headerContent}
       {!data ? (
         <TablePlaceholder />

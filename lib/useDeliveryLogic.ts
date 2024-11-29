@@ -58,17 +58,30 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
     }
   };
 
-
-  const handleConfirmStateChange = async () => {
-    if (!validateDni()) {
-      setDniError("DNI must be 7, 8, or 11 digits.");
-      return;
-    }
+  const handleConfirmStateChange = async (formData: {
+    dni: string;
+    delivery_cost: number;
+    carrier_id: number;
+  }) => {
     setIsConfirming(true);
 
     try {
-      await toggleState();
+      const newState = state === "delivered" ? "pending" : "delivered";
+      
+      // Prepare update data
+      const updateData = {
+        state: newState,
+        ...(newState === "delivered" && {
+          recipient_dni: formData.dni,
+          delivery_cost: formData.delivery_cost,
+          carrier_id: formData.carrier_id
+        })
+      };
+
+      await updateField(updateData);
+      setState(newState);
       setShowStateAlertDialog(false);
+      mutate(fetchURL);
     } catch (error) {
       console.error("Failed to update state:", error);
       setError("Unable to update status.");
@@ -77,20 +90,7 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
     }
   };
 
-  const toggleState = async () => {
-    const newState = state === "delivered" ? "pending" : "delivered";
-    setState(newState);
-
-    try {
-      await updateField({ state: newState });
-      mutate(fetchURL);
-    } catch (error) {
-      console.error("Error updating state:", error);
-      setState(delivery.state);
-      throw error;
-    }
-  };
-
+ 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
 
@@ -215,7 +215,7 @@ export const useDeliveryLogic = ({ delivery: delivery, fetchURL }: UseDeliveryLo
     formatDate,
     formatNoteDate,
     formatArgentinePhoneNumber,
-
+    
     // Action handlers
     handleAddNote,
     handleConfirmScheduledDate,
