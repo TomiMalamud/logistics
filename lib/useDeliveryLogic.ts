@@ -22,8 +22,6 @@ export const useDeliveryLogic = ({
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [showStateAlertDialog, setShowStateAlertDialog] = useState(false);
-  const [dni, setDni] = useState("");
-  const [dniError, setDniError] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUpdatingDeliveryDetails, setIsUpdatingDeliveryDetails] =
@@ -54,11 +52,6 @@ export const useDeliveryLogic = ({
     }
   };
 
-  // Handlers and utility functions
-  const handleDniChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDni(e.target.value);
-    setDniError("");
-  };
 
   const isToday = (someDate: Date) => {
     return (
@@ -86,7 +79,6 @@ export const useDeliveryLogic = ({
   };
 
   const handleConfirmStateChange = async (formData: {
-    dni: string;
     delivery_cost: number;
     carrier_id: number;
   }) => {
@@ -99,7 +91,6 @@ export const useDeliveryLogic = ({
       const updateData = {
         state: newState,
         ...(newState === "delivered" && {
-          recipient_dni: formData.dni,
           delivery_cost: formData.delivery_cost,
           carrier_id: formData.carrier_id
         })
@@ -228,9 +219,6 @@ export const useDeliveryLogic = ({
     isAddingNote,
     showStateAlertDialog,
     setShowStateAlertDialog,
-    dni,
-    dniError,
-    handleDniChange,
     handleConfirmStateChange,
     isConfirming,
     error,

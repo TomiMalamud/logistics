@@ -7,7 +7,7 @@ export default async function handler(
 ) {
   if (req.method === "PUT") {
     const { id } = req.query;
-    const { state, scheduled_date, recipient_dni, delivery_cost, carrier_id } =
+    const { state, scheduled_date, delivery_cost, carrier_id } =
       req.body;
 
     if (!id) {
@@ -43,7 +43,6 @@ export default async function handler(
             })
           }),
         ...(scheduled_date && { scheduled_date }),
-        ...(recipient_dni && { recipient_dni }),
         ...(delivery_cost && { delivery_cost }),
         ...(carrier_id && { carrier_id })
       };

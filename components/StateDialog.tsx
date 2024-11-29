@@ -26,7 +26,6 @@ type Carrier = {
 };
 
 type FormData = {
-  dni: string;
   delivery_cost: number;
   carrier_id: number;
 };
@@ -41,17 +40,12 @@ type StateDialogProps = {
   isConfirming: boolean;
 };
 
-// Pure functions for validation
-const isDniValid = (dni: string): boolean => /^\d{8,11}$/.test(dni);
-
 const isDeliveryCostValid = (cost: string): boolean => {
   const numValue = parseFloat(cost);
   return !isNaN(numValue) && numValue > 0;
 };
 
-const sanitizeDni = (value: string): string => value.replace(/[^0-9]/g, '');
 
-// Custom hooks
 const useCarriers = () => {
   const [carriers, setCarriers] = useState<Carrier[]>([]);
 
@@ -83,32 +77,24 @@ const StateDialog: React.FC<StateDialogProps> = ({
   onConfirm,
   isConfirming
 }) => {
-  // Form state with typed useState hooks
-  const [dni, setDni] = useState("");
-  const [dniError, setDniError] = useState("");
+
   const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost?.toString() ?? "");
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(initialCarrierId);
   
   const carriers = useCarriers();
 
-  // Event handlers as pure functions
-  const handleDniChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const sanitizedValue = sanitizeDni(e.target.value);
-    setDni(sanitizedValue);
-    setDniError(isDniValid(sanitizedValue) ? "" : "DNI debe tener entre 8 y 11 dígitos");
-  };
+
 
   const handleDeliveryCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDeliveryCost(e.target.value);
   };
 
   const handleConfirmStateChange = async () => {
-    if (!isDniValid(dni) || !isDeliveryCostValid(deliveryCost) || !selectedCarrierId) {
+    if (!isDeliveryCostValid(deliveryCost) || !selectedCarrierId) {
       return;
     }
   
     const formData = {
-      dni,
       delivery_cost: parseFloat(deliveryCost),
       carrier_id: selectedCarrierId
     };
@@ -125,7 +111,7 @@ const StateDialog: React.FC<StateDialogProps> = ({
     setShowStateAlertDialog(true);
   };
 
-  const isSubmitDisabled = !dni || !selectedCarrierId || isConfirming || !isDniValid(dni);
+  const isSubmitDisabled = !selectedCarrierId || isConfirming;
 
   return (
     <Dialog>
@@ -142,25 +128,11 @@ const StateDialog: React.FC<StateDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Marcar como Entregada</DialogTitle>
           <DialogDescription>
-            Ingresá el DNI de quien recibió, el costo de envío y el transporte.
+            Indicá el costo de envío estimado y el transporte responsable.
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col gap-4 mt-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">DNI del receptor</label>
-            <Input
-              type="text"
-              placeholder="DNI"
-              value={dni}
-              onChange={handleDniChange}
-              required
-              maxLength={11}
-            />
-            {dniError && (
-              <p className="text-red-500 text-sm">{dniError}</p>
-            )}
-          </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Costo de envío</label>
