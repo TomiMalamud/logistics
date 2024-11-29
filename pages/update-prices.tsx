@@ -8,9 +8,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle
-} from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Upload } from "lucide-react";
 
 import type { User } from "@supabase/supabase-js";

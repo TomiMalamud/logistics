@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Router from "next/router";
-import { Button } from "../components/ui/button";
-import { Comprobante } from "../types/api";
+import { Button } from "@/components/ui/button";
+import { Comprobante } from "@/types/api";
 import type { User } from "@supabase/supabase-js";
 import type { GetServerSidePropsContext } from "next";
 import { createClient } from "@/utils/supabase/server-props";

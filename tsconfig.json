@@ -18,13 +18,11 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "baseUrl": ".",             // Set base URL to the project root
+    "baseUrl": ".",
     "paths": {
-      "@/components/*": ["components/*"],   
-      "@/lib/*": ["lib/*"],                 
-      "@/utils/*": ["utils/*"],
-      "@/types/*": ["types/*"]
+      "@/*": ["./*"]
     }
+
   },
   "exclude": [
     "node_modules"
@@ -34,7 +32,6 @@
     "**/*.ts",
     "**/*.tsx",
     "pages/api/auth/[...nextauth].js",
-    "pages/_document.js",
-    "pages/test.js"
+    "pages/_document.js", "next.config.js",
   ]
 }

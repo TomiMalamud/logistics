@@ -1,7 +1,7 @@
 // pages/api/get-invoice_number/index.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getComprobanteById } from '../../../lib/api';
+import { getComprobanteById } from '@/lib/api';
 
 type SuccessResponse = {
   Saldo: string;

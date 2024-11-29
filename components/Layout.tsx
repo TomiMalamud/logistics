@@ -1,29 +1,12 @@
 // components/Layout.tsx
+
 import React from "react";
 import Head from "next/head";
 import { Button } from "./ui/button";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useCallback, useMemo } from "react";
-
-// Define types for navigation items
-type NavigationItem = {
-  href: string;
-  text: string;
-};
-
-// Define route configuration
-const ROUTE_CONFIG: Record<string, NavigationItem> = {
-  "/expedition": {
-    href: "/",
-    text: "Ir al Dashboard",
-  },
-  "/": {
-    href: "/expedition",
-    text: "Ir a Expedición",
-  },
-} as const;
+import { useCallback } from "react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -36,11 +19,6 @@ const Layout = ({
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
   
-  // Memoize navigation item based on current path
-  const navigationItem = useMemo(() => 
-    ROUTE_CONFIG[router.pathname] || { href: "/", text: "" },
-    [router.pathname]
-  );
 
   // Memoize sign-out handler
   const handleSignOut = useCallback(async () => {
@@ -50,7 +28,6 @@ const Layout = ({
       await router.push("/login");
     } catch (error) {
       console.error("Error signing out:", error);
-      // You might want to add proper error handling here (e.g., toast notification)
     }
   }, [router]);
 
@@ -62,14 +39,7 @@ const Layout = ({
       </Head>
 
       <main className="p-4 md:p-10 mx-auto max-w-7xl">
-        <nav className="flex justify-between">
-          {navigationItem.text && (
-            <Button variant="link" className="-ml-2 text-gray-600">
-              <Link href={navigationItem.href}>{navigationItem.text}</Link>
-            </Button>
-          )}
-          
-          <div className="flex items-center gap-x-2 -mr-2">
+        <nav className="flex justify-between -mx-4">
             <Button 
               variant="link" 
               className="hidden text-gray-600 md:block"
@@ -84,7 +54,6 @@ const Layout = ({
             >
               Cerrar Sesión
             </Button>
-          </div>
         </nav>
 
         <header className="flex mt-4 justify-between items-center">

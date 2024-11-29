@@ -102,7 +102,7 @@ const Delivery: React.FC<DeliveryProps> = ({ delivery: delivery, fetchURL }) => 
         )}
 
         <div className="space-x-2 flex">
-          <Button variant="outline">
+          <Button variant="outline" className="md:block hidden">
             <ScheduledDateDialog
               scheduledDate={deliveryLogic.scheduledDate}
               setScheduledDate={deliveryLogic.setScheduledDate}

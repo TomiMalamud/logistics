@@ -6,7 +6,7 @@ import {
   GetClientByIdResponse,
   Comprobante,
   SearchComprobanteResponse,
-} from '../types/api';
+} from '@/types/api';
 
 const API_URL_BASE = process.env.NEXT_PUBLIC_API_URL_BASE as string;
 const CLIENT_ID = process.env.CLIENT_ID as string;

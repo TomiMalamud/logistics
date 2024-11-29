@@ -6,10 +6,10 @@ import React, {
   useRef
 } from "react";
 import useSWR from "swr";
-import Layout from "../components/Layout";
+import Layout from "@/components/Layout";
 import DeliveryList from "@/components/DeliveryList";
-import TablePlaceholder from "../components/TablePlaceholder";
-import { Input } from "../components/ui/input";
+import TablePlaceholder from "@/components/TablePlaceholder";
+import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import {
   Select,
@@ -18,9 +18,9 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue
-} from "../components/ui/select";
+} from "@/components/ui/select";
 import { SelectGroup } from "@radix-ui/react-select";
-import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { User } from "@supabase/supabase-js";
 import type { GetServerSidePropsContext } from "next";
 import type { Profile } from "types/types";
@@ -129,7 +129,7 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
 
   const headerContent = useMemo(
     () => (
-      <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="bg-gray-100">
         <Tabs
           defaultValue="pending"
           className="w-full mb-4 mt-6"

@@ -32,7 +32,7 @@ const DeliveryList: React.FC<DeliveryListProps> = memo(({
 }) => {
   if (!data?.feed?.length) {
     return (
-      <div className="py-4 text-center text-gray-500">
+      <div className="py-8 text-center text-gray-500">
         No se encontraron resultados
       </div>
     );
@@ -103,7 +103,7 @@ const DeliveryList: React.FC<DeliveryListProps> = memo(({
         ))}
       </div>
 
-      <Pagination className="justify-center">
+      <Pagination>
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious 
@@ -121,6 +121,7 @@ const DeliveryList: React.FC<DeliveryListProps> = memo(({
                 <PaginationLink
                   onClick={() => handlePageChange(pageNum as number)}
                   isActive={currentPage === pageNum}
+                  className="cursor-pointer"
                 >
                   {pageNum}
                 </PaginationLink>
