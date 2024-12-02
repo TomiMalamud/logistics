@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/component'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,13 +12,35 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  async function logIn() {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      console.error(error)
+  async function logIn(e) {
+    e.preventDefault()
+    setError('')
+    setIsLoading(true)
+
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      })
+
+      if (authError) {
+        if (authError.message.includes('Invalid login')) {
+          setError('Email o contraseña incorrecta')
+        } else {
+          setError('Ha ocurrido un error. Por favor, intente nuevamente.')
+        }
+        return
+      }
+
+      router.push('/')
+    } catch (err) {
+      setError('Ha ocurrido un error. Por favor, intente nuevamente.')
+    } finally {
+      setIsLoading(false)
     }
-    router.push('/')
   }
 
   return (
@@ -27,7 +50,12 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold text-center">App Entregas</CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4">
+          <form onSubmit={logIn} className="space-y-4">
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">Email</label>
               <Input
@@ -36,6 +64,8 @@ export default function LoginPage() {
                 placeholder="Ingresá tu email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full"
               />
             </div>
             <div className="space-y-2">
@@ -46,12 +76,23 @@ export default function LoginPage() {
                 placeholder="Ingresá tu contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full"
               />
+            </div>
+            <div className="text-sm text-gray-500 mt-2">
+              ¿Olvidaste tu contraseña? Contacta al administrador para restablecerla.
             </div>
           </form>
         </CardContent>
         <CardFooter className="flex justify-end">
-          <Button onClick={logIn}>Iniciar Sesión</Button>
+          <Button 
+            onClick={logIn} 
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
+            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          </Button>
         </CardFooter>
       </Card>
     </main>

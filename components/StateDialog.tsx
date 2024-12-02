@@ -91,6 +91,13 @@ const StateDialog: React.FC<StateDialogProps> = ({
   
   const carriers = useCarriers();
 
+  // Reset form fields when delivery type changes
+  useEffect(() => {
+    setDeliveryCost("");
+    setSelectedCarrierId(undefined);
+    setSelectedStore(undefined);
+  }, [deliveryType]);
+
   const handleDeliveryCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDeliveryCost(e.target.value);
   };
@@ -152,7 +159,6 @@ const StateDialog: React.FC<StateDialogProps> = ({
         
         <div className="flex flex-col gap-4 mt-4">
           <RadioGroup 
-            defaultValue="carrier"
             value={deliveryType}
             onValueChange={(value) => setDeliveryType(value as "carrier" | "pickup")}
             className="gap-4"
@@ -173,7 +179,7 @@ const StateDialog: React.FC<StateDialogProps> = ({
                 <label className="text-sm font-medium">Costo de envío</label>
                 <Input
                   type="number"
-                  placeholder="Costo"
+                  placeholder="Ingresá el costo"
                   value={deliveryCost}
                   onChange={handleDeliveryCostChange}
                   required
@@ -190,7 +196,7 @@ const StateDialog: React.FC<StateDialogProps> = ({
                   required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar transporte" />
+                    <SelectValue placeholder="Seleccioná un transporte" />
                   </SelectTrigger>
                   <SelectContent>
                     {carriers.map((carrier) => (
@@ -214,7 +220,7 @@ const StateDialog: React.FC<StateDialogProps> = ({
                 required
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar sucursal" />
+                  <SelectValue placeholder="Seleccioná una sucursal" />
                 </SelectTrigger>
                 <SelectContent>
                   {PICKUP_STORES.map((store) => (
