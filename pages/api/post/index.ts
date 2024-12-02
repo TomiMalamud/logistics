@@ -1,6 +1,7 @@
 // pages/api/post/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
+import { sendDeliveryScheduleEmail } from "@/utils/emails";
 
 export default async function handler(
   req: NextApiRequest,
@@ -107,6 +108,16 @@ export default async function handler(
       }
 
       res.status(200).json({ message: "Delivery created successfully" });
+      // In your POST handler, after successful delivery creation:
+      if (scheduled_date && req.body.email) {
+        await sendDeliveryScheduleEmail({
+          email: req.body.email,
+          customerName: name,
+          scheduledDate: scheduled_date,
+          phone,
+          address
+        });
+      }
     } catch (error) {
       console.error("Unexpected error:", error);
       res.status(400).json({ error: (error as Error).message });
