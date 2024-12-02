@@ -43,6 +43,7 @@ export interface Customer {
     invoice_id: number | null,
     balance: number | null,
     delivery_cost: number | null,
+    delivery_date: string | null,
     carrier_id: number | null,
   }
   

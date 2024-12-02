@@ -112,6 +112,13 @@ const Delivery: React.FC<DeliveryProps> = ({
               Visitaremos el domicilio...
             </p>
           </div>
+        ) : delivery.state === "delivered" ? (
+          <div>
+            <h1 className="font-medium text-black">Entregado</h1>
+            <p className="text-sm mt-1 text-slate-500">
+              {delivery.delivery_date && `El ${deliveryLogic.formatDate(delivery.delivery_date)}` }
+            </p>
+          </div>
         ) : delivery.scheduled_date ? (
           <div>
             {new Date(delivery.scheduled_date).toISOString().split("T")[0] <
@@ -197,7 +204,7 @@ const Delivery: React.FC<DeliveryProps> = ({
                   initialCarrierId={delivery.carrier_id}
                   carriers={carriers}
                   onConfirm={deliveryLogic.handleUpdateDeliveryDetails}
-                  isUpdating={deliveryLogic.isUpdatingDeliveryDetails}                 
+                  isUpdating={deliveryLogic.isUpdatingDeliveryDetails}
                 />
               </DropdownMenuItem>
             </DropdownMenuContent>
