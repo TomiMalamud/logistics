@@ -1,10 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "PUT") {
     const { id } = req.query;
     const { state, scheduled_date, delivery_cost, carrier_id, pickup_store } = req.body;
@@ -14,31 +11,38 @@ export default async function handler(
     }
 
     try {
+      // Fetch existing delivery with customer data
       const { data: existingDelivery, error: fetchError } = await supabase
         .from("deliveries")
-        .select("*")
+        .select(`
+          *,
+          customers (
+            name,
+            email,
+            address
+          )
+        `)
         .eq("id", id)
         .single();
 
-      if (fetchError) {
-        throw new Error(`Error fetching delivery: ${fetchError.message}`);
-      }
+      if (fetchError) throw new Error(`Error fetching delivery: ${fetchError.message}`);
+      if (!existingDelivery) return res.status(404).json({ error: "Delivery not found" });
 
-      if (!existingDelivery) {
-        return res.status(404).json({ error: "Delivery not found" });
-      }
+      // Check if scheduled_date has changed
+      const isScheduleDateChanged = scheduled_date && 
+        (!existingDelivery.scheduled_date || 
+         new Date(scheduled_date).getTime() !== new Date(existingDelivery.scheduled_date).getTime());
 
-      // Prepare updates
+      // Update delivery
       const updates = {
-        ...(state &&
-          ["pending", "delivered"].includes(state) && {
-            state,
-            ...(state === "delivered" && {
-              delivery_date: new Date().toLocaleString("en-US", {
-                timeZone: "America/Argentina/Buenos_Aires"
-              })
+        ...(state && ["pending", "delivered"].includes(state) && {
+          state,
+          ...(state === "delivered" && {
+            delivery_date: new Date().toLocaleString("en-US", {
+              timeZone: "America/Argentina/Buenos_Aires"
             })
-          }),
+          })
+        }),
         ...(scheduled_date && { scheduled_date }),
         ...(delivery_cost && { delivery_cost }),
         ...(carrier_id && { carrier_id }),
@@ -51,11 +55,29 @@ export default async function handler(
         .eq("id", id)
         .select();
 
-      if (updateError) {
-        throw new Error(`Error updating delivery: ${updateError.message}`);
+      if (updateError) throw new Error(`Error updating delivery: ${updateError.message}`);
+
+      // Send email if scheduled date changed and customer has email
+      if (isScheduleDateChanged && existingDelivery.customers.email) {
+        try {
+          await fetch('/api/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerName: existingDelivery.customers.name,
+              email: existingDelivery.customers.email,
+              scheduledDate: scheduled_date,
+              products: existingDelivery.products,
+              address: existingDelivery.customers.address,
+            }),
+          });
+        } catch (emailError) {
+          console.error('Failed to send email:', emailError);
+          // Don't throw error here - we still want to complete the delivery update
+        }
       }
 
-      // Add note for state change
+      // Add state change note
       if (state && state !== existingDelivery.state) {
         const deliveryId = parseInt(id as string, 10);
         let noteText = "";
@@ -75,26 +97,18 @@ export default async function handler(
               .eq("id", carrier_id)
               .single();
 
-            if (carrierError) {
-              throw new Error(`Error fetching carrier: ${carrierError.message}`);
-            }
-
+            if (carrierError) throw new Error(`Error fetching carrier: ${carrierError.message}`);
             noteText = `Entregado por ${carrier.name} con un costo de $${delivery_cost}`;
           }
         } else if (state === "pending") {
           noteText = "Marcado como 'Pendiente'";
         }
 
-        const { error: noteError } = await supabase.from("notes").insert([
-          {
-            text: noteText,
-            delivery_id: deliveryId
-          }
-        ]);
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert([{ text: noteText, delivery_id: deliveryId }]);
 
-        if (noteError) {
-          throw new Error(`Error adding note: ${noteError.message}`);
-        }
+        if (noteError) throw new Error(`Error adding note: ${noteError.message}`);
       }
 
       res.status(200).json({ message: "Delivery updated successfully" });

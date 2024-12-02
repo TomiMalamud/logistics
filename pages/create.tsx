@@ -21,6 +21,7 @@ interface FormData {
   phone: string;
   scheduled_date: string;
   notes: string;
+  email: string | null; 
 }
 
 const initialFormData: FormData = {
@@ -29,6 +30,7 @@ const initialFormData: FormData = {
   phone: "",
   scheduled_date: "",
   notes: "",
+  email: null 
 };
 
 const Create: React.FC<CreateProps> = ({ user }) => {
@@ -80,7 +82,8 @@ const Create: React.FC<CreateProps> = ({ user }) => {
           address: customer.Ciudad !== "VILLA CARLOS PAZ" && customer.Ciudad !== "SIN IDENTIFICAR" && customer.Ciudad !== ""
             ? `${customer.Domicilio} - ${customer.Ciudad}`
             : customer.Domicilio,
-          phone: sanitizedPhone
+          phone: sanitizedPhone,
+          email: customer.Email || null
         }));
         
         // Validate the sanitized phone number
@@ -94,7 +97,8 @@ const Create: React.FC<CreateProps> = ({ user }) => {
         setFormData(prev => ({
           ...prev,
           address: "",
-          phone: ""
+          phone: "",
+          email: null  
         }));
       } finally {
         setFieldsLoading(false);

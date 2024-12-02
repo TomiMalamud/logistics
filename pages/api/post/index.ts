@@ -19,9 +19,8 @@ export default async function handler(
         phone,
         scheduled_date,
         notes,
-        created_by        
+        created_by
       } = req.body;
-      
 
       // Check for missing required fields
       if (!order_date || !products || !name || !address || !phone) {
@@ -46,16 +45,22 @@ export default async function handler(
       if (customerData) {
         // Customer exists
         customer_id = customerData.id;
+        await supabase
+          .from("customers")
+          .update({ email: req.body.email })
+          .eq("id", customer_id);
       } else {
         // Insert new customer and retrieve the id
         const { data: newCustomer, error: newCustomerError } = await supabase
           .from("customers")
-          .insert([{ name, address, phone }])
-          .select("id") // Ensure the id is returned
+          .insert([{ name, address, phone, email: req.body.email || null }])
+          .select("id")
           .single();
 
         if (newCustomerError) {
-          throw new Error(`Error creating customer: ${newCustomerError.message}`);
+          throw new Error(
+            `Error creating customer: ${newCustomerError.message}`
+          );
         }
 
         customer_id = newCustomer.id;
@@ -74,7 +79,7 @@ export default async function handler(
             created_by: created_by,
             invoice_number,
             invoice_id,
-            balance            
+            balance
           }
         ])
         .select("*")
@@ -86,7 +91,9 @@ export default async function handler(
 
       // Ensure we have valid delivery data
       if (!deliveryData || !deliveryData.id) {
-        throw new Error("Delivery creation failed, delivery data is null or invalid");
+        throw new Error(
+          "Delivery creation failed, delivery data is null or invalid"
+        );
       }
 
       if (notes && notes.trim() !== "") {
