@@ -8,9 +8,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter
-} from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,16 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
-// Type definitions
 type Carrier = {
   id: number;
   name: string;
 };
 
 type FormData = {
-  delivery_cost: number;
-  carrier_id: number;
+  delivery_cost?: number;
+  carrier_id?: number;
+  pickup_store?: "cd" | "9dejulio" | "carcano";
+  delivery_type: "carrier" | "pickup";
 };
 
 type StateDialogProps = {
@@ -40,11 +43,11 @@ type StateDialogProps = {
   isConfirming: boolean;
 };
 
-const isDeliveryCostValid = (cost: string): boolean => {
-  const numValue = parseFloat(cost);
-  return !isNaN(numValue) && numValue > 0;
-};
-
+const PICKUP_STORES = [
+  { value: "cd", label: "CD" },
+  { value: "9dejulio", label: "9 de Julio" },
+  { value: "carcano", label: "Carcano" }
+] as const;
 
 const useCarriers = () => {
   const [carriers, setCarriers] = useState<Carrier[]>([]);
@@ -67,7 +70,11 @@ const useCarriers = () => {
   return carriers;
 };
 
-// Main component
+const isDeliveryCostValid = (cost: string): boolean => {
+  const numValue = parseFloat(cost);
+  return !isNaN(numValue) && numValue > 0;
+};
+
 const StateDialog: React.FC<StateDialogProps> = ({
   state,
   setState,
@@ -77,28 +84,36 @@ const StateDialog: React.FC<StateDialogProps> = ({
   onConfirm,
   isConfirming
 }) => {
-
+  const [deliveryType, setDeliveryType] = useState<"carrier" | "pickup">("carrier");
   const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost?.toString() ?? "");
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(initialCarrierId);
+  const [selectedStore, setSelectedStore] = useState<"cd" | "9dejulio" | "carcano" | undefined>();
   
   const carriers = useCarriers();
-
-
 
   const handleDeliveryCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDeliveryCost(e.target.value);
   };
 
-  const handleConfirmStateChange = async () => {
-    if (!isDeliveryCostValid(deliveryCost) || !selectedCarrierId) {
+  const handleFormSubmit = async () => {
+    const formData: FormData = {
+      delivery_type: deliveryType,
+      ...(deliveryType === "carrier" && {
+        delivery_cost: isDeliveryCostValid(deliveryCost) ? parseFloat(deliveryCost) : undefined,
+        carrier_id: selectedCarrierId
+      }),
+      ...(deliveryType === "pickup" && {
+        pickup_store: selectedStore
+      })
+    };
+
+    if (
+      (deliveryType === "carrier" && (!isDeliveryCostValid(deliveryCost) || !selectedCarrierId)) ||
+      (deliveryType === "pickup" && !selectedStore)
+    ) {
       return;
     }
-  
-    const formData = {
-      delivery_cost: parseFloat(deliveryCost),
-      carrier_id: selectedCarrierId
-    };
-  
+
     try {
       await onConfirm(formData);
     } catch (error) {
@@ -111,7 +126,10 @@ const StateDialog: React.FC<StateDialogProps> = ({
     setShowStateAlertDialog(true);
   };
 
-  const isSubmitDisabled = !selectedCarrierId || isConfirming;
+  const isSubmitDisabled = 
+    isConfirming || 
+    (deliveryType === "carrier" && (!selectedCarrierId || !isDeliveryCostValid(deliveryCost))) ||
+    (deliveryType === "pickup" && !selectedStore);
 
   return (
     <Dialog>
@@ -128,52 +146,94 @@ const StateDialog: React.FC<StateDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Marcar como Entregada</DialogTitle>
           <DialogDescription>
-            Indicá el costo de envío estimado y el transporte responsable.
+            Seleccione el tipo de entrega y complete los datos correspondientes.
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col gap-4 mt-4">
+          <RadioGroup 
+            defaultValue="carrier"
+            value={deliveryType}
+            onValueChange={(value) => setDeliveryType(value as "carrier" | "pickup")}
+            className="gap-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="carrier" id="carrier" />
+              <Label htmlFor="carrier">Envío por transporte</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="pickup" id="pickup" />
+              <Label htmlFor="pickup">Retiro en sucursal</Label>
+            </div>
+          </RadioGroup>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Costo de envío</label>
-            <Input
-              type="number"
-              placeholder="Costo"
-              value={deliveryCost}
-              onChange={handleDeliveryCostChange}
-              required
-              min="0"
-              step="1"
-            />
-          </div>
+          {deliveryType === "carrier" ? (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Costo de envío</label>
+                <Input
+                  type="number"
+                  placeholder="Costo"
+                  value={deliveryCost}
+                  onChange={handleDeliveryCostChange}
+                  required
+                  min="0"
+                  step="1"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Transporte</label>
-            <Select 
-              value={selectedCarrierId?.toString()} 
-              onValueChange={(value) => setSelectedCarrierId(parseInt(value))}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar transporte" />
-              </SelectTrigger>
-              <SelectContent>
-                {carriers.map((carrier) => (
-                  <SelectItem 
-                    key={carrier.id} 
-                    value={carrier.id.toString()}
-                  >
-                    {carrier.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Transporte</label>
+                <Select 
+                  value={selectedCarrierId?.toString()} 
+                  onValueChange={(value) => setSelectedCarrierId(parseInt(value))}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar transporte" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {carriers.map((carrier) => (
+                      <SelectItem 
+                        key={carrier.id} 
+                        value={carrier.id.toString()}
+                      >
+                        {carrier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Sucursal</label>
+              <Select
+                value={selectedStore}
+                onValueChange={(value) => setSelectedStore(value as typeof selectedStore)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar sucursal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PICKUP_STORES.map((store) => (
+                    <SelectItem 
+                      key={store.value} 
+                      value={store.value}
+                    >
+                      {store.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
           <Button
-            onClick={handleConfirmStateChange}
+            onClick={handleFormSubmit}
             disabled={isSubmitDisabled}
             className="w-full"
           >

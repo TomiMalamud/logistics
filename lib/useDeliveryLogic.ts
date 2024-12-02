@@ -79,23 +79,33 @@ export const useDeliveryLogic = ({
   };
 
   const handleConfirmStateChange = async (formData: {
-    delivery_cost: number;
-    carrier_id: number;
+    delivery_cost?: number;
+    carrier_id?: number;
+    pickup_store?: "cd" | "9dejulio" | "carcano";
+    delivery_type: "carrier" | "pickup";
   }) => {
     setIsConfirming(true);
-
+  
     try {
       const newState = state === "delivered" ? "pending" : "delivered";
-
+  
       // Prepare update data
       const updateData = {
         state: newState,
         ...(newState === "delivered" && {
-          delivery_cost: formData.delivery_cost,
-          carrier_id: formData.carrier_id
+          ...(formData.delivery_type === "carrier" && {
+            delivery_cost: formData.delivery_cost,
+            carrier_id: formData.carrier_id,
+            pickup_store: null // Clear pickup store if carrier delivery
+          }),
+          ...(formData.delivery_type === "pickup" && {
+            pickup_store: formData.pickup_store,
+            delivery_cost: null, // Clear delivery cost if pickup
+            carrier_id: null // Clear carrier if pickup
+          })
         })
       };
-
+  
       await updateField(updateData);
       setState(newState);
       setShowStateAlertDialog(false);
@@ -107,7 +117,7 @@ export const useDeliveryLogic = ({
       setIsConfirming(false);
     }
   };
-
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
 

@@ -7,15 +7,13 @@ export default async function handler(
 ) {
   if (req.method === "PUT") {
     const { id } = req.query;
-    const { state, scheduled_date, delivery_cost, carrier_id } =
-      req.body;
+    const { state, scheduled_date, delivery_cost, carrier_id, pickup_store } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Missing delivery ID" });
     }
 
     try {
-      // Fetch existing delivery
       const { data: existingDelivery, error: fetchError } = await supabase
         .from("deliveries")
         .select("*")
@@ -36,7 +34,6 @@ export default async function handler(
           ["pending", "delivered"].includes(state) && {
             state,
             ...(state === "delivered" && {
-              // Set delivery_date in Argentina timezone
               delivery_date: new Date().toLocaleString("en-US", {
                 timeZone: "America/Argentina/Buenos_Aires"
               })
@@ -44,9 +41,10 @@ export default async function handler(
           }),
         ...(scheduled_date && { scheduled_date }),
         ...(delivery_cost && { delivery_cost }),
-        ...(carrier_id && { carrier_id })
+        ...(carrier_id && { carrier_id }),
+        ...(pickup_store && { pickup_store })
       };
-      // Update delivery
+
       const { data, error: updateError } = await supabase
         .from("deliveries")
         .update(updates)
@@ -63,18 +61,26 @@ export default async function handler(
         let noteText = "";
 
         if (state === "delivered") {
-          // Fetch carrier name if carrier_id is provided
-          const { data: carrier, error: carrierError } = await supabase
-            .from("carriers")
-            .select("name")
-            .eq("id", carrier_id)
-            .single();
+          if (pickup_store) {
+            const storeNames = {
+              cd: "CD",
+              "9dejulio": "9 de Julio",
+              carcano: "Carcano"
+            };
+            noteText = `Retiro en sucursal: ${storeNames[pickup_store]}`;
+          } else if (carrier_id) {
+            const { data: carrier, error: carrierError } = await supabase
+              .from("carriers")
+              .select("name")
+              .eq("id", carrier_id)
+              .single();
 
-          if (carrierError) {
-            throw new Error(`Error fetching carrier: ${carrierError.message}`);
+            if (carrierError) {
+              throw new Error(`Error fetching carrier: ${carrierError.message}`);
+            }
+
+            noteText = `Entregado por ${carrier.name} con un costo de $${delivery_cost}`;
           }
-
-          noteText = `Entregado por ${carrier.name} con un costo de $${delivery_cost}`;
         } else if (state === "pending") {
           noteText = "Marcado como 'Pendiente'";
         }
