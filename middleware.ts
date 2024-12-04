@@ -5,10 +5,15 @@ import { updateSession } from '@/utils/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
+  // Allow access to reset-password page without authentication
+  if (request.nextUrl.pathname === '/reset-password' || 
+    request.nextUrl.searchParams.has('token')) {
+  return NextResponse.next()
+}
+
   // Update session first
   const response = await updateSession(request)
   
-  // Now we can safely get the user
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -17,13 +22,12 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set() {}, // We don't need to set cookies here
-        remove() {}, // We don't need to remove cookies here
+        set() {}, 
+        remove() {}, 
       },
     }
   )
 
-  // Use getUser instead of getSession as per docs recommendation
   const { data: { user }, error } = await supabase.auth.getUser()
 
   // Protect all routes except login

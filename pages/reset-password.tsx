@@ -1,52 +1,72 @@
 // pages/reset-password.tsx
-import { useRouter } from 'next/router'
-import { useState, useEffect } from 'react'
-import { createClient } from '@/utils/supabase/component'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/component";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
-  const supabase = createClient()
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const supabase = createClient();
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if we have the recovery token
-    const hash = window.location.hash
-    if (!hash || !hash.includes('access_token')) {
-      router.push('/login')
+    async function handleAuthStateChange() {
+      // Listen for auth state changes
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session && !window.location.hash && !router.query.token) {
+        router.push("/login");
+      }
     }
-  }, [router])
+
+    handleAuthStateChange();
+  }, [router, supabase.auth]);
 
   const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
-    setMessage('')
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setMessage("");
 
     try {
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
-      })
+      });
 
       if (updateError) {
-        setError('Error al actualizar la contraseña. Por favor, intente nuevamente.')
-        return
+        setError(
+          "Error al actualizar la contraseña. Por favor, intente nuevamente."
+        );
+        return;
       }
 
-      setMessage('Contraseña actualizada correctamente')
-      setTimeout(() => router.push('/login'), 2000)
+      setMessage("Contraseña actualizada correctamente");
+
+      // Sign out after password reset
+      await supabase.auth.signOut();
+
+      // Redirect after a short delay
+      setTimeout(() => router.push("/login"), 2000);
     } catch (err) {
-      setError('Ha ocurrido un error. Por favor, intente nuevamente.')
+      setError("Ha ocurrido un error. Por favor, intente nuevamente.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -86,15 +106,15 @@ export default function ResetPasswordPage() {
           </form>
         </CardContent>
         <CardFooter className="flex justify-end">
-          <Button 
-            onClick={handlePasswordReset} 
+          <Button
+            onClick={handlePasswordReset}
             disabled={isLoading}
             className="w-full sm:w-auto"
           >
-            {isLoading ? 'Actualizando...' : 'Actualizar Contraseña'}
+            {isLoading ? "Actualizando..." : "Actualizar Contraseña"}
           </Button>
         </CardFooter>
       </Card>
     </main>
-  )
+  );
 }
