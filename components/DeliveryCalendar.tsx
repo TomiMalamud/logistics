@@ -137,8 +137,8 @@ const DeliveryCalendar = ({ searchUrl }) => {
           </TooltipTrigger>
           <TooltipContent>
             <div className="space-y-1">
-              <p>🛏️ {delivery.products}</p>
-              <p>📍 {delivery.customers?.address}</p>
+              <p>🛏️ {titleCase(delivery.products.toLowerCase())}</p>
+              <p>📍 {titleCase(delivery.customers?.address.toLowerCase())}</p>
               <p>📱 {delivery.customers?.phone}</p>
               {delivery.type === "delivered" && <p>✅ Entregado</p>}
             </div>
