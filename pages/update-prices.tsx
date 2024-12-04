@@ -12,12 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Upload } from "lucide-react";
-
 import type { User } from "@supabase/supabase-js";
-import type { GetServerSidePropsContext } from "next";
-
-import { createClient } from "@/utils/supabase/server-props";
-
 
 interface ERPRow {
   SKU: string;
@@ -73,7 +68,8 @@ export default function UpdatePrices({ user }: { user: User }) {
         );
       } finally {
         if (erpButtonRef.current) {
-          erpButtonRef.current.textContent = "Archivo de Contabilium subido correctamente.";
+          erpButtonRef.current.textContent =
+            "Archivo de Contabilium subido correctamente.";
           erpButtonRef.current.disabled = false;
         }
       }
@@ -117,15 +113,19 @@ export default function UpdatePrices({ user }: { user: User }) {
     const notFound: EcommerceRow[] = [];
 
     const updatedData = ecommerceData.map((ecommerceRow) => {
-      const erpRow = erpData.find((erp) => erp.SKU === ecommerceRow["Código de barras"]);
+      const erpRow = erpData.find(
+        (erp) => erp.SKU === ecommerceRow["Código de barras"]
+      );
       if (erpRow) {
         updatedCount++;
         console.log(`Matching SKU found: ${erpRow.SKU}`);
-        console.log(`Old price: ${ecommerceRow["Precio promocional"]}, New price: ${erpRow["Precio Final"]}`);
-        
+        console.log(
+          `Old price: ${ecommerceRow["Precio promocional"]}, New price: ${erpRow["Precio Final"]}`
+        );
+
         const newPrecioPromocional = erpRow["Precio Final"];
         const newPrecio = Math.round(newPrecioPromocional / (1 - 0.45));
-        
+
         return {
           ...ecommerceRow,
           "Precio promocional": newPrecioPromocional.toString(),
@@ -134,7 +134,9 @@ export default function UpdatePrices({ user }: { user: User }) {
       } else {
         notFoundCount++;
         notFound.push(ecommerceRow);
-        console.log(`No matching SKU found for: ${ecommerceRow["Código de barras"]}`);
+        console.log(
+          `No matching SKU found for: ${ecommerceRow["Código de barras"]}`
+        );
         return ecommerceRow;
       }
     });
@@ -198,7 +200,7 @@ export default function UpdatePrices({ user }: { user: User }) {
                 </a>
               </li>
               <li>
-                Descargá el archivo .csv de productos desde{" "}                
+                Descargá el archivo .csv de productos desde{" "}
                 <a
                   href="https://rohisommiers2.mitiendanube.com/admin/v2/products/import?categoryId=11051538&published=true"
                   target="_blank"
@@ -210,9 +212,16 @@ export default function UpdatePrices({ user }: { user: User }) {
               </li>
               <li>Subilos a ambos usando los botones de abajo</li>
               <li>Hacé click en el botón de Actualizar Precios</li>
-              <li>Verificá que los precios se hayan actualizado abriendo <span className="text-gray-500">precios_actualizados_tiendanube.csv</span> (que se acaba de descargar).</li>
-              <li>Subí el archivo creado a{" "}
-              <a
+              <li>
+                Verificá que los precios se hayan actualizado abriendo{" "}
+                <span className="text-gray-500">
+                  precios_actualizados_tiendanube.csv
+                </span>{" "}
+                (que se acaba de descargar).
+              </li>
+              <li>
+                Subí el archivo creado a{" "}
+                <a
                   href="https://rohisommiers2.mitiendanube.com/admin/v2/products/import/"
                   target="_blank"
                   rel="noreferrer"
@@ -221,7 +230,10 @@ export default function UpdatePrices({ user }: { user: User }) {
                   Tienda Nube
                 </a>
               </li>
-              <li>¡Listo! Verificá los cambios luego de 10 minutos en la página. Deben coindicir con Contabilium.</li>
+              <li>
+                ¡Listo! Verificá los cambios luego de 10 minutos en la página.
+                Deben coindicir con Contabilium.
+              </li>
             </ol>
           </div>
           <div>
@@ -264,9 +276,10 @@ export default function UpdatePrices({ user }: { user: User }) {
           <Button onClick={updatePrices} className="w-full" variant="default">
             Actualizar Precios
           </Button>
-          
         </CardFooter>
-        <p className="text-center mb-4">Nota: Sólo sirve para actualizar colchones y sommiers</p>
+        <p className="text-center mb-4">
+          Nota: Sólo sirve para actualizar colchones y sommiers
+        </p>
       </Card>
       {notFoundProducts.length > 1 && (
         <Card className="w-full max-w-xl mx-auto mt-4">
@@ -277,35 +290,14 @@ export default function UpdatePrices({ user }: { user: User }) {
             <ul className="list-disc pl-5">
               {notFoundProducts.map((product, index) => (
                 <li key={index}>
-                  Código de barras: {product["Código de barras"]}, Nombre: {product["Nombre"]}
+                  Código de barras: {product["Código de barras"]}, Nombre:{" "}
+                  {product["Nombre"]}
                 </li>
               ))}
             </ul>
           </CardContent>
         </Card>
       )}
-
     </div>
   );
-}
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const supabase = createClient(context);
-
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false
-      }
-    };
-  }
-
-  return {
-    props: {
-      user: data.user
-    }
-  };
 }

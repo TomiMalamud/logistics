@@ -3,7 +3,7 @@ import Head from "next/head";
 import { Button } from "./ui/button";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/component";
 import { useCallback, useMemo } from "react";
 
 interface LayoutProps {
@@ -17,49 +17,74 @@ interface NavItem {
   showOnMobile: boolean;
 }
 
-const Layout = ({ 
-  children, 
-  title = "Entregas | ROHI Sommiers" 
+const Layout = ({
+  children,
+  title = "Entregas | ROHI Sommiers"
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
-  
-  const navItems: NavItem[] = useMemo(() => [
-    { path: "/", label: "✔️ Entregas", showOnMobile: true },
-    { path: "/deliveries/calendar", label: "🗓️ Calendario", showOnMobile: true },
-    { path: "/carriers", label: "🚚 Transportes", showOnMobile: true },
-    { path: "/update-prices", label: "Actualizar Precios", showOnMobile: false }
-  ], []);
+  const supabase = createClient();
+
+  const navItems: NavItem[] = useMemo(
+    () => [
+      { path: "/", label: "✔️ Entregas", showOnMobile: true },
+      {
+        path: "/deliveries/calendar",
+        label: "🗓️ Calendario",
+        showOnMobile: true
+      },
+      { path: "/carriers", label: "🚚 Transportes", showOnMobile: true },
+      {
+        path: "/update-prices",
+        label: "Actualizar Precios",
+        showOnMobile: false
+      }
+    ],
+    []
+  );
 
   const handleSignOut = useCallback(async () => {
     try {
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      await router.push("/login");
+
+      // Clear any local storage or cookies if needed
+      localStorage.removeItem("supabase.auth.token");
+
+      // Use replace instead of push to prevent back navigation
+      await router.replace("/login");
     } catch (error) {
       console.error("Error signing out:", error);
+      // Optionally show an error message to the user
+      alert("Error al cerrar sesión. Por favor, intente nuevamente.");
     }
-  }, [router]);
+  }, [router, supabase]);
 
-  const getNavButtonClasses = useCallback((path: string, showOnMobile: boolean): string => {
-    const baseClasses = "text-gray-600";
-    const mobileClasses = showOnMobile ? "" : "hidden md:block";
-    const activeClasses = router.pathname === path ? "font-bold" : "";
-    
-    return `${baseClasses} ${mobileClasses} ${activeClasses}`.trim();
-  }, [router.pathname]);
+  const getNavButtonClasses = useCallback(
+    (path: string, showOnMobile: boolean): string => {
+      const baseClasses = "text-gray-600";
+      const mobileClasses = showOnMobile ? "" : "hidden md:block";
+      const activeClasses = router.pathname === path ? "font-bold" : "";
 
-  const renderNavButtons = useCallback(() => 
-    navItems.map(({ path, label, showOnMobile }) => (
-      <Button 
-        key={path}
-        variant="link" 
-        className={getNavButtonClasses(path, showOnMobile)}
-        asChild
-      >
-        <Link href={path}>{label}</Link>
-      </Button>
-    ))
-  , [navItems, getNavButtonClasses]);
+      return `${baseClasses} ${mobileClasses} ${activeClasses}`.trim();
+    },
+    [router.pathname]
+  );
+
+  const renderNavButtons = useCallback(
+    () =>
+      navItems.map(({ path, label, showOnMobile }) => (
+        <Button
+          key={path}
+          variant="link"
+          className={getNavButtonClasses(path, showOnMobile)}
+          asChild
+        >
+          <Link href={path}>{label}</Link>
+        </Button>
+      )),
+    [navItems, getNavButtonClasses]
+  );
 
   return (
     <>
@@ -73,17 +98,15 @@ const Layout = ({
           <div className="flex items-center space-x-2">
             {renderNavButtons()}
           </div>
-          <Button 
-            variant="link" 
-            className="text-gray-600 md:block hidden" 
+          <Button
+            variant="link"
+            className="text-gray-600 md:block hidden"
             onClick={handleSignOut}
           >
             Cerrar Sesión
           </Button>
         </nav>
-        <section>
-          {children}
-        </section>
+        <section>{children}</section>
       </main>
     </>
   );

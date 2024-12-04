@@ -246,45 +246,45 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
     </Layout>
   );
 };
-
 export default Index;
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const supabase = createClient(context);
+  const supabase = createClient(context)
 
-  const { data, error } = await supabase.auth.getUser();
+  // Use getUser instead of checking session
+  const { data: { user }, error } = await supabase.auth.getUser()
 
-  if (error || !data.user) {
+  if (error || !user) {
     return {
       redirect: {
-        destination: "/login",
+        destination: '/login',
         permanent: false
       }
-    };
+    }
   }
 
-  const user = data.user;
+  // Fetch profile data
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('name')
+    .eq('id', user.id)
+    .single()
 
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
-    .select("name")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profileData) {
-    console.error("Error fetching profile:", profileError);
+  if (profileError) {
+    console.error('Error fetching profile:', profileError)
     return {
       props: {
         user,
         profile: null
       }
-    };
+    }
   }
 
   return {
     props: {
       user,
-      profile: profileData
+      profile: profile || null // Ensure we always return null if no profile
     }
-  };
+  }
 }
+

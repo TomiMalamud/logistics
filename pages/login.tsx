@@ -15,27 +15,29 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  async function logIn(e) {
+  async function logIn(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setIsLoading(true)
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
       })
 
-      if (authError) {
-        if (authError.message.includes('Invalid login')) {
-          setError('Email o contraseña incorrecta')
-        } else {
-          setError('Ha ocurrido un error. Por favor, intente nuevamente.')
-        }
+      if (signInError) {
+        setError(signInError.message === 'Invalid login credentials' 
+          ? 'Email o contraseña incorrecta'
+          : 'Ha ocurrido un error. Por favor, intente nuevamente.'
+        )
         return
       }
 
-      router.push('/')
+      // The middleware will handle the redirect
+      if (data?.session) {
+        router.push('/')
+      }
     } catch (err) {
       setError('Ha ocurrido un error. Por favor, intente nuevamente.')
     } finally {

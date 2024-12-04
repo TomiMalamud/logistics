@@ -1,3 +1,4 @@
+// utils/supabase/static-props.ts
 import { createClient as createClientPrimitive } from '@supabase/supabase-js'
 
 export function createClient() {

@@ -241,9 +241,11 @@ export default Create;
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const supabase = createClient(context);
-  const { data, error } = await supabase.auth.getUser();
 
-  if (error || !data.user) {
+  // Use getUser instead of checking session
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
     return {
       redirect: {
         destination: "/login",
@@ -252,9 +254,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // We still need to return the user for created_by
   return {
     props: {
-      user: data.user
+      user: {
+        id: user.id, // Only pass the id since that's what we need
+      }
     }
   };
 }
