@@ -24,8 +24,9 @@ const Layout = ({
   const router = useRouter();
   
   const navItems: NavItem[] = useMemo(() => [
-    { path: "/", label: "Entregas", showOnMobile: false },
-    { path: "/carriers", label: "Transportes", showOnMobile: true },
+    { path: "/", label: "✔️ Entregas", showOnMobile: true },
+    { path: "/deliveries/calendar", label: "🗓️ Calendario", showOnMobile: true },
+    { path: "/carriers", label: "🚚 Transportes", showOnMobile: true },
     { path: "/update-prices", label: "Actualizar Precios", showOnMobile: false }
   ], []);
 
@@ -74,7 +75,7 @@ const Layout = ({
           </div>
           <Button 
             variant="link" 
-            className="text-gray-600" 
+            className="text-gray-600 md:block hidden" 
             onClick={handleSignOut}
           >
             Cerrar Sesión

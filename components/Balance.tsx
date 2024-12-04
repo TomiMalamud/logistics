@@ -36,7 +36,7 @@ const Saldo: React.FC<SaldoProps> = ({ invoice_id }) => {
         setSaldo(fetchedSaldo);
         setSaldoInCache(invoice_id, fetchedSaldo);
       } catch (err) {        
-        setError('No se encontró la factura. Probá recargando la página.');
+        setError('No se encontró la factura y no conocemos el saldo pendiente. Recargá la página.');
       }
     };
 
