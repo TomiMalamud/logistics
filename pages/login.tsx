@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import ResetPassword from '@/components/ResetPassword'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showResetPassword, setShowResetPassword] = useState(false)
 
   async function logIn(e: React.FormEvent) {
     e.preventDefault()
@@ -43,6 +45,14 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (showResetPassword) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-gray-100">
+        <ResetPassword onBack={() => setShowResetPassword(false)} />
+      </main>
+    )
   }
 
   return (
@@ -82,9 +92,14 @@ export default function LoginPage() {
                 className="w-full"
               />
             </div>
-            <div className="text-sm text-gray-500 mt-2">
-              ¿Olvidaste tu contraseña? Contacta al administrador para restablecerla.
-            </div>
+            <Button
+              type="button"
+              variant="link"
+              className="text-sm text-gray-500 p-0 h-auto"
+              onClick={() => setShowResetPassword(true)}
+            >
+              ¿Olvidaste tu contraseña?
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-end">
