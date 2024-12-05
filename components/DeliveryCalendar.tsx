@@ -18,6 +18,90 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+
+const DraggableDeliveryItem = ({ delivery, onDragEnd }) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'DELIVERY',
+    item: { id: delivery.id },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    end: (item, monitor: { getDropResult: () => { date: string } | null }) => {
+      const dropResult = monitor.getDropResult();
+      if (dropResult) {
+        onDragEnd(item.id, dropResult.date);
+      }
+    },
+  }));
+
+  const today = new Date().toISOString().split("T")[0];
+  const scheduledDate = delivery.scheduled_date
+    ? delivery.scheduled_date.split("T")[0]
+    : null;
+  const isPastDue = scheduledDate && scheduledDate < today && delivery.state !== "delivered";
+  const isToday = scheduledDate && scheduledDate === today;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            ref={drag}
+            className={`
+              text-xs p-1 rounded cursor-move
+              ${isDragging ? "opacity-50" : "opacity-100"}
+              ${delivery.state === "delivered"
+                ? "bg-gray-50 cursor-auto text-gray-500"
+                : isPastDue && !isToday
+                ? "bg-red-200 hover:bg-red-300"
+                : "bg-blue-50 hover:bg-blue-100"
+              }
+            `}
+          >
+            <div className="truncate">
+              {titleCase(delivery.customers?.name.toLowerCase())}
+            </div>
+            <div className="truncate text-gray-500">
+              {titleCase(delivery.products.toLowerCase())}
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="space-y-1">
+            <p>🛏️ {titleCase(delivery.products.toLowerCase())}</p>
+            <p>📍 {titleCase(delivery.customers?.address.toLowerCase())}</p>
+            <p>📱 {delivery.customers?.phone}</p>
+            {delivery.state === "delivered" && <p>✅ Entregado</p>}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+// Droppable calendar cell component
+const DroppableCell = ({ date, children }) => {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: 'DELIVERY',
+    drop: () => ({ date }),
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  }));
+
+  return (
+    <div
+      ref={drop}
+      className={`h-full min-h-24 p-1 border-gray-200 ${
+        isOver ? "bg-blue-50" : "bg-white"
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
 
 const DeliveryCalendar = ({ searchUrl }) => {
   const [date, setDate] = useState(new Date());
@@ -25,6 +109,29 @@ const DeliveryCalendar = ({ searchUrl }) => {
   const [unscheduledCount, setUnscheduledCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const handleDeliveryDragEnd = async (deliveryId, newDate) => {
+    try {
+      const response = await fetch(`/api/delivery/${deliveryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scheduled_date: newDate,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update delivery date');
+      }
+
+      // Refetch calendar data
+      fetchMonthDeliveries(date);
+    } catch (error) {
+      console.error('Error updating delivery date:', error);
+      // Here you might want to add a toast notification
+    }
+  };
 
   // Helper function to get normalized date string (YYYY-MM-DD)
   const getNormalizedDate = (date) => {
@@ -162,7 +269,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
     const isToday = today === cellDate;
 
     return (
-      <div className="h-full min-h-24 p-1 border-gray-200">
+      <DroppableCell date={dateStr}>
         <div className="font-medium text-sm mb-1 flex justify-start">
           {isToday ? (
             <div className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
@@ -172,10 +279,19 @@ const DeliveryCalendar = ({ searchUrl }) => {
             <span>{day}</span>
           )}
         </div>
-        <div className="space-y-1">{dayDeliveries.map(renderDeliveryItem)}</div>
-      </div>
+        <div className="space-y-1">
+          {dayDeliveries.map((delivery) => (
+            <DraggableDeliveryItem
+              key={delivery.id}
+              delivery={delivery}
+              onDragEnd={handleDeliveryDragEnd}
+            />
+          ))}
+        </div>
+      </DroppableCell>
     );
   };
+
 
   const { daysInMonth, startingDay } = getDaysInMonth(date);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -186,6 +302,8 @@ const DeliveryCalendar = ({ searchUrl }) => {
   const weekDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
   return (
+    <DndProvider backend={HTML5Backend}>
+
     <div className="space-y-4">
       {unscheduledCount > 0 && (
         <Alert variant="destructive">
@@ -276,6 +394,8 @@ const DeliveryCalendar = ({ searchUrl }) => {
         )}
       </Card>
     </div>
+    </DndProvider>
+
   );
 };
 
