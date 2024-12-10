@@ -1,5 +1,3 @@
-// Delivery.tsx
-
 import React, { useEffect, useState } from "react";
 import { useDeliveryLogic } from "@/lib/useDeliveryLogic";
 import { Button } from "./ui/button";
@@ -46,10 +44,7 @@ const useCarriers = () => {
   return carriers;
 };
 
-const Delivery: React.FC<DeliveryProps> = ({
-  delivery: delivery,
-  fetchURL
-}) => {
+export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const carriers = useCarriers();
 
   const deliveryLogic = useDeliveryLogic({
@@ -116,7 +111,8 @@ const Delivery: React.FC<DeliveryProps> = ({
           <div>
             <h1 className="font-medium text-black">Entregado</h1>
             <p className="text-sm mt-1 text-slate-500">
-              {delivery.delivery_date && `El ${deliveryLogic.formatDate(delivery.delivery_date)}` }
+              {delivery.delivery_date &&
+                `El ${deliveryLogic.formatDate(delivery.delivery_date)}`}
             </p>
           </div>
         ) : delivery.scheduled_date ? (
@@ -270,6 +266,6 @@ const Delivery: React.FC<DeliveryProps> = ({
       </div>
     </div>
   );
-};
+}
 
-export default Delivery;
+Delivery.displayName = "Delivery";

@@ -45,7 +45,7 @@ interface FeedResponse {
 }
 
 // Pure function to build URL with search params
-const buildSearchUrl = ({
+function buildSearchUrl({
   state,
   page,
   search,
@@ -55,7 +55,7 @@ const buildSearchUrl = ({
   page: number;
   search: string;
   scheduledDate: string;
-}) => {
+}) {
   const params = new URLSearchParams({
     state,
     page: page.toString(),
@@ -63,9 +63,9 @@ const buildSearchUrl = ({
     scheduledDate
   });
   return `/api/feed?${params.toString()}`;
-};
+}
 
-const Index: React.FC<IndexProps> = ({ user, profile }) => {
+export default function Index({ user, profile }: IndexProps) {
   const [page, setPage] = useState(1);
   const [filterEstado, setFilterEstado] = useState("pending");
   const [filterScheduledDate, setFilterScheduledDate] = useState("all");
@@ -246,7 +246,6 @@ const Index: React.FC<IndexProps> = ({ user, profile }) => {
     </Layout>
   );
 };
-export default Index;
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const supabase = createClient(context)

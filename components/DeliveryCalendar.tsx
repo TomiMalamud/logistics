@@ -75,6 +75,11 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd }) => {
             <div className="truncate text-gray-500">
               {titleCase(delivery.products.toLowerCase())}
             </div>
+            {(delivery.balance > 0 && delivery.state == "pending") && 
+            <div className="text-red-600">
+              Saldo {delivery.balance}
+            </div>
+            }
           </div>
         </TooltipTrigger>
         <TooltipContent>
@@ -265,7 +270,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
       <DroppableCell date={dateStr}>
         <div className="font-medium text-sm m-2 flex justify-between">
           {totalCost > 0 && (
-            <span className="text-gray-500">{formattedTotalCost}</span>
+            <span className="text-gray-500 font-light">{formattedTotalCost}</span>
           )}
           {isToday ? (
             <div className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
@@ -299,15 +304,12 @@ const DeliveryCalendar = ({ searchUrl }) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="space-y-4">
-        {unscheduledCount > 0 && (
           <Alert variant="destructive">
             <AlertDescription>
               Hay <span className="font-bold">{unscheduledCount}</span> entregas
               sin programar que no se ven en el calendario.
             </AlertDescription>
           </Alert>
-        )}
-
         <Card>
           <CardHeader className="flex-row justify-between items-center">
             <div className="flex items-center gap-x-4">

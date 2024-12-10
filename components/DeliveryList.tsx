@@ -1,4 +1,3 @@
-import { memo } from "react";
 import Delivery from "./Delivery";
 import { 
   Pagination, 
@@ -24,12 +23,12 @@ interface DeliveryListProps {
   currentPage: number;
 }
 
-const DeliveryList: React.FC<DeliveryListProps> = memo(({ 
+export default function DeliveryList({ 
   data, 
   searchUrl, 
   onPageChange,
   currentPage 
-}) => {
+}: DeliveryListProps) {
   if (!data?.feed?.length) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -138,8 +137,6 @@ const DeliveryList: React.FC<DeliveryListProps> = memo(({
       </Pagination>
     </div>
   );
-});
+}
 
 DeliveryList.displayName = 'DeliveryList';
-
-export default DeliveryList;

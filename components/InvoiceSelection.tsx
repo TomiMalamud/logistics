@@ -17,7 +17,7 @@ interface ComprobantesSelectProps {
   placeholder?: string;
 }
 
-const InvoiceSelection: React.FC<ComprobantesSelectProps> = ({ onSelect, placeholder = 'Select a invoice_number' }) => {
+export default function InvoiceSelection({ onSelect, placeholder = 'Select a invoice_number' }) {
   const [invoices, setInvoices] = useState<Comprobante[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -78,5 +78,3 @@ const InvoiceSelection: React.FC<ComprobantesSelectProps> = ({ onSelect, placeho
     </Select>
   );
 };
-
-export default InvoiceSelection;

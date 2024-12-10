@@ -1,249 +1,41 @@
-import React, { useState } from "react";
-import Router from "next/router";
-import { Button } from "@/components/ui/button";
-import { Comprobante } from "@/types/api";
-import type { User } from "@supabase/supabase-js";
+import React from "react";
 import type { GetServerSidePropsContext } from "next";
 import { createClient } from "@/utils/supabase/server-props";
-import InvoiceSelection from "@/components/InvoiceSelection";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import FormField from "@/components/FormField";
-import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/phone";
+import CreateDelivery from "@/components/CreateDelivery";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface CreateProps {
-  user: User;
-}
-
-interface FormData {
-  products: string;
-  address: string;
-  phone: string;
-  scheduled_date: string;
-  notes: string;
-  email: string | null; 
-}
-
-const initialFormData: FormData = {
-  products: "",
-  address: "",
-  phone: "",
-  scheduled_date: "",
-  notes: "",
-  email: null 
-};
-
-const Create: React.FC<CreateProps> = ({ user }) => {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [selectedComprobante, setSelectedComprobante] = useState<Comprobante | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [fieldsLoading, setFieldsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [phoneError, setPhoneError] = useState("");
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    if (name === 'phone') {
-      const sanitizedPhone = sanitizePhoneNumber(value);
-      setFormData(prev => ({ ...prev, phone: sanitizedPhone }));
-      
-      if (!sanitizedPhone) {
-        setPhoneError("");
-      } else if (!validatePhoneNumber(sanitizedPhone)) {
-        setPhoneError("El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones.");
-      } else {
-        setPhoneError("");
-      }
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleComprobanteSelect = async (invoice_number: Comprobante) => {
-    setSelectedComprobante(invoice_number);
-    setFieldsLoading(true);
-    setFormData(prev => ({
-      ...prev,
-      address: "Cargando...",
-      phone: "Cargando..."
-    }));
-
-    if (invoice_number?.IdCliente) {
-      try {
-        const res = await fetch(`/api/customer/${invoice_number.IdCliente}`);
-        if (!res.ok) throw new Error("Failed to fetch customer data");
-        const customer = await res.json();
-        
-        const sanitizedPhone = sanitizePhoneNumber(customer.Telefono || "");
-        
-        setFormData(prev => ({
-          ...prev,
-          address: customer.Ciudad !== "VILLA CARLOS PAZ" && customer.Ciudad !== "SIN IDENTIFICAR" && customer.Ciudad !== ""
-            ? `${customer.Domicilio} - ${customer.Ciudad}`
-            : customer.Domicilio,
-          phone: sanitizedPhone,
-          email: customer.Email || null
-        }));
-        
-        // Validate the sanitized phone number
-        if (sanitizedPhone && !validatePhoneNumber(sanitizedPhone)) {
-          setPhoneError("El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones.");
-        } else {
-          setPhoneError("");
-        }
-      } catch (error) {
-        console.error("Error fetching customer data:", error);
-        setFormData(prev => ({
-          ...prev,
-          address: "",
-          phone: "",
-          email: null  
-        }));
-      } finally {
-        setFieldsLoading(false);
-      }
-    } else {
-      setFieldsLoading(false);
-    }
-  };
-
-  const submitData = async (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    if (!selectedComprobante) {
-      setError("No invoice_number selected.");
-      return;
-    }
-    
-    const sanitizedPhone = sanitizePhoneNumber(formData.phone);
-    if (!validatePhoneNumber(sanitizedPhone)) {
-      setPhoneError("El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const body = {
-        ...formData,
-        phone: sanitizedPhone,
-        order_date: new Date(selectedComprobante.FechaAlta).toISOString().split('T')[0],
-        invoice_number: `${selectedComprobante.TipoFc} ${selectedComprobante.Numero}`,
-        invoice_id: selectedComprobante.Id,
-        balance: parseFloat(selectedComprobante.Saldo.replace(',', '.')) || 0,
-        name: selectedComprobante.RazonSocial,
-        created_by: user.id,
-      };
-
-      const response = await fetch("/api/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "An error occurred while saving.");
-      }
-
-      await Router.push("/");
-    } catch (error) {
-      console.error("Submit error:", error);
-      setError(error instanceof Error ? error.message : "An unknown error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function CreateDeliveryPage({ user }) {
   return (
-    <main className="relative flex min-h-screen md:p-10 items-center justify-center">
-      <div className="items-start">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-4">Nueva entrega</h1>
-        <Card>
-          <form onSubmit={submitData}>
-            <CardContent className="w-full md:w-[540px] px-2 py-6 md:px-6 md:py-8">
-              <div className="max-w-xl space-y-3">
-                <FormField label="Factura">
-                  <InvoiceSelection
-                    onSelect={handleComprobanteSelect}
-                    placeholder="Seleccioná un comprobante"
-                  />
-                  {selectedComprobante && selectedComprobante?.Saldo !== "0,00" && (
-                    <Alert className="text-yellow-600 mt-3">
-                      <AlertTitle>Factura adeudada</AlertTitle>
-                      <AlertDescription>
-                        Saldo: $ {selectedComprobante?.Saldo || 'No se pudo obtener el balance. Aclarar en Notas si la factura está adeudada.'}. Recordá
-                        registrar la cobranza cuando cobremos.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </FormField>
-                <FormField
-                  label="Domicilio"
-                  name="address"
-                  value={fieldsLoading ? "Cargando..." : formData.address}
-                  onChange={handleInputChange}
-                  disabled={loading || fieldsLoading || !selectedComprobante}
-                  placeholder="Se completa con Contabilium"
-                />
-                <FormField
-                  label="Celular"
-                  name="phone"
-                  value={fieldsLoading ? "Cargando..." : formData.phone}
-                  onChange={handleInputChange}
-                  disabled={loading || fieldsLoading || !selectedComprobante}
-                  error={phoneError}
-                  placeholder="Se completa con Contabilium"
-                />
-                <FormField
-                  label="Producto"
-                  name="products"
-                  value={formData.products}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  isTextarea
-                  placeholder="Euro 140x190 + 2 Almohadas ZIP + 2 Bases 70x190"
-                />
-                <FormField
-                  label="Fecha de Entrega Programada (opcional)"
-                  name="scheduled_date"
-                  value={formData.scheduled_date}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  type="date"
-                />
-                <FormField
-                  label="Notas"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                  placeholder="Agregar notas y entre qué calles está"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button type="button" variant="link" onClick={() => Router.push("/")}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Cargando..." : "Guardar"}
-              </Button>
-            </CardFooter>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-          </form>
-        </Card>
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="w-[540px] container px-0">
+          <Tabs defaultValue="delivery">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="delivery">Entrega</TabsTrigger>
+              <TabsTrigger value="pickup">Retiro</TabsTrigger>
+              <TabsTrigger value="inter_store">Entre locales</TabsTrigger>
+            </TabsList>
+            <TabsContent value="delivery">
+              <CreateDelivery user={user} />
+            </TabsContent>
+            <TabsContent value="pickup">
+              <p>En proceso</p>
+            </TabsContent>
+            <TabsContent value="inter_store">
+              <p>En proceso</p>
+            </TabsContent>
+          </Tabs>
       </div>
-    </main>
+    </div>
   );
-};
-
-export default Create;
+}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const supabase = createClient(context);
 
-  // Use getUser instead of checking session
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
 
   if (error || !user) {
     return {
@@ -254,11 +46,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  // We still need to return the user for created_by
   return {
     props: {
       user: {
-        id: user.id, // Only pass the id since that's what we need
+        id: user.id
       }
     }
   };

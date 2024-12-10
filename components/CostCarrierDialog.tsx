@@ -27,14 +27,14 @@ type CostCarrierDialogProps = {
   trigger?: React.ReactNode;
 };
 
-const CostCarrierDialog: React.FC<CostCarrierDialogProps> = ({
+export default function CostCarrierDialog({
   initialDeliveryCost,
   initialCarrierId,
   carriers,
   onConfirm,
   isUpdating,
   trigger
-}) => {
+}: CostCarrierDialogProps) {
   const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost?.toString() ?? "");
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(initialCarrierId);
   const [open, setOpen] = useState(false);
@@ -124,6 +124,6 @@ const CostCarrierDialog: React.FC<CostCarrierDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-};
+}
 
-export default CostCarrierDialog;
+CostCarrierDialog.displayName = 'CostCarrierDialog';

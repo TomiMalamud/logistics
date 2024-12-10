@@ -8,7 +8,7 @@ interface SaldoProps {
   invoice_id: number;
 }
 
-const Saldo: React.FC<SaldoProps> = ({ invoice_id }) => {
+export default function Saldo({ invoice_id }: SaldoProps) {
   const [balance, setSaldo] = useState<string | null>(null); // State to store the fetched Saldo
   const [error, setError] = useState<string | null>(null); 
 
@@ -60,5 +60,3 @@ const Saldo: React.FC<SaldoProps> = ({ invoice_id }) => {
     </>
   );
 };
-
-export default Saldo;
