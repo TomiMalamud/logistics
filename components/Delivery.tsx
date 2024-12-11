@@ -18,35 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import CostCarrierDialog from "./CostCarrierDialog";
 
-type Carrier = {
-  id: number;
-  name: string;
-};
-
-const useCarriers = () => {
-  const [carriers, setCarriers] = useState<Carrier[]>([]);
-
-  useEffect(() => {
-    const fetchCarriers = async () => {
-      try {
-        const response = await fetch("/api/carriers");
-        const data = await response.json();
-        setCarriers(data);
-      } catch (error) {
-        console.error("Failed to fetch carriers:", error);
-        setCarriers([]);
-      }
-    };
-
-    fetchCarriers();
-  }, []);
-
-  return carriers;
-};
-
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
-  const carriers = useCarriers();
-
   const deliveryLogic = useDeliveryLogic({
     delivery: {
       ...delivery,
@@ -198,7 +170,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 <CostCarrierDialog
                   initialDeliveryCost={delivery.delivery_cost}
                   initialCarrierId={delivery.carrier_id}
-                  carriers={carriers}
                   onConfirm={deliveryLogic.handleUpdateDeliveryDetails}
                   isUpdating={deliveryLogic.isUpdatingDeliveryDetails}
                 />

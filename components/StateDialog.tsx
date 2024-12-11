@@ -52,56 +52,9 @@ const PICKUP_STORES = [
   { value: "carcano", label: "Carcano" }
 ] as const;
 
-function useCarriers() {
-  const [carriers, setCarriers] = useState<Carrier[]>([]);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    async function fetchCarriers() {
-      try {
-        const response = await fetch('/api/carriers');
-        if (!response.ok) throw new Error('Failed to fetch carriers');
-        const data = await response.json();
-        setCarriers(data);
-      } catch (error) {
-        setError(error instanceof Error ? error : new Error('Unknown error'));
-        setCarriers([]);
-      }
-    }
-    
-    fetchCarriers();
-  }, []);
-
-  return { carriers, error };
-}
-
 function isDeliveryCostValid(cost: string): boolean {
   const numValue = parseFloat(cost);
   return !isNaN(numValue) && numValue > 0;
-}
-
-function useFormState(initialDeliveryCost?: number, initialCarrierId?: number) {
-  const [deliveryType, setDeliveryType] = useState<DeliveryType>("carrier");
-  const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost?.toString() ?? "");
-  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(initialCarrierId);
-  const [selectedStore, setSelectedStore] = useState<PickupStore | undefined>();
-
-  useEffect(() => {
-    setDeliveryCost("");
-    setSelectedCarrierId(undefined);
-    setSelectedStore(undefined);
-  }, [deliveryType]);
-
-  return {
-    deliveryType,
-    setDeliveryType,
-    deliveryCost,
-    setDeliveryCost,
-    selectedCarrierId,
-    setSelectedCarrierId,
-    selectedStore,
-    setSelectedStore
-  };
 }
 
 export default function StateDialog({ 
@@ -113,17 +66,47 @@ export default function StateDialog({
   onConfirm,
   isConfirming
 }: StateDialogProps) {
-  const { carriers, error: carriersError } = useCarriers();
-  const {
-    deliveryType,
-    setDeliveryType,
-    deliveryCost,
-    setDeliveryCost,
-    selectedCarrierId,
-    setSelectedCarrierId,
-    selectedStore,
-    setSelectedStore
-  } = useFormState(initialDeliveryCost, initialCarrierId);
+  const [open, setOpen] = useState(false);
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>("carrier");
+  const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost?.toString() ?? "");
+  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(initialCarrierId);
+  const [selectedStore, setSelectedStore] = useState<PickupStore | undefined>();
+  
+  // Carriers state
+  const [carriers, setCarriers] = useState<Carrier[]>([]);
+  const [isLoadingCarriers, setIsLoadingCarriers] = useState(false);
+  const [carriersError, setCarriersError] = useState<string | null>(null);
+
+  // Reset form when delivery type changes
+  useEffect(() => {
+    setDeliveryCost("");
+    setSelectedCarrierId(undefined);
+    setSelectedStore(undefined);
+  }, [deliveryType]);
+
+  // Fetch carriers only when dialog opens AND delivery type is "carrier"
+  useEffect(() => {
+    if (!open || deliveryType !== "carrier") return;
+
+    const fetchCarriers = async () => {
+      setIsLoadingCarriers(true);
+      try {
+        const response = await fetch('/api/carriers');
+        if (!response.ok) throw new Error('Failed to fetch carriers');
+        const data = await response.json();
+        setCarriers(data);
+        setCarriersError(null);
+      } catch (error) {
+        console.error('Error fetching carriers:', error);
+        setCarriersError('Error al cargar transportes');
+        setCarriers([]);
+      } finally {
+        setIsLoadingCarriers(false);
+      }
+    };
+    
+    fetchCarriers();
+  }, [open, deliveryType]);
 
   async function handleFormSubmit() {
     const formData: FormData = {
@@ -146,6 +129,7 @@ export default function StateDialog({
 
     try {
       await onConfirm(formData);
+      setOpen(false);
     } catch (error) {
       console.error('Failed to confirm state change:', error);
     }
@@ -161,12 +145,8 @@ export default function StateDialog({
     (deliveryType === "carrier" && (!selectedCarrierId || !isDeliveryCostValid(deliveryCost))) ||
     (deliveryType === "pickup" && !selectedStore);
 
-  if (carriersError) {
-    return <div>Error loading carriers: {carriersError.message}</div>;
-  }
-
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
           className="w-full" 
@@ -197,6 +177,8 @@ export default function StateDialog({
               selectedCarrierId={selectedCarrierId}
               onCarrierChange={(value) => setSelectedCarrierId(parseInt(value))}
               carriers={carriers}
+              isLoading={isLoadingCarriers}
+              error={carriersError}
             />
           ) : (
             <PickupStoreSelector
@@ -250,13 +232,17 @@ function CarrierForm({
   onDeliveryCostChange,
   selectedCarrierId,
   onCarrierChange,
-  carriers
+  carriers,
+  isLoading,
+  error
 }: {
   deliveryCost: string;
   onDeliveryCostChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   selectedCarrierId?: number;
   onCarrierChange: (value: string) => void;
   carriers: Carrier[];
+  isLoading: boolean;
+  error: string | null;
 }) {
   return (
     <>
@@ -275,25 +261,30 @@ function CarrierForm({
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Transporte</label>
-        <Select 
-          value={selectedCarrierId?.toString()} 
-          onValueChange={onCarrierChange}
-          required
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccioná un transporte" />
-          </SelectTrigger>
-          <SelectContent>
-            {carriers.map((carrier) => (
-              <SelectItem 
-                key={carrier.id} 
-                value={carrier.id.toString()}
-              >
-                {carrier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {error ? (
+          <div className="text-sm text-red-500">{error}</div>
+        ) : (
+          <Select 
+            value={selectedCarrierId?.toString()} 
+            onValueChange={onCarrierChange}
+            required
+            disabled={isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={isLoading ? "Cargando..." : "Seleccioná un transporte"} />
+            </SelectTrigger>
+            <SelectContent>
+              {carriers.map((carrier) => (
+                <SelectItem 
+                  key={carrier.id} 
+                  value={carrier.id.toString()}
+                >
+                  {carrier.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </>
   );

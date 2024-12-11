@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -18,10 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type Carrier = {
+  id: number;
+  name: string;
+};
+
 type CostCarrierDialogProps = {
   initialDeliveryCost?: number;
   initialCarrierId?: number;
-  carriers: Array<{ id: number; name: string }>;
   onConfirm: (data: { delivery_cost: number; carrier_id: number }) => Promise<void>;
   isUpdating: boolean;
   trigger?: React.ReactNode;
@@ -30,7 +34,6 @@ type CostCarrierDialogProps = {
 export default function CostCarrierDialog({
   initialDeliveryCost,
   initialCarrierId,
-  carriers,
   onConfirm,
   isUpdating,
   trigger
@@ -38,6 +41,36 @@ export default function CostCarrierDialog({
   const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost?.toString() ?? "");
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(initialCarrierId);
   const [open, setOpen] = useState(false);
+  
+  // Move carriers state inside component
+  const [carriers, setCarriers] = useState<Carrier[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch carriers only when dialog opens
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchCarriers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/carriers");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setCarriers(data);
+        setError(null);
+      } catch (error) {
+        console.error("Failed to fetch carriers:", error);
+        setError("Error al cargar transportes. Por favor, intenta nuevamente.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCarriers();
+  }, [open]); // Only run when dialog opens
 
   const handleConfirm = async () => {
     if (!isDeliveryCostValid(deliveryCost) || !selectedCarrierId) return;
@@ -58,12 +91,15 @@ export default function CostCarrierDialog({
     return !isNaN(numValue) && numValue >= 0;
   };
 
-  const isSubmitDisabled = !selectedCarrierId || !isDeliveryCostValid(deliveryCost) || isUpdating;
+  const isSubmitDisabled = !selectedCarrierId || 
+    !isDeliveryCostValid(deliveryCost) || 
+    isUpdating || 
+    isLoading;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <span>Actualizar costo y transporte</span>
+        {trigger ?? <span>Actualizar costo y transporte</span>}
       </DialogTrigger>
       
       <DialogContent className="sm:max-w-lg">
@@ -90,25 +126,30 @@ export default function CostCarrierDialog({
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Transporte</label>
-            <Select 
-              value={selectedCarrierId?.toString()} 
-              onValueChange={(value) => setSelectedCarrierId(parseInt(value))}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar transporte" />
-              </SelectTrigger>
-              <SelectContent>
-                {carriers.map((carrier) => (
-                  <SelectItem 
-                    key={carrier.id} 
-                    value={carrier.id.toString()}
-                  >
-                    {carrier.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {error ? (
+              <div className="text-sm text-red-500">{error}</div>
+            ) : (
+              <Select 
+                value={selectedCarrierId?.toString()} 
+                onValueChange={(value) => setSelectedCarrierId(parseInt(value))}
+                required
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoading ? "Cargando..." : "Seleccionar transporte"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {carriers.map((carrier) => (
+                    <SelectItem 
+                      key={carrier.id} 
+                      value={carrier.id.toString()}
+                    >
+                      {carrier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
