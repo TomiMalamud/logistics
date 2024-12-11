@@ -74,7 +74,7 @@ export default function Balance({ invoice_id }: BalanceProps) {
   return (
     <>
       {balance && balance !== "0,00" && (
-        <div className="relative">
+        <div className="relative group">
           <Alert variant="destructive" className={`mt-3 ${isRefreshing ? 'text-red-200' : ''}`}>
             <AlertTitle>Factura adeudada</AlertTitle>
             <AlertDescription>
@@ -86,7 +86,7 @@ export default function Balance({ invoice_id }: BalanceProps) {
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="hidden sm:block absolute top-4 right-2"
+            className="hidden absolute group-hover:block top-4 right-2"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>

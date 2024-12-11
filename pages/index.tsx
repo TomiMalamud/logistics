@@ -1,10 +1,6 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-  useRef
-} from "react";
+import { useRouter } from "next/router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { debounce } from "lodash";
 import useSWR from "swr";
 import Layout from "@/components/Layout";
 import DeliveryList from "@/components/DeliveryList";
@@ -21,14 +17,13 @@ import {
 } from "@/components/ui/select";
 import { SelectGroup } from "@radix-ui/react-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { User } from "@supabase/supabase-js";
-import type { GetServerSidePropsContext } from "next";
-import type { Profile } from "types/types";
-import { createClient } from "@/utils/supabase/server-props";
-import { useDeliveryCounts } from "@/lib/useDeliveryCounts";
-import { debounce } from "lodash";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useDeliveryCounts } from "@/lib/useDeliveryCounts";
+import type { User } from "@supabase/supabase-js";
+import type { Profile } from "types/types";
+import { createClient } from "@/utils/supabase/server-props";
+import { GetServerSidePropsContext } from "next";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -44,90 +39,156 @@ interface FeedResponse {
   totalItems: number;
 }
 
-// Pure function to build URL with search params
-function buildSearchUrl({
-  state,
-  page,
-  search,
-  scheduledDate
-}: {
-  state: string;
-  page: number;
-  search: string;
-  scheduledDate: string;
-}) {
-  const params = new URLSearchParams({
-    state,
-    page: page.toString(),
-    search,
-    scheduledDate
-  });
-  return `/api/feed?${params.toString()}`;
-}
+// Default filter values
+const DEFAULT_FILTERS = {
+  state: "pending",
+  page: "1",
+  search: "",
+  scheduledDate: "all"
+};
 
 export default function Index({ user, profile }: IndexProps) {
-  const [page, setPage] = useState(1);
-  const [filterEstado, setFilterEstado] = useState("pending");
-  const [filterScheduledDate, setFilterScheduledDate] = useState("all");
-  const [inputValue, setInputValue] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
   const { counts } = useDeliveryCounts();
 
-  // Create a ref for the debounced search function
-  const debouncedSearchRef = useRef(
-    debounce((value: string, callback: (value: string) => void) => {
-      callback(value);
-    }, 500)
+  // Get current filters from URL or use defaults
+  const currentFilters = useMemo(
+    () => ({
+      state: (router.query.state as string) ?? DEFAULT_FILTERS.state,
+      page: (router.query.page as string) ?? DEFAULT_FILTERS.page,
+      search: (router.query.search as string) ?? DEFAULT_FILTERS.search,
+      scheduledDate:
+        (router.query.scheduledDate as string) ?? DEFAULT_FILTERS.scheduledDate
+    }),
+    [router.query]
   );
 
-  const handleSearch = useCallback((value: string) => {
-    setSearchQuery(value);
-    setPage(1);
-  }, []);
+  // Update URL with new filters
+  const updateFilters = useCallback(
+    (newFilters: Partial<typeof currentFilters>) => {
+      const updatedQuery = {
+        ...router.query,
+        ...newFilters,
+        page: newFilters.state ? "1" : router.query.page // Reset page when changing filters
+      };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    const debouncedFn = debouncedSearchRef.current;
-    return () => {
-      debouncedFn.cancel();
-    };
-  }, []);
+      // Remove default values from URL
+      Object.entries(updatedQuery).forEach(([key, value]) => {
+        if (value === DEFAULT_FILTERS[key as keyof typeof DEFAULT_FILTERS]) {
+          delete updatedQuery[key];
+        }
+      });
 
-  const handleSearchChange = useCallback(
+      router.push(
+        {
+          pathname: router.pathname,
+          query: updatedQuery
+        },
+        undefined,
+        { shallow: true }
+      );
+    },
+    [router]
+  );
+
+  // Handlers for filter changes
+  const handleTabChange = useCallback(
+    (value: string) => {
+      updateFilters({ state: value });
+    },
+    [updateFilters]
+  );
+
+  const handleScheduledDateChange = useCallback(
+    (value: string) => {
+      updateFilters({ scheduledDate: value });
+    },
+    [updateFilters]
+  );
+  const [searchInput, setSearchInput] = useState(
+    (router.query.search as string) || ""
+  );
+
+  const handleSearch = useCallback(
+    (value: string) => {
+      const query = { ...router.query };
+      if (value.trim()) {
+        query.search = value.trim();
+      } else {
+        delete query.search;
+      }
+      router.push({ pathname: router.pathname, query }, undefined, {
+        shallow: true
+      });
+    },
+    [router]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearch(searchInput);
+      }
+    },
+    [searchInput, handleSearch]
+  );
+
+  const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setInputValue(value);
-      debouncedSearchRef.current(value, handleSearch);
+      setSearchInput(e.target.value);
+      // If input is cleared, remove the search filter
+      if (!e.target.value.trim()) {
+        handleSearch("");
+      }
     },
     [handleSearch]
   );
 
-  const handleTabChange = useCallback((value: string) => {
-    setFilterEstado(value);
-    setPage(1);
-  }, []);
+  const handleBlur = useCallback(() => {
+    handleSearch(searchInput);
+  }, [searchInput, handleSearch]);
 
-  const handleScheduledDateChange = useCallback((value: string) => {
-    setFilterScheduledDate(value);
-    setPage(1);
-  }, []);
+  // Build API URL for SWR
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    Object.entries(currentFilters).forEach(([key, value]) => {
+      if (value) params.append(key, value);
+    });
+    return `/api/feed?${params.toString()}`;
+  }, [currentFilters]);
 
-  // Memoize URL building
-  const searchUrl = useMemo(
-    () =>
-      buildSearchUrl({
-        state: filterEstado,
-        page,
-        search: searchQuery,
-        scheduledDate: filterScheduledDate
-      }),
-    [filterEstado, page, searchQuery, filterScheduledDate]
+  // Fetch data
+  const { data, error, isLoading, isValidating } = useSWR<FeedResponse>(
+    apiUrl,
+    fetcher,
+    {
+      keepPreviousData: true,
+      revalidateOnFocus: false
+    }
   );
 
-  const { data, error } = useSWR<FeedResponse>(searchUrl, fetcher, {
-    keepPreviousData: true,
-    revalidateOnFocus: false
-  });
+  // Create a function to determine if we should show the placeholder
+  const shouldShowPlaceholder = useMemo(() => {
+    // Show placeholder when:
+    // 1. Initial loading (no data yet)
+    // 2. Validating (loading new data) and filters have changed
+    const isInitialLoading = !data && isLoading;
+    const isFilteringOrSearching =
+      isValidating &&
+      (searchInput !== currentFilters.search || // Search changed
+        router.query.state !== currentFilters.state || // State changed
+        router.query.scheduledDate !== currentFilters.scheduledDate); // Date filter changed
+
+    return isInitialLoading || isFilteringOrSearching;
+  }, [
+    data,
+    isLoading,
+    isValidating,
+    searchInput,
+    currentFilters,
+    router.query
+  ]);
 
   const headerContent = useMemo(
     () => (
@@ -145,10 +206,9 @@ export default function Index({ user, profile }: IndexProps) {
         </p>
         <div className="bg-gray-100">
           <Tabs
-            defaultValue="pending"
+            value={currentFilters.state}
             className="w-full mb-4 mt-6"
             onValueChange={handleTabChange}
-            value={filterEstado}
           >
             <TabsList aria-label="Filter by state">
               <TabsTrigger value="pending">
@@ -173,14 +233,16 @@ export default function Index({ user, profile }: IndexProps) {
                 <Input
                   placeholder="Buscar por nombre o domicilio del cliente"
                   className="pl-8 bg-white"
-                  value={inputValue}
-                  onChange={handleSearchChange}
+                  value={searchInput}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleBlur}
                 />
               </div>
 
               <div className="flex w-auto">
                 <Select
-                  value={filterScheduledDate}
+                  value={currentFilters.scheduledDate}
                   onValueChange={handleScheduledDateChange}
                 >
                   <SelectTrigger
@@ -211,14 +273,14 @@ export default function Index({ user, profile }: IndexProps) {
     [
       profile,
       user.email,
+      searchInput,
+      currentFilters,
+      counts,
       handleTabChange,
-      filterEstado,
-      counts?.pending,
-      counts?.delivered,
-      inputValue,
-      handleSearchChange,
-      filterScheduledDate,
-      handleScheduledDateChange
+      handleScheduledDateChange,
+      handleBlur,
+      handleChange,
+      handleKeyDown
     ]
   );
 
@@ -233,50 +295,50 @@ export default function Index({ user, profile }: IndexProps) {
   return (
     <Layout>
       {headerContent}
-      {!data ? (
+      {error ? (
+        <p className="text-red-500">Error al cargar. Actualizá la página.</p>
+      ) : shouldShowPlaceholder ? (
         <TablePlaceholder />
       ) : (
-        <DeliveryList
-          data={data}
-          searchUrl={searchUrl}
-          onPageChange={setPage}
-          currentPage={page}
-        />
+        <DeliveryList data={data} searchUrl={apiUrl} />
       )}
     </Layout>
   );
-};
+}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const supabase = createClient(context)
+  const supabase = createClient(context);
 
   // Use getUser instead of checking session
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
 
   if (error || !user) {
     return {
       redirect: {
-        destination: '/login',
+        destination: "/login",
         permanent: false
       }
-    }
+    };
   }
 
   // Fetch profile data
   const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('name')
-    .eq('id', user.id)
-    .single()
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .single();
 
   if (profileError) {
-    console.error('Error fetching profile:', profileError)
+    console.error("Error fetching profile:", profileError);
     return {
       props: {
         user,
         profile: null
       }
-    }
+    };
   }
 
   return {
@@ -284,6 +346,5 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user,
       profile: profile || null // Ensure we always return null if no profile
     }
-  }
+  };
 }
-

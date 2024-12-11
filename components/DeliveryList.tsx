@@ -1,12 +1,13 @@
+import { useRouter } from "next/router";
 import Delivery from "./Delivery";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationEllipsis, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
 } from "@/components/ui/pagination";
 
 interface FeedResponse {
@@ -19,16 +20,15 @@ interface FeedResponse {
 interface DeliveryListProps {
   data: FeedResponse | undefined;
   searchUrl: string;
-  onPageChange: (page: number) => void;
-  currentPage: number;
 }
 
-export default function DeliveryList({ 
-  data, 
-  searchUrl, 
-  onPageChange,
-  currentPage 
+export default function DeliveryList({
+  data,
+  searchUrl,
 }: DeliveryListProps) {
+  const router = useRouter();
+  const currentPage = Number(router.query.page || 1);
+
   if (!data?.feed?.length) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -39,7 +39,13 @@ export default function DeliveryList({
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= data.totalPages) {
-      onPageChange(newPage);
+      router.push({
+        pathname: router.pathname,
+        query: {
+          ...router.query,
+          page: newPage.toString()
+        }
+      }, undefined, { shallow: true });
     }
   };
 
@@ -57,11 +63,11 @@ export default function DeliveryList({
     } else {
       // Always show first page
       pages.push(1);
-      
+
       // Calculate start and end of visible page range
       let start = Math.max(2, currentPage - 1);
       let end = Math.min(totalPages - 1, currentPage + 1);
-      
+
       // Adjust range if at the start or end
       if (currentPage <= 2) {
         end = 4;
@@ -69,26 +75,25 @@ export default function DeliveryList({
       if (currentPage >= totalPages - 1) {
         start = totalPages - 3;
       }
-      
+
       // Add ellipsis if needed
       if (start > 2) {
         pages.push('ellipsis');
       }
-      
+
       // Add visible page range
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
-      
+
       // Add ellipsis if needed
       if (end < totalPages - 1) {
         pages.push('ellipsis');
       }
-      
+
       // Always show last page
       pages.push(totalPages);
     }
-    
     return pages;
   };
 
@@ -101,15 +106,13 @@ export default function DeliveryList({
           </div>
         ))}
       </div>
-
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious 
+            <PaginationPrevious
               onClick={() => handlePageChange(currentPage - 1)}
             />
           </PaginationItem>
-
           {getPageNumbers().map((pageNum, index) => (
             pageNum === 'ellipsis' ? (
               <PaginationItem key={`ellipsis-${index}`}>
@@ -127,9 +130,8 @@ export default function DeliveryList({
               </PaginationItem>
             )
           ))}
-
           <PaginationItem>
-            <PaginationNext 
+            <PaginationNext
               onClick={() => handlePageChange(currentPage + 1)}
             />
           </PaginationItem>

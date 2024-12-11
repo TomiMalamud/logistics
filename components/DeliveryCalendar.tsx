@@ -27,6 +27,7 @@ import {
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import _ from "lodash";
+import Link from "next/link";
 
 const DraggableDeliveryItem = ({ delivery, onDragEnd }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -304,12 +305,14 @@ const DeliveryCalendar = ({ searchUrl }) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="space-y-4">
+        <Link href="/?scheduledDate=noDate&page=">
           <Alert variant="destructive">
             <AlertDescription>
               Hay <span className="font-bold">{unscheduledCount}</span> entregas
               sin programar que no se ven en el calendario.
             </AlertDescription>
           </Alert>
+          </Link>
         <Card>
           <CardHeader className="flex-row justify-between items-center">
             <div className="flex items-center gap-x-4">
