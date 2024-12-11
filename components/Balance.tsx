@@ -1,62 +1,97 @@
 // Saldo.tsx
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { getSaldoFromCache, setSaldoInCache } from '@/lib/balanceCache';
+import { Button } from './ui/button';
+import { RefreshCw } from 'lucide-react';
+import { getSaldoFromCache as getBalanceFromCache, setSaldoInCache, removeFromCache } from '@/lib/balanceCache';
 
-interface SaldoProps {
+interface BalanceProps {
   invoice_id: number;
 }
 
-export default function Saldo({ invoice_id }: SaldoProps) {
-  const [balance, setSaldo] = useState<string | null>(null); // State to store the fetched Saldo
-  const [error, setError] = useState<string | null>(null); 
+export default function Balance({ invoice_id }: BalanceProps) {
+  const [balance, setBalance] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchAndSetSaldo = async () => {
-      if (!invoice_id) return;
+  const fetchBalance = useCallback(async (skipCache = false) => {
+    if (!invoice_id) return;
 
-      // Check if balance is cached
-      const cachedSaldo = getSaldoFromCache(invoice_id);
-      if (cachedSaldo !== undefined) {
-        setSaldo(cachedSaldo);
+    // Check cache unless skipCache is true
+    if (!skipCache) {
+      const cachedBalance = getBalanceFromCache(invoice_id);
+      if (cachedBalance !== undefined) {
+        setBalance(cachedBalance);
         return;
       }
+    }
 
-      try {
-        const response = await fetch(`/api/get-invoice_number?invoice_id=${invoice_id}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        const fetchedSaldo = data.Saldo.toString();
-        setSaldo(fetchedSaldo);
-        setSaldoInCache(invoice_id, fetchedSaldo);
-      } catch (err) {        
-        setError('No se encontró la factura y no conocemos el saldo pendiente. Recargá la página.');
+    try {
+      const response = await fetch(`/api/get-invoice_number?invoice_id=${invoice_id}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
 
-    fetchAndSetSaldo(); // Call the async function
-  }, [invoice_id]); // This effect will run whenever invoice_id changes
+      const data = await response.json();
+      const fetchedBalance = data.Saldo.toString();
+      
+      setBalance(fetchedBalance);
+      setSaldoInCache(invoice_id, fetchedBalance);
+      setError(null);
+    } catch (err) {
+      setError('No se encontró la factura y no conocemos el saldo pendiente. Recargá la página.');
+    }
+  }, [invoice_id]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    removeFromCache(invoice_id);
+    await fetchBalance(true);
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
 
   if (error) {
-    return <p className="text-red-500">{error}</p>;
+    return (
+      <div className="flex items-center gap-2">
+        <p className="text-red-500">{error}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+    );
   }
 
   return (
     <>
-      {balance && balance !== "0,00" && 
-        <Alert variant='destructive' className="mt-3">
-          <AlertTitle>Factura adeudada</AlertTitle>
-          <AlertDescription>
-            Saldo: $ {balance}. Recordá registrar la cobranza en Contabilium si cobramos en contraentrega.
-          </AlertDescription>
-        </Alert>
-      }
+      {balance && balance !== "0,00" && (
+        <div className="relative">
+          <Alert variant="destructive" className={`mt-3 ${isRefreshing ? 'text-red-200' : ''}`}>
+            <AlertTitle>Factura adeudada</AlertTitle>
+            <AlertDescription>
+              Saldo: $ {balance}. Recordá registrar la cobranza en Contabilium si cobramos en contraentrega.
+            </AlertDescription>
+          </Alert>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="hidden sm:block absolute top-4 right-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      )}
     </>
   );
-};
+}

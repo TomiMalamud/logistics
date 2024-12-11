@@ -16,6 +16,7 @@ import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/phone";
 import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import Link from "next/link";
 
 interface CreateProps {
   user: User;
@@ -306,8 +307,8 @@ export default function CreateDelivery({ user }: CreateProps) {
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button type="button" variant="link" onClick={() => Router.push("/")}>
-            Cancelar
+          <Button type="button" variant="link" asChild>
+            <Link href="/">Cancelar</Link>
           </Button>
           <Button type="submit" disabled={loading}>
             {loading ? "Cargando..." : "Guardar"}

@@ -225,7 +225,7 @@ export default function Index({ user, profile }: IndexProps) {
   if (error) {
     return (
       <Layout>
-        <p className="text-red-500">Error loading deliveries</p>
+        <p className="text-red-500">Error al cargar. Actualizá la página.</p>
       </Layout>
     );
   }
