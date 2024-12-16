@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import Head from "next/head";
 import { Button } from "./ui/button";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/component";
-import { useCallback, useMemo } from "react";
+import { useRole } from "@/lib/useRole";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +15,7 @@ interface NavItem {
   path: string;
   label: string;
   showOnMobile: boolean;
+  roles: ('admin' | 'sales')[];
 }
 
 const Layout = ({
@@ -23,20 +24,33 @@ const Layout = ({
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
   const supabase = createClient();
+  const { role, loading } = useRole();
 
   const navItems: NavItem[] = useMemo(
     () => [
-      { path: "/", label: "✔️ Entregas", showOnMobile: true },
+      { 
+        path: "/", 
+        label: "✔️ Entregas", 
+        showOnMobile: true,
+        roles: ['admin', 'sales']
+      },
       {
         path: "/deliveries/calendar",
         label: "🗓️ Calendario",
-        showOnMobile: true
+        showOnMobile: true,
+        roles: ['admin', 'sales']
       },
-      { path: "/carriers", label: "🚚 Transportes", showOnMobile: true },
+      { 
+        path: "/carriers", 
+        label: "🚚 Transportes", 
+        showOnMobile: true,
+        roles: ['admin']
+      },
       {
         path: "/update-prices",
         label: "Actualizar Precios",
-        showOnMobile: false
+        showOnMobile: false,
+        roles: ['admin']
       }
     ],
     []
@@ -44,18 +58,13 @@ const Layout = ({
 
   const handleSignOut = useCallback(async () => {
     try {
-      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      // Clear any local storage or cookies if needed
       localStorage.removeItem("supabase.auth.token");
-
-      // Use replace instead of push to prevent back navigation
       await router.replace("/login");
     } catch (error) {
       console.error("Error signing out:", error);
-      // Optionally show an error message to the user
       alert("Error al cerrar sesión. Por favor, intente nuevamente.");
     }
   }, [router, supabase]);
@@ -73,18 +82,21 @@ const Layout = ({
 
   const renderNavButtons = useCallback(
     () =>
-      navItems.map(({ path, label, showOnMobile }) => (
-        <Button
-          key={path}
-          variant="link"
-          className={getNavButtonClasses(path, showOnMobile)}
-          asChild
-        >
-          <Link href={path}>{label}</Link>
-        </Button>
-      )),
-    [navItems, getNavButtonClasses]
+      navItems
+        .filter(({ roles }) => role && roles.includes(role))
+        .map(({ path, label, showOnMobile }) => (
+          <Button
+            key={path}
+            variant="link"
+            className={getNavButtonClasses(path, showOnMobile)}
+            asChild
+          >
+            <Link href={path}>{label}</Link>
+          </Button>
+        )),
+    [navItems, getNavButtonClasses, role]
   );
+
 
   return (
     <>

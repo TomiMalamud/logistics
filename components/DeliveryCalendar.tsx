@@ -28,16 +28,21 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import _ from "lodash";
 import Link from "next/link";
+import { useRole } from "@/lib/useRole";
 
-const DraggableDeliveryItem = ({ delivery, onDragEnd }) => {
+interface DropResult {
+  date: string;
+}
+
+const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "DELIVERY",
     item: { id: delivery.id },
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
     }),
-    end: (item, monitor: { getDropResult: () => { date: string } | null }) => {
-      const dropResult = monitor.getDropResult();
+    end: (item, monitor) => {
+      const dropResult = monitor.getDropResult() as DropResult | null;
       if (dropResult) {
         onDragEnd(item.id, dropResult.date);
       }
@@ -56,9 +61,7 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd }) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            ref={drag}
-            className={`
+          <div ref={drag} className={`
               text-xs p-1 rounded cursor-move
               ${isDragging ? "opacity-50" : "opacity-100"}
               ${
@@ -68,19 +71,16 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd }) => {
                   ? "bg-red-200 hover:bg-red-300"
                   : "bg-blue-50 hover:bg-blue-100"
               }
-            `}
-          >
+            `}>
             <div className="truncate">
               {titleCase(delivery.customers?.name.toLowerCase())}
             </div>
             <div className="truncate text-gray-500">
               {titleCase(delivery.products.toLowerCase())}
             </div>
-            {(delivery.balance > 0 && delivery.state == "pending") && 
-            <div className="text-red-600">
-              Saldo {delivery.balance}
-            </div>
-            }
+            {delivery.balance > 0 && delivery.state == "pending" && (
+              <div className="text-red-600">Saldo {delivery.balance}</div>
+            )}
           </div>
         </TooltipTrigger>
         <TooltipContent>
@@ -88,7 +88,7 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd }) => {
             <p>🛏️ {titleCase(delivery.products.toLowerCase())}</p>
             <p>📍 {titleCase(delivery.customers?.address.toLowerCase())}</p>
             <p>📱 {delivery.customers?.phone}</p>
-            {delivery.delivery_cost && (
+            {showCosts && delivery.delivery_cost && (
               <p>
                 💲{" "}
                 {delivery.delivery_cost.toLocaleString("es-AR", {
@@ -133,6 +133,8 @@ const DeliveryCalendar = ({ searchUrl }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [monthlyTotal, setMonthlyTotal] = useState(0);
+  const { role } = useRole();
+  const showCosts = role === "admin";
 
   // Calculate monthly total from deliveries
   const calculateMonthlyTotal = useCallback((deliveriesData) => {
@@ -257,9 +259,8 @@ const DeliveryCalendar = ({ searchUrl }) => {
       .map((delivery) => delivery.delivery_cost || 0)
       .reduce((sum, cost) => sum + cost, 0);
 
-    // Format the total cost in ARS currency
     const formattedTotalCost =
-      totalCost > 0
+      totalCost > 0 && showCosts
         ? totalCost.toLocaleString("es-AR", {
             style: "currency",
             currency: "ARS",
@@ -270,8 +271,10 @@ const DeliveryCalendar = ({ searchUrl }) => {
     return (
       <DroppableCell date={dateStr}>
         <div className="font-medium text-sm m-2 flex justify-between">
-          {totalCost > 0 && (
-            <span className="text-gray-500 font-light">{formattedTotalCost}</span>
+          {formattedTotalCost && (
+            <span className="text-gray-500 font-light">
+              {formattedTotalCost}
+            </span>
           )}
           {isToday ? (
             <div className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
@@ -287,6 +290,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
               key={delivery.id}
               delivery={delivery}
               onDragEnd={handleDeliveryDragEnd}
+              showCosts={showCosts}
             />
           ))}
         </div>
@@ -312,7 +316,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
               sin programar que no se ven en el calendario.
             </AlertDescription>
           </Alert>
-          </Link>
+        </Link>
         <Card>
           <CardHeader className="flex-row justify-between items-center">
             <div className="flex items-center gap-x-4">
@@ -322,14 +326,16 @@ const DeliveryCalendar = ({ searchUrl }) => {
                   year: "numeric"
                 })}
               </CardTitle>
-              <CardDescription>
-                {monthlyTotal > 0 &&
-                  monthlyTotal.toLocaleString("es-AR", {
-                    style: "currency",
-                    currency: "ARS",
-                    maximumFractionDigits: 0
-                  })}
-              </CardDescription>
+              {showCosts && (
+                <CardDescription>
+                  {monthlyTotal > 0 &&
+                    monthlyTotal.toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                      maximumFractionDigits: 0
+                    })}
+                </CardDescription>
+              )}
             </div>
             <div className="flex gap-4">
               <Select value={filter} onValueChange={setFilter}>
@@ -365,46 +371,45 @@ const DeliveryCalendar = ({ searchUrl }) => {
             </div>
           </CardHeader>
           <CardContent>
-
-          {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          ) : (
-            <div className="grid">
-              <div className="grid grid-cols-6 gap-px mb-1 border-b border-gray-400">
-                {weekDays.map((day) => (
-                  <div
-                    key={day}
-                    className="text-right mr-2 font-light py-2"
-                  >
-                    {day}
-                  </div>
-                ))}
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
               </div>
-
-              <div className="grid grid-cols-6 auto-rows-fr gap-px bg-gray-200">
-                {blanks.map((blank) => (
-                  <div key={`blank-${blank}`} className="bg-gray-50 min-h-24" />
-                ))}
-
-                {days.map((day) => {
-                  const currentDate = new Date(
-                    date.getFullYear(),
-                    date.getMonth(),
-                    day
-                  );
-                  return currentDate.getDay() !== 0 ? (
-                    <div key={`day-${day}`} className="bg-white">
-                      {renderDeliveryCell(day)}
+            ) : (
+              <div className="grid">
+                <div className="grid grid-cols-6 gap-px mb-1 border-b border-gray-400">
+                  {weekDays.map((day) => (
+                    <div key={day} className="text-right mr-2 font-light py-2">
+                      {day}
                     </div>
-                  ) : null;
-                })}
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-6 auto-rows-fr gap-px bg-gray-200">
+                  {blanks.map((blank) => (
+                    <div
+                      key={`blank-${blank}`}
+                      className="bg-gray-50 min-h-24"
+                    />
+                  ))}
+
+                  {days.map((day) => {
+                    const currentDate = new Date(
+                      date.getFullYear(),
+                      date.getMonth(),
+                      day
+                    );
+                    return currentDate.getDay() !== 0 ? (
+                      <div key={`day-${day}`} className="bg-white">
+                        {renderDeliveryCell(day)}
+                      </div>
+                    ) : null;
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
           </CardContent>
         </Card>
       </div>
