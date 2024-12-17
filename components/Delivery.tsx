@@ -17,6 +17,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import CostCarrierDialog from "./CostCarrierDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "./ui/tooltip";
 
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({
@@ -64,7 +70,22 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               "Revisar Vendedor en Contabilium"}
           </p>
           <span className="mx-2">|</span>
-          <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Creado el{" "}
+                  {new Date(new Date(delivery.created_at).getTime()- 6 * 60 * 60 * 1000)
+                    .toISOString()
+                    .replace("T", " a las ")
+                    .slice(0, -5)}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
