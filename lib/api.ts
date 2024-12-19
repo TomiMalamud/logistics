@@ -262,17 +262,16 @@ export const getComprobanteById = async (id: number): Promise<Comprobante> => {
   return data;
 };
 
-// lib/api.ts
-
 interface Product {
   Id: string;
   Codigo: string;
   Nombre: string;
   PrecioFinal: number;
   Stock: number;
+  Estado: string;
 }
 
-interface SearchProductsResponse {
+export interface SearchProductsResponse {
   Items: Product[];
   TotalItems: number;
   TotalPage: number;
@@ -341,8 +340,12 @@ export const searchProducts = async (
     }
 
     const data: SearchProductsResponse = await response.json();
+    const activeProducts = data.Items.filter(
+      (product) => product.Estado === "Activo" && product.PrecioFinal > 0
+    );
+
     return {
-      Items: data.Items || [],
+      Items: activeProducts,
       TotalItems: data.TotalItems || 0,
       TotalPage: data.TotalPage || 1
     };

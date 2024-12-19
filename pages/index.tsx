@@ -18,7 +18,7 @@ import { SelectGroup } from "@radix-ui/react-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useDeliveryCounts } from "@/lib/useDeliveryCounts";
+import { useDeliveryCounts } from "@/lib/hooks/useDeliveryCounts";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "types/types";
 import { createClient } from "@/utils/supabase/server-props";
@@ -192,14 +192,14 @@ export default function Index({ user, profile }: IndexProps) {
   const headerContent = useMemo(
     () => (
       <>
-        <header className="flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold tracking-tight">
             Entregas de ROHI Sommiers
           </h1>
           <Button asChild className="hidden md:block">
             <Link href="/create">+ Agregar</Link>
           </Button>
-        </header>
+        </div>
         <p className="text-yellow-800 font-medium">
           Hola {profile ? profile.name : user.email.split("@")[0]}!
         </p>

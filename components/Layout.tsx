@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/component";
-import { useRole } from "@/lib/useRole";
+import { useRole } from "@/lib/hooks/useRole";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -37,6 +37,12 @@ const Layout = ({
       {
         path: "/deliveries/calendar",
         label: "🗓️ Calendario",
+        showOnMobile: true,
+        roles: ["admin", "sales"]
+      },
+      {
+        path: "/price-checker",
+        label: "🏷️ Precios",
         showOnMobile: true,
         roles: ["admin", "sales"]
       },
@@ -104,21 +110,19 @@ const Layout = ({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-gray-100">
-        <nav className="p-4 flex justify-between">
-          <div className="flex items-center space-x-2">
+      <header className="bg-gray-100 justify-between p-3 flex border-b  border-grid">
+        <nav className="flex overflow-x-scroll">
             {renderNavButtons()}
-          </div>
-          <Button
+        </nav>        
+        <Button
             variant="link"
-            className="text-gray-600 md:block hidden"
+            className="text-gray-600 md:block hidden "
             onClick={handleSignOut}
           >
             Cerrar Sesión
           </Button>
-        </nav>
-        <main className="p-4 md:p-10 mx-auto max-w-7xl">{children}</main>
-      </div>
+      </header>
+        <main className="p-4 md:p-8 mx-auto max-w-7xl min-h-screen">{children}</main>
     </>
   );
 };

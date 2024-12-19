@@ -84,7 +84,7 @@ export interface SearchComprobanteResponse {
 }
 
 export interface Product {
-  id: string;
+  Id: string;
   Codigo: string;
   Nombre: string;
   PrecioFinal: number;

@@ -28,7 +28,7 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import _ from "lodash";
 import Link from "next/link";
-import { useRole } from "@/lib/useRole";
+import { useRole } from "@/lib/hooks/useRole";
 
 interface DropResult {
   date: string;

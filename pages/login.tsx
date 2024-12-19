@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import ResetPassword from '@/components/ResetPassword'
+import Footer from '@/components/Footer'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -59,7 +60,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">App Entregas</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Logística</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={logIn} className="space-y-4">
@@ -112,6 +113,7 @@ export default function LoginPage() {
           </Button>
         </CardFooter>
       </Card>
+      <Footer />
     </div>
   )
 }

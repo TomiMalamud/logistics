@@ -3,6 +3,9 @@ import "../styles/globals.css";
 import { loadPersistentCache } from "@/lib/balanceCache";
 import { useEffect } from "react";
 import { Public_Sans } from "next/font/google";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "@/lib/queryClient";
 
 const publicSans = Public_Sans({
   subsets: ["latin"],
@@ -18,7 +21,10 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   return (
     <main className={`${publicSans.variable} font-sans`}>
-      <Component {...pageProps} />
+      <QueryClientProvider client={queryClient}>
+        <Component {...pageProps} />
+        {process.env.NODE_ENV === "development" && <ReactQueryDevtools />}
+      </QueryClientProvider>
     </main>
   );
 };
