@@ -29,7 +29,6 @@ export interface Customer {
   IdListaPrecio?: number | null;
 }
 
-// If the API returns a list of clients
 export interface GetClientByIdResponse {
   clients: Customer[];
   total: number;
@@ -82,4 +81,18 @@ export interface SearchComprobanteResponse {
   Items: Comprobante[];
   TotalPage: number;
   TotalItems: number;
+}
+
+export interface Product {
+  id: string;
+  Codigo: string;
+  Nombre: string;
+  PrecioFinal: number;
+  Stock: number;
+}
+
+export interface SearchProductsResponse {
+  Items: Product[];
+  TotalItems: number;
+  TotalPage: number;
 }

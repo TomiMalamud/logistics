@@ -15,7 +15,7 @@ interface NavItem {
   path: string;
   label: string;
   showOnMobile: boolean;
-  roles: ('admin' | 'sales')[];
+  roles: ("admin" | "sales")[];
 }
 
 const Layout = ({
@@ -28,29 +28,29 @@ const Layout = ({
 
   const navItems: NavItem[] = useMemo(
     () => [
-      { 
-        path: "/", 
-        label: "✔️ Entregas", 
+      {
+        path: "/",
+        label: "✔️ Entregas",
         showOnMobile: true,
-        roles: ['admin', 'sales']
+        roles: ["admin", "sales"]
       },
       {
         path: "/deliveries/calendar",
         label: "🗓️ Calendario",
         showOnMobile: true,
-        roles: ['admin', 'sales']
+        roles: ["admin", "sales"]
       },
-      { 
-        path: "/carriers", 
-        label: "🚚 Transportes", 
+      {
+        path: "/carriers",
+        label: "🚚 Transportes",
         showOnMobile: true,
-        roles: ['admin']
+        roles: ["admin"]
       },
       {
         path: "/update-prices",
         label: "Actualizar Precios",
         showOnMobile: false,
-        roles: ['admin']
+        roles: ["admin"]
       }
     ],
     []
@@ -97,7 +97,6 @@ const Layout = ({
     [navItems, getNavButtonClasses, role]
   );
 
-
   return (
     <>
       <Head>
@@ -105,8 +104,8 @@ const Layout = ({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <main className="p-4 md:p-10 mx-auto max-w-7xl">
-        <nav className="flex justify-between -mx-4 mb-4">
+      <div className="min-h-screen bg-gray-100">
+        <nav className="p-4 flex justify-between">
           <div className="flex items-center space-x-2">
             {renderNavButtons()}
           </div>
@@ -118,8 +117,8 @@ const Layout = ({
             Cerrar Sesión
           </Button>
         </nav>
-        <section>{children}</section>
-      </main>
+        <main className="p-4 md:p-10 mx-auto max-w-7xl">{children}</main>
+      </div>
     </>
   );
 };

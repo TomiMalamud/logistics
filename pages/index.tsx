@@ -1,6 +1,5 @@
 import { useRouter } from "next/router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { debounce } from "lodash";
+import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import Layout from "@/components/Layout";
 import DeliveryList from "@/components/DeliveryList";
