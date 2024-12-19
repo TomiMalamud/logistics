@@ -9,14 +9,16 @@ import {
 } from "../ui/card";
 import { titleCase } from "title-case";
 
-// components/ProductCard.tsx
 interface ProductCardProps {
   product: Product;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const calculateDiscountPrice = (price: number) => Math.floor(price * 0.7);
+  const calculateDiscountPrice = (price: number) =>
+    Math.floor(price * (1 - descuento / 100));
   const calculateMonthlyPrice = (price: number) => Math.floor(price / 12);
+  const descuento = 30;
+
   return (
     <Card className="hover:bg-gray-100 transition mb-2">
       <a
@@ -26,7 +28,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       >
         <CardHeader className="pb-4">
           <CardTitle>{titleCase(product.Nombre.toLowerCase())}</CardTitle>
-          <CardDescription >
+          <CardDescription>
             {product.Codigo} | Stock: {product.Stock}
           </CardDescription>
         </CardHeader>
@@ -40,7 +42,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
         </CardContent>
         <CardFooter className="justify-between flex items-center text-gray-500 pt-2 -mb-4">
-          <div>Contado 30% OFF</div>
+          <div>Contado {descuento}% OFF</div>
           <div>
             ${" "}
             {calculateDiscountPrice(product.PrecioFinal).toLocaleString(

@@ -18,7 +18,6 @@ import { SelectGroup } from "@radix-ui/react-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useDeliveryCounts } from "@/lib/hooks/useDeliveryCounts";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "types/types";
 import { createClient } from "@/utils/supabase/server-props";
@@ -48,7 +47,6 @@ const DEFAULT_FILTERS = {
 
 export default function Index({ user, profile }: IndexProps) {
   const router = useRouter();
-  const { counts } = useDeliveryCounts();
 
   // Get current filters from URL or use defaults
   const currentFilters = useMemo(
@@ -213,14 +211,11 @@ export default function Index({ user, profile }: IndexProps) {
               <TabsTrigger value="pending">
                 Pendientes
                 <span className="text-gray-500 font-light ml-2">
-                  {counts?.pending ?? "-"}
+                  {data && data.totalItems}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="delivered">
                 Entregadas
-                <span className="text-gray-500 font-light ml-2">
-                  {counts?.delivered ?? "-"}
-                </span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -254,7 +249,7 @@ export default function Index({ user, profile }: IndexProps) {
                     <SelectGroup>
                       <SelectLabel>Fecha Programada</SelectLabel>
                       <SelectItem value="all">
-                        Fecha Programada: Todas
+                        Fecha Programada
                       </SelectItem>
                       <SelectItem value="hasDate">Fecha programada</SelectItem>
                       <SelectItem value="noDate">
@@ -274,7 +269,7 @@ export default function Index({ user, profile }: IndexProps) {
       user.email,
       searchInput,
       currentFilters,
-      counts,
+      data,
       handleTabChange,
       handleScheduledDateChange,
       handleBlur,

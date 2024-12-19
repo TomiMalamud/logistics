@@ -37,7 +37,7 @@ const Layout = ({
       {
         path: "/deliveries/calendar",
         label: "🗓️ Calendario",
-        showOnMobile: true,
+        showOnMobile: false,
         roles: ["admin", "sales"]
       },
       {
