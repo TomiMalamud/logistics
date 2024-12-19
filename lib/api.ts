@@ -157,8 +157,8 @@ export const searchComprobantes = async (
 
   try {
     const allItems = await fetchAllComprobantes(
-      "2024-12-06",
-      "2024-12-06",
+      fechaDesde,
+      fechaHasta,
       filtro
     );
 
