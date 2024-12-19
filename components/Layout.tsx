@@ -116,7 +116,7 @@ const Layout = ({
         </nav>        
         <Button
             variant="link"
-            className="text-gray-600 md:block hidden "
+            className="text-gray-600 md:block hidden"
             onClick={handleSignOut}
           >
             Cerrar Sesión
