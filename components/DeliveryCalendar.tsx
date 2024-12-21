@@ -34,6 +34,12 @@ interface DropResult {
   date: string;
 }
 
+interface DroppableCellProps {
+  date: string;
+  children: React.ReactNode;
+}
+
+
 const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "DELIVERY",
@@ -61,7 +67,7 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div ref={drag} className={`
+          <div ref={drag as unknown as React.RefObject<HTMLDivElement>} className={`
               text-xs p-1 rounded cursor-move
               ${isDragging ? "opacity-50" : "opacity-100"}
               ${
@@ -105,8 +111,12 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
 };
 
 // Droppable calendar cell component
-const DroppableCell = ({ date, children }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
+const DroppableCell = ({ date, children }: DroppableCellProps) => {
+  const [{ isOver }, drop] = useDrop<
+    { id: number }, // Item type
+    DropResult,     // DropResult type
+    { isOver: boolean } // Collect props type
+  >(() => ({
     accept: "DELIVERY",
     drop: () => ({ date }),
     collect: (monitor) => ({
@@ -116,7 +126,7 @@ const DroppableCell = ({ date, children }) => {
 
   return (
     <div
-      ref={drop}
+      ref={drop as unknown as React.RefObject<HTMLDivElement>}
       className={`h-full min-h-24 p-1 border-gray-200 ${
         isOver ? "bg-blue-50" : "bg-white"
       }`}
@@ -125,6 +135,7 @@ const DroppableCell = ({ date, children }) => {
     </div>
   );
 };
+
 
 const DeliveryCalendar = ({ searchUrl }) => {
   const [date, setDate] = useState(new Date());
