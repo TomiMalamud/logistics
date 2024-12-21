@@ -110,7 +110,7 @@ const Layout = ({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <header className="bg-gray-100 justify-between p-3 flex border-b  border-grid">
+      <header className="bg-white justify-between p-3 flex border-b  border-grid">
         <nav className="flex overflow-x-scroll">
             {renderNavButtons()}
         </nav>        

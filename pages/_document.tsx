@@ -11,7 +11,7 @@ class MyDocument extends Document {
       <Html lang="es" className="h-full">
         <Head>
         </Head>
-        <body className="h-full bg-gray-100">
+        <body className="h-full bg-gray-50">
           <Main />
           <NextScript />
         </body>

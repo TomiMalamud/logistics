@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useDeliveryLogic } from "@/lib/hooks/useDeliveryLogic";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
@@ -8,7 +8,7 @@ import StateDialog from "./StateDialog";
 import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
 import Balance from "./Balance";
-import { MoreHorizontal } from "lucide-react";
+import { Factory, Home, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,7 @@ import {
   TooltipTrigger
 } from "./ui/tooltip";
 
+
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({
     delivery: {
@@ -36,6 +37,21 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     fetchURL
   });
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const displayName = delivery.type === 'supplier_pickup' 
+    ? delivery.suppliers?.name 
+    : delivery.customers?.name;
+  
+  const displayPhone = delivery.type === 'supplier_pickup'
+    ? null  // Assuming we don't need supplier phone
+    : delivery.customers?.phone;
+
+  const displayAddress = delivery.type === 'supplier_pickup'
+    ? null
+    : delivery.customers?.address;
+
+  const displayIcon = delivery.type === 'supplier_pickup'
+    ? <Factory className="h-4 w-4" />
+    : <Home size={16}/>;
 
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
@@ -49,16 +65,15 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
         <div className="flex items-center">
-          <p className="font-bold text-lg">
-            {titleCase(delivery.customers.name)}
+          <p className="font-bold text-lg flex items-center gap-x-2">            
+            {displayIcon}
+            {displayName ? titleCase(displayName) : 'Sin nombre'}
           </p>
-          {delivery.customers.phone && (
+          {displayPhone && (
             <>
               <span className="mx-2">|</span>
               <p className="text-slate-600 text-sm">
-                {deliveryLogic.formatArgentinePhoneNumber(
-                  delivery.customers.phone
-                )}
+                {deliveryLogic.formatArgentinePhoneNumber(displayPhone)}
               </p>
             </>
           )}
@@ -97,12 +112,14 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               Actualizando fecha de entrega...
             </h1>
             <p className="text-sm mt-1 text-slate-500">
-              Visitaremos el domicilio...
+              {delivery.type === 'supplier_pickup' ? 'Programando retiro...' : 'Visitaremos el domicilio...'}
             </p>
           </div>
         ) : delivery.state === "delivered" ? (
           <div>
-            <h1 className="font-medium text-black">Entregado</h1>
+            <h1 className="font-medium text-black">
+              {delivery.type === 'supplier_pickup' ? 'Retirado' : 'Entregado'}
+            </h1>
             <p className="text-sm mt-1 text-slate-500">
               {delivery.delivery_date &&
                 `El ${deliveryLogic.formatDate(delivery.delivery_date)}`}
@@ -114,34 +131,36 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
             new Date().toISOString().split("T")[0] ? (
               <div>
                 <h1 className="font-medium text-red-500">
-                  !!! Entrega atrasada
+                  {delivery.type === 'supplier_pickup' ? '!!! Retiro en fárbica atrasado' : '!!! Entrega atrasada'}
                 </h1>
                 <p className="text-sm mt-1 text-red-500">
-                  Teníamos que entregar el{" "}
-                  <span className="font-bold">
-                    {deliveryLogic.formatDate(delivery.scheduled_date)}
-                  </span>
-                  , reprogramá la entrega con el cliente y actualizá la fecha
-                  acá
+                  {delivery.type === 'supplier_pickup' 
+                    ? `Teníamos que retirar el ${deliveryLogic.formatDate(delivery.scheduled_date)}, reprogramá el retiro y actualizá la fecha acá`
+                    : `Teníamos que entregar el ${deliveryLogic.formatDate(delivery.scheduled_date)}, reprogramá la entrega con el cliente y actualizá la fecha acá`
+                  }
                 </p>
               </div>
             ) : (
               <div>
-                <h1 className="font-medium">Entrega programada</h1>
+                <h1 className="font-medium">
+                  {delivery.type === 'supplier_pickup' ? 'Retiro en fábrica programado' : 'Entrega programada'}
+                </h1>
                 <p className="text-sm mt-1 text-slate-500">
                   {deliveryLogic.isToday(new Date(delivery.scheduled_date)) ? (
                     <span>
-                      Visitaremos el domicilio{" "}
+                      {delivery.type === 'supplier_pickup' 
+                        ? 'Retiro programado '
+                        : 'Visitaremos el domicilio '}
                       <span className="font-bold text-black">
                         hoy, {deliveryLogic.formatDate(delivery.scheduled_date)}
                       </span>
                     </span>
                   ) : (
                     <span>
-                      Visitaremos el domicilio el{" "}
-                      <span className="font-bold">
-                        {deliveryLogic.formatDate(delivery.scheduled_date)}
-                      </span>
+                      {delivery.type === 'supplier_pickup'
+                        ? `Retiro programado para el ${deliveryLogic.formatDate(delivery.scheduled_date)}`
+                        : `Visitaremos el domicilio el ${deliveryLogic.formatDate(delivery.scheduled_date)}`
+                      }
                     </span>
                   )}
                 </p>
@@ -150,12 +169,21 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </div>
         ) : (
           <div>
-            <h1 className="text-orange-500">Fecha de entrega no programada</h1>
+            <h1 className="text-orange-500">
+              {delivery.type === 'supplier_pickup' 
+                ? 'Fecha de retiro en fábrica no programada'
+                : 'Fecha de entrega no programada'
+              }
+            </h1>
             <p className="text-sm mt-1 text-slate-500">
-              Coordinar cuanto antes con el cliente
+              {delivery.type === 'supplier_pickup'
+                ? 'Coordinar retiro cuanto antes'
+                : 'Coordinar cuanto antes con el cliente'
+              }
             </p>
           </div>
         )}
+
         <div className="space-x-2 flex">
           <div className="w-24">
             <StateDialog
@@ -206,12 +234,15 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       </Alert>
 
       {/* Address */}
-      <div className="flex py-2 items-center justify-between">
-        <p className="text-sm text-slate-600 mr-5">
-          {delivery.customers.address}
-        </p>
-      </div>
-      {delivery.state === "pending" && (
+      {displayAddress && (
+        <div className="flex py-2 items-center justify-between">
+          <p className="text-sm text-slate-600 mr-5">
+            {displayAddress}
+          </p>
+        </div>
+      )}
+
+      {delivery.state === "pending" && delivery.type !== 'supplier_pickup' && (
         <Balance invoice_id={delivery.invoice_id} />
       )}
 

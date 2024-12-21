@@ -44,7 +44,15 @@ export interface Customer {
     balance: number | null,
     delivery_cost: number | null,
     delivery_date: string | null,
+    type: string,
+    supplier_id: string | null,
+    suppliers: Supplier | null,
     carrier_id: number | null,
+  }
+
+  export interface Supplier {
+    id: number;
+    name: string;
   }
   
   // Props for Delivery Component

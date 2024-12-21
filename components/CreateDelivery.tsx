@@ -215,7 +215,7 @@ export default function CreateDelivery({ user }: CreateProps) {
         created_by: user.id
       };
 
-      const response = await fetch("/api/post", {
+      const response = await fetch("/api/create-delivery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)

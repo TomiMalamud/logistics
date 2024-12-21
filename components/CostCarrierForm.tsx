@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { useCarriers } from '@/lib/hooks/useCarriers';
+import { useCarriers } from "@/lib/hooks/useCarriers";
 
 interface Carrier {
   id: number;
@@ -35,59 +35,38 @@ export default function CostCarrierForm({
   onCarrierChange,
   onCostChange,
   required = false,
-  className = '',
+  className = ""
 }: CostCarrierFormProps) {
-  // Initialize state safely with empty string for cost if undefined/null
-  const [deliveryCost, setDeliveryCost] = useState(() => {
-    if (initialDeliveryCost === undefined || initialDeliveryCost === null) return '';
-    return initialDeliveryCost.toString();
-  });
-  
-  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(
-    initialCarrierId ?? undefined
+  // Initialize state with initial values
+  const [deliveryCost, setDeliveryCost] = useState(
+    () => initialDeliveryCost?.toString() ?? ""
   );
-  
-  const { 
-    carriers, 
-    isLoading: isLoadingCarriers, 
-    error: carriersError 
+
+  const [selectedCarrierId, setSelectedCarrierId] = useState<string>(
+    initialCarrierId?.toString() ?? ""
+  );
+
+  const {
+    carriers,
+    isLoading: isLoadingCarriers,
+    error: carriersError
   } = useCarriers();
-
-  // Handle external changes to initial values
-  useEffect(() => {
-    if (initialDeliveryCost !== undefined && initialDeliveryCost !== null) {
-      setDeliveryCost(initialDeliveryCost.toString());
-    }
-  }, [initialDeliveryCost]);
-
-  useEffect(() => {
-    setSelectedCarrierId(initialCarrierId ?? undefined);
-  }, [initialCarrierId]);
-
-  // Propagate changes up
-  useEffect(() => {
-    onCarrierChange(selectedCarrierId);
-  }, [selectedCarrierId, onCarrierChange]);
-
-  useEffect(() => {
-    onCostChange(deliveryCost);
-  }, [deliveryCost, onCostChange]);
 
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setDeliveryCost(value);
+    onCostChange(value);
   };
 
   const handleCarrierChange = (value: string) => {
-    setSelectedCarrierId(parseInt(value));
+    setSelectedCarrierId(value);
+    onCarrierChange(value ? parseInt(value) : undefined);
   };
 
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="space-y-2">
-        <label className="text-sm font-medium">
-          Costo de envío
-        </label>
+        <label className="text-sm font-medium">Costo de envío</label>
         <Input
           type="number"
           placeholder="Ingresá el costo"
@@ -100,29 +79,26 @@ export default function CostCarrierForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">
-          Transporte
-        </label>
+        <label className="text-sm font-medium">Transporte</label>
         {carriersError ? (
           <div className="text-sm text-red-500">{carriersError}</div>
         ) : (
-          <Select 
-            value={selectedCarrierId?.toString()} 
+          <Select
+            value={selectedCarrierId}
             onValueChange={handleCarrierChange}
             required={required}
             disabled={isLoadingCarriers}
           >
             <SelectTrigger>
-              <SelectValue 
-                placeholder={isLoadingCarriers ? "Cargando..." : "Seleccioná un transporte"} 
+              <SelectValue
+                placeholder={
+                  isLoadingCarriers ? "Cargando..." : "Seleccioná un transporte"
+                }
               />
             </SelectTrigger>
             <SelectContent>
               {carriers.map((carrier: Carrier) => (
-                <SelectItem 
-                  key={carrier.id} 
-                  value={carrier.id.toString()}
-                >
+                <SelectItem key={carrier.id} value={carrier.id.toString()}>
                   {carrier.name}
                 </SelectItem>
               ))}
@@ -134,4 +110,4 @@ export default function CostCarrierForm({
   );
 }
 
-CostCarrierForm.displayName = 'CostCarrierForm';
+CostCarrierForm.displayName = "CostCarrierForm";

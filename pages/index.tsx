@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 import DeliveryList from "@/components/DeliveryList";
 import TablePlaceholder from "@/components/TablePlaceholder";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +22,14 @@ import type { User } from "@supabase/supabase-js";
 import type { Profile } from "types/types";
 import { createClient } from "@/utils/supabase/server-props";
 import { GetServerSidePropsContext } from "next";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -194,14 +202,31 @@ export default function Index({ user, profile }: IndexProps) {
           <h1 className="text-2xl font-bold tracking-tight">
             Entregas de ROHI Sommiers
           </h1>
-          <Button asChild className="hidden md:block">
-            <Link href="/create">+ Agregar</Link>
-          </Button>
+
+          <DropdownMenu>
+            <Button asChild>
+              <DropdownMenuTrigger className="mr-2">
+                Agregar
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </DropdownMenuTrigger>
+            </Button>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild>
+                <Link href={"/create-delivery"}>Entrega</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={"/create-pickup"}>Retiro</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="hidden">
+                <Link href={"/create-delivery"}>Entrega</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <p className="text-yellow-800 font-medium">
           Hola {profile ? profile.name : user.email.split("@")[0]}!
         </p>
-        <div className="bg-gray-100">
+        <div className="bg-gray-50">
           <Tabs
             value={currentFilters.state}
             className="w-full mb-4 mt-6"
@@ -214,9 +239,7 @@ export default function Index({ user, profile }: IndexProps) {
                   {data && data.totalItems}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="delivered">
-                Entregadas
-              </TabsTrigger>
+              <TabsTrigger value="delivered">Entregadas</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -248,9 +271,7 @@ export default function Index({ user, profile }: IndexProps) {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Fecha Programada</SelectLabel>
-                      <SelectItem value="all">
-                        Fecha Programada
-                      </SelectItem>
+                      <SelectItem value="all">Fecha Programada</SelectItem>
                       <SelectItem value="hasDate">Fecha programada</SelectItem>
                       <SelectItem value="noDate">
                         Fecha no programada

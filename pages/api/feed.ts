@@ -20,12 +20,13 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { 
-    state = 'pending', 
-    page = '1', 
+  const {
+    state = 'pending',
+    page = '1',
     pageSize = '40',
     search = '',
-    scheduledDate = 'all'
+    scheduledDate = 'all',
+    type
   } = req.query
 
   if (!['pending', 'delivered'].includes(state as string)) {
@@ -44,7 +45,7 @@ export default async function handler(
       .from('deliveries')
       .select(`
         *,
-        customers!inner (
+        customers (
           name,
           address,
           phone
@@ -57,16 +58,30 @@ export default async function handler(
         created_by:profiles (
           email,
           name
-        )`, { count: 'exact' })
+        ),
+        suppliers (
+          name
+        ),
+        carriers (
+          name,
+          phone
+        )
+      `, { count: 'exact' })
       .eq('state', state)
       .range(start, end)
 
-    // Apply search if present
+    // Apply delivery type filter if provided
+    if (type) {
+      query = query.eq('type', type)
+    }
+
+    // Apply search if present - only search customer fields for home/store deliveries
     if (search) {
       const searchTerm = `*${search}*`
-      query = query.or(`name.ilike.${searchTerm},address.ilike.${searchTerm}`, { 
-        referencedTable: 'customers' 
-      })
+      query = query.or(
+        `products.ilike.${searchTerm},` +
+        `customers.name.ilike.${searchTerm},customers.address.ilike.${searchTerm},`
+      )
     }
 
     // Apply scheduled date filter
@@ -96,8 +111,23 @@ export default async function handler(
       return res.status(500).json({ error: 'Count not available' })
     }
 
+    // Transform the data to handle different delivery types
+    const transformedData = data?.map(delivery => ({
+      ...delivery,
+      // For supplier pickups, ensure we show relevant info
+      displayName: delivery.type === 'supplier_pickup' 
+        ? delivery.suppliers?.name 
+        : delivery.customers?.name,
+      displayAddress: delivery.type === 'supplier_pickup'
+        ? null
+        : delivery.customers?.address,
+      displayPhone: delivery.type === 'supplier_pickup'
+        ? delivery.suppliers?.phone
+        : delivery.customers?.phone
+    }))
+
     return res.status(200).json({
-      feed: data,
+      feed: transformedData,
       page: Number(page),
       totalPages: Math.ceil(count / Number(pageSize)),
       totalItems: count

@@ -1,4 +1,4 @@
-// pages/api/post/index.ts
+// pages/api/create-delivery/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
 import { sendDeliveryScheduleEmail } from "@/utils/emails";
