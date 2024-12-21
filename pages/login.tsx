@@ -1,50 +1,56 @@
-import { useRouter } from 'next/router'
-import { useState } from 'react'
-import { createClient } from '@/utils/supabase/component'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import ResetPassword from '@/components/ResetPassword'
-import Footer from '@/components/Footer'
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { createClient } from "@/utils/supabase/component";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import ResetPassword from "@/components/ResetPassword";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter();
+  const supabase = createClient();
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   async function logIn(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
 
       if (signInError) {
-        setError(signInError.message === 'Invalid login credentials' 
-          ? 'Email o contraseña incorrecta'
-          : 'Ha ocurrido un error. Por favor, intente nuevamente.'
-        )
-        return
+        setError(
+          signInError.message === "Invalid login credentials"
+            ? "Email o contraseña incorrecta"
+            : "Ha ocurrido un error. Por favor, intente nuevamente."
+        );
+        return;
       }
 
-      // The middleware will handle the redirect
       if (data?.session) {
-        router.push('/')
+        router.push("/");
       }
     } catch (err) {
-      setError('Ha ocurrido un error. Por favor, intente nuevamente.')
+      setError("Ha ocurrido un error. Por favor, intente nuevamente.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -57,10 +63,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md">
+    <div className="max-w-md mt-20 container mx-auto min-h-screen bg-gray-100">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Logística</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">
+            Logística
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={logIn} className="space-y-4">
@@ -70,7 +78,9 @@ export default function LoginPage() {
               </Alert>
             )}
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email</label>
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
               <Input
                 id="email"
                 type="email"
@@ -82,7 +92,9 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Contraseña</label>
+              <label htmlFor="password" className="text-sm font-medium">
+                Contraseña
+              </label>
               <Input
                 id="password"
                 type="password"
@@ -103,17 +115,40 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button 
-            onClick={logIn} 
+        <CardFooter className="">
+          <Button
+            onClick={logIn}
             disabled={isLoading}
             className="w-full sm:w-auto"
           >
-            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
         </CardFooter>
       </Card>
-      <Footer />
+      <div className="text-center text-sm leading-loose text-muted-foreground mt-4">
+        <p>
+          Built by{" "}
+          <a
+            href="https://www.tmalamud.com"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium underline underline-offset-4"
+          >
+            Tomás Malamud
+          </a>
+        </p>
+        <p>
+          The source code is available on{" "}
+          <a
+            href="https://github.com/TomiMalamud/logistics"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium underline underline-offset-4"
+          >
+            GitHub
+          </a>
+        </p>
+      </div>
     </div>
-  )
+  );
 }

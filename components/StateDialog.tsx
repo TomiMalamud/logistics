@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -10,7 +9,8 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -18,16 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 
 type DeliveryType = "carrier" | "pickup";
 type PickupStore = "cd" | "9dejulio" | "carcano";
-
-interface Carrier {
-  id: number;
-  name: string;
-}
 
 interface FormData {
   delivery_cost?: number;
@@ -52,11 +46,6 @@ const PICKUP_STORES = [
   { value: "carcano", label: "Carcano" }
 ] as const;
 
-function isDeliveryCostValid(cost: string): boolean {
-  const numValue = parseFloat(cost);
-  return !isNaN(numValue) && numValue > 0;
-}
-
 export default function StateDialog({ 
   state,
   setState,
@@ -68,45 +57,17 @@ export default function StateDialog({
 }: StateDialogProps) {
   const [open, setOpen] = useState(false);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("carrier");
-  const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost?.toString() ?? "");
-  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(initialCarrierId);
+  const [deliveryCost, setDeliveryCost] = useState('');
+  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
   const [selectedStore, setSelectedStore] = useState<PickupStore | undefined>();
-  
-  // Carriers state
-  const [carriers, setCarriers] = useState<Carrier[]>([]);
-  const [isLoadingCarriers, setIsLoadingCarriers] = useState(false);
-  const [carriersError, setCarriersError] = useState<string | null>(null);
 
   // Reset form when delivery type changes
-  useEffect(() => {
+  const handleDeliveryTypeChange = (value: string) => {
+    setDeliveryType(value as DeliveryType);
     setDeliveryCost("");
     setSelectedCarrierId(undefined);
     setSelectedStore(undefined);
-  }, [deliveryType]);
-
-  // Fetch carriers only when dialog opens AND delivery type is "carrier"
-  useEffect(() => {
-    if (!open || deliveryType !== "carrier") return;
-
-    const fetchCarriers = async () => {
-      setIsLoadingCarriers(true);
-      try {
-        const response = await fetch('/api/carriers');
-        if (!response.ok) throw new Error('Failed to fetch carriers');
-        const data = await response.json();
-        setCarriers(data);
-        setCarriersError(null);
-      } catch (error) {
-        console.error('Error fetching carriers:', error);
-        setCarriersError('Error al cargar transportes');
-        setCarriers([]);
-      } finally {
-        setIsLoadingCarriers(false);
-      }
-    };
-    
-    fetchCarriers();
-  }, [open, deliveryType]);
+  };
 
   async function handleFormSubmit() {
     const formData: FormData = {
@@ -167,18 +128,16 @@ export default function StateDialog({
         <div className="flex flex-col gap-4 mt-4">
           <DeliveryTypeSelector 
             value={deliveryType}
-            onChange={(value) => setDeliveryType(value as DeliveryType)}
+            onChange={handleDeliveryTypeChange}
           />
 
           {deliveryType === "carrier" ? (
-            <CarrierForm
-              deliveryCost={deliveryCost}
-              onDeliveryCostChange={(e) => setDeliveryCost(e.target.value)}
-              selectedCarrierId={selectedCarrierId}
-              onCarrierChange={(value) => setSelectedCarrierId(parseInt(value))}
-              carriers={carriers}
-              isLoading={isLoadingCarriers}
-              error={carriersError}
+            <CostCarrierForm
+              initialDeliveryCost={initialDeliveryCost}
+              initialCarrierId={initialCarrierId}
+              onCarrierChange={setSelectedCarrierId}
+              onCostChange={setDeliveryCost}
+              required
             />
           ) : (
             <PickupStoreSelector
@@ -224,69 +183,6 @@ function DeliveryTypeSelector({
         <Label htmlFor="pickup">Retiro en sucursal</Label>
       </div>
     </RadioGroup>
-  );
-}
-
-function CarrierForm({
-  deliveryCost,
-  onDeliveryCostChange,
-  selectedCarrierId,
-  onCarrierChange,
-  carriers,
-  isLoading,
-  error
-}: {
-  deliveryCost: string;
-  onDeliveryCostChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  selectedCarrierId?: number;
-  onCarrierChange: (value: string) => void;
-  carriers: Carrier[];
-  isLoading: boolean;
-  error: string | null;
-}) {
-  return (
-    <>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Costo de envío</label>
-        <Input
-          type="number"
-          placeholder="Ingresá el costo"
-          value={deliveryCost}
-          onChange={onDeliveryCostChange}
-          required
-          min="0"
-          step="1"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Transporte</label>
-        {error ? (
-          <div className="text-sm text-red-500">{error}</div>
-        ) : (
-          <Select 
-            value={selectedCarrierId?.toString()} 
-            onValueChange={onCarrierChange}
-            required
-            disabled={isLoading}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={isLoading ? "Cargando..." : "Seleccioná un transporte"} />
-            </SelectTrigger>
-            <SelectContent>
-              {carriers.map((carrier) => (
-                <SelectItem 
-                  key={carrier.id} 
-                  value={carrier.id.toString()}
-                >
-                  {carrier.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-    </>
   );
 }
 

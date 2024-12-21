@@ -3,6 +3,7 @@ import type { GetServerSidePropsContext } from "next";
 import { createClient } from "@/utils/supabase/server-props";
 import CreateDelivery from "@/components/CreateDelivery";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CreatePickup from "@/components/CreatePickup";
 
 export default function CreateDeliveryPage({ user }) {
   return (
@@ -18,7 +19,7 @@ export default function CreateDeliveryPage({ user }) {
               <CreateDelivery user={user} />
             </TabsContent>
             <TabsContent value="pickup">
-              <p>En proceso</p>
+              <CreatePickup user={user} />
             </TabsContent>
             <TabsContent value="inter_store">
               <p>En proceso</p>
