@@ -251,7 +251,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Calendar size={12} />
+                <Calendar size={12} className="text-gray-600" />
                 <ScheduledDateDialog
                   scheduledDate={deliveryLogic.scheduledDate}
                   setScheduledDate={deliveryLogic.setScheduledDate}
@@ -264,7 +264,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <PiggyBank size={12} />
+                <PiggyBank size={12} className="text-gray-600" />
                 <CostCarrierDialog
                   initialDeliveryCost={delivery.delivery_cost}
                   initialCarrierId={delivery.carrier_id}
@@ -279,7 +279,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   setIsNotesDialogOpen(true);
                 }}
               >
-                <StickyNote size={12} />
+                <StickyNote size={12} className="text-gray-600"/>
                 Notas
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -319,7 +319,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       {/* Address */}
       {displayAddress && (
         <div className="flex py-2 items-center justify-between">
-          <p className="text-sm text-slate-600 mr-5">{displayAddress}</p>
+          <p className="text-sm text-slate-600 mr-5 capitalize">{displayAddress.toLowerCase()}</p>
         </div>
       )}
       {delivery.state === "pending" && delivery.type !== "supplier_pickup" && (
@@ -330,7 +330,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         {deliveryLogic.newNotas.length > 0 ? (
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">
-              {deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1].text} |{" "}
+              {deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1].text.toLowerCase()} |{" "}
               {deliveryLogic.formatNoteDate(
                 deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1]
                   .created_at || ""

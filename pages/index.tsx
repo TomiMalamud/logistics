@@ -218,15 +218,22 @@ export default function Index({ user, profile }: IndexProps) {
                 <ChevronDown className="ml-2 h-4 w-4" />
               </DropdownMenuTrigger>
             </Button>
-            <DropdownMenuContent>
-              <DropdownMenuItem asChild>
-                <Link href={"/create/delivery"}>Entrega</Link>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>              
+                <Link href={"/create/delivery"}>
+                <Home size={12} className=" text-gray-600" />
+                Entrega</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild >
+                <Link href={"/create/pickup"}>
+                <Factory size={12} className=" text-gray-600" />
+                Retiro
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={"/create/pickup"}>Retiro</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={"/create/store-mov"}>Entre Locales</Link>
+                <Link href={"/create/store-mov"}>
+                <Store size={12} className="text-gray-600" />
+                Entre Locales</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
