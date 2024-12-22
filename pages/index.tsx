@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 import DeliveryList from "@/components/DeliveryList";
 import TablePlaceholder from "@/components/TablePlaceholder";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, Search } from "lucide-react";
+import { Calendar, CalendarOff, ChevronDown, Factory, Home, Search, Store } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -50,7 +50,8 @@ const DEFAULT_FILTERS = {
   state: "pending",
   page: "1",
   search: "",
-  scheduledDate: "all"
+  scheduledDate: "all",
+  type: "all"
 };
 
 export default function Index({ user, profile }: IndexProps) {
@@ -63,7 +64,8 @@ export default function Index({ user, profile }: IndexProps) {
       page: (router.query.page as string) ?? DEFAULT_FILTERS.page,
       search: (router.query.search as string) ?? DEFAULT_FILTERS.search,
       scheduledDate:
-        (router.query.scheduledDate as string) ?? DEFAULT_FILTERS.scheduledDate
+        (router.query.scheduledDate as string) ?? DEFAULT_FILTERS.scheduledDate,
+      type: (router.query.type as string) ?? DEFAULT_FILTERS.type
     }),
     [router.query]
   );
@@ -160,7 +162,7 @@ export default function Index({ user, profile }: IndexProps) {
     Object.entries(currentFilters).forEach(([key, value]) => {
       if (value) params.append(key, value);
     });
-    return `/api/feed?${params.toString()}`;
+    return `/api/deliveries?${params.toString()}`;
   }, [currentFilters]);
 
   // Fetch data
@@ -194,6 +196,12 @@ export default function Index({ user, profile }: IndexProps) {
     currentFilters,
     router.query
   ]);
+  const handleDeliveryTypeChange = useCallback(
+    (value: string) => {
+      updateFilters({ type: value });
+    },
+    [updateFilters]
+  );
 
   const headerContent = useMemo(
     () => (
@@ -245,6 +253,7 @@ export default function Index({ user, profile }: IndexProps) {
 
           <form onSubmit={(e) => e.preventDefault()}>
             <div className="flex space-x-2">
+              {/* Existing search input */}
               <div className="relative w-full pb-2">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -257,25 +266,65 @@ export default function Index({ user, profile }: IndexProps) {
                 />
               </div>
 
+              {/* Delivery Type Filter */}
+              <div className="flex w-auto">
+                <Select
+                  value={currentFilters.type}
+                  onValueChange={handleDeliveryTypeChange}
+                >
+                  <SelectTrigger
+                    aria-label="Filter Type"
+                    className="bg-white text-black"
+                  >
+                    <SelectValue placeholder="Filtrar por tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Tipo de Entrega</SelectLabel>
+                      <SelectItem value="all">Tipo</SelectItem>
+                      <SelectItem value="home_delivery">
+                        <Home className="inline-block mr-2 text-gray-700" size={12} />
+                        Entrega a Domicilio
+                      </SelectItem>
+                      <SelectItem value="supplier_pickup">
+                      <Factory className="inline-block mr-2 text-gray-700" size={12} />
+                        Retiro de Proveedor
+                      </SelectItem>
+                      <SelectItem
+                        value="stores_movement"
+                        className="flex items-center"
+                      >
+                        <Store className="inline-block mr-2 text-gray-700" size={12} />Entre Locales
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Existing scheduled date filter */}
               <div className="flex w-auto">
                 <Select
                   value={currentFilters.scheduledDate}
                   onValueChange={handleScheduledDateChange}
                 >
                   <SelectTrigger
-                    aria-label="Filter"
+                    aria-label="Filter Date"
                     className="bg-white text-black"
                   >
-                    <SelectValue placeholder="Filtrar por 'fecha programada'" />
+                    <SelectValue placeholder="Filtrar por fecha programada" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Fecha Programada</SelectLabel>
-                      <SelectItem value="all">Fecha Programada</SelectItem>
-                      <SelectItem value="hasDate">Fecha programada</SelectItem>
+                      <SelectItem value="all">Con y Sin Fecha</SelectItem>
+                      <SelectItem value="hasDate">
+                        <Calendar className="inline-block mr-2 text-gray-700" size={12} />
+                        Con fecha
+                        </SelectItem>
                       <SelectItem value="noDate">
-                        Fecha no programada
-                      </SelectItem>
+                        <CalendarOff className="inline-block mr-2 text-gray-700" size={12} />
+                        Sin fecha
+                        </SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -293,6 +342,7 @@ export default function Index({ user, profile }: IndexProps) {
       data,
       handleTabChange,
       handleScheduledDateChange,
+      handleDeliveryTypeChange,
       handleBlur,
       handleChange,
       handleKeyDown

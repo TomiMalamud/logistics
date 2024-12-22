@@ -93,7 +93,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
   };
 
   const handleStoreChange =
-    (type: "origin_store" | "destination_store") => (value: StoreId) => {
+    (type: "origin_store" | "dest_store") => (value: StoreId) => {
       setFormData((prev) => ({
         ...prev,
         [type]: value
@@ -135,7 +135,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
                     <SelectItem
                       key={store.id}
                       value={store.id}
-                      disabled={store.id === formData.destination_store}
+                      disabled={store.id === formData.dest_store}
                     >
                       {store.name}
                     </SelectItem>
@@ -145,8 +145,8 @@ export default function CreateStoreMov({ user }: { user: User }) {
             </FormField>
             <FormField label="Destino">
               <Select
-                value={formData.destination_store}
-                onValueChange={handleStoreChange("destination_store")}
+                value={formData.dest_store}
+                onValueChange={handleStoreChange("dest_store")}
                 required
               >
                 <SelectTrigger>

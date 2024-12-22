@@ -8,7 +8,7 @@ import StateDialog from "./StateDialog";
 import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
 import Balance from "./Balance";
-import { Factory, Home, MoreHorizontal } from "lucide-react";
+import { Factory, Home, MoreHorizontal, Store } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,21 +37,47 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     fetchURL
   });
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
-  const displayName = delivery.type === 'supplier_pickup' 
-    ? delivery.suppliers?.name 
-    : delivery.customers?.name;
+
+  const PICKUP_STORES = [
+    { value: "cd", label: "CD" },
+    { value: "9dejulio", label: "9 de Julio" },
+    { value: "carcano", label: "Cárcano" }
+  ] as const;
+
+  const getStoreLabel = (storeValue: string) => {
+    const store = PICKUP_STORES.find(store => store.value === storeValue);
+    return store ? store.label : storeValue;
+  };
+
+  const getDisplayName = () => {
+    switch (delivery.type) {
+      case 'supplier_pickup':
+        return delivery.suppliers?.name;
+      case 'stores_movement':
+        return `Movimiento de ${getStoreLabel(delivery.origin_store)} a ${getStoreLabel(delivery.dest_store)}`;
+      default:
+        return delivery.customers?.name;
+    }
+  };
   
-  const displayPhone = delivery.type === 'supplier_pickup'
-    ? null  // Assuming we don't need supplier phone
-    : delivery.customers?.phone;
+  const displayName = getDisplayName();
+  
+  const displayPhone = delivery.type === 'home_delivery' ? delivery.customers?.phone : null;
 
-  const displayAddress = delivery.type === 'supplier_pickup'
-    ? null
-    : delivery.customers?.address;
+  const displayAddress = delivery.type === 'home_delivery' ? delivery.customers?.address : null;
 
-  const displayIcon = delivery.type === 'supplier_pickup'
-    ? <Factory className="h-4 w-4" />
-    : <Home size={16}/>;
+  const getDisplayIcon = () => {
+    switch (delivery.type) {
+      case 'supplier_pickup':
+        return <Factory className="h-4 w-4" />;
+      case 'stores_movement':
+        return <Store className="h-4 w-4" />;
+      default:
+        return <Home size={16} />;
+    }
+  };
+  
+  const displayIcon = getDisplayIcon();
 
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
@@ -67,7 +93,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         <div className="flex items-center">
           <p className="font-bold text-lg flex items-center gap-x-2">            
             {displayIcon}
-            {displayName ? titleCase(displayName) : 'Sin nombre'}
+            {displayName}
           </p>
           {displayPhone && (
             <>

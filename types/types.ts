@@ -47,6 +47,8 @@ export interface Customer {
     type: string,
     supplier_id: string | null,
     suppliers: Supplier | null,
+    origin_store: Store | null,
+    dest_store: Store | null,
     carrier_id: number | null,
   }
 

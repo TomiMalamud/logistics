@@ -24,7 +24,7 @@ export interface ProductItem {
 
 interface FormData {
   origin_store: StoreId;
-  destination_store: StoreId;
+  dest_store: StoreId;
   products: ProductItem[];
   scheduled_date?: string;
 }
@@ -56,7 +56,7 @@ export const useStoreMovement = (user: User) => {
 
   const [formData, setFormData] = useState<FormData>({
     origin_store: "cd",
-    destination_store: "" as StoreId,
+    dest_store: "" as StoreId,
     products: [],
     scheduled_date: new Date().toISOString().split("T")[0]
   });
@@ -65,8 +65,8 @@ export const useStoreMovement = (user: User) => {
   const [error, setError] = useState<string | null>(null);
 
   const validateForm = (data: FormData): string | null => {
-    if (!data.destination_store) return "Seleccioná un local de destino";
-    if (data.origin_store === data.destination_store)
+    if (!data.dest_store) return "Seleccioná un local de destino";
+    if (data.origin_store === data.dest_store)
       return "Local de destino y origen no pueden ser iguales";
     if (data.products.length === 0) return "Agregá al menos un producto.";
     return null;
@@ -102,7 +102,7 @@ export const useStoreMovement = (user: User) => {
           .join(", ")
       };
 
-      const response = await fetch("/api/create-delivery", {
+      const response = await fetch("/api/create-store-mov", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)

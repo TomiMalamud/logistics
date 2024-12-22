@@ -16,7 +16,7 @@ export const ProductList = ({ products, onRemove }: ProductListProps) => {
       {products.map((product) => (
         <div
           key={product.id}
-          className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+          className="flex group items-center justify-between p-2 bg-gray-50 min-h-12 rounded-md"
         >
           <div className="space-x-2 flex-1">
             <span className="text-sm text-gray-500">{product.code}</span>
@@ -27,7 +27,7 @@ export const ProductList = ({ products, onRemove }: ProductListProps) => {
             size="icon"
             variant="ghost"
             onClick={() => onRemove(product.id)}
-            className="h-8 w-8"
+            className="h-8 w-8 hidden group-hover:inline-flex"
           >
             <X className="h-4 w-4" />
           </Button>

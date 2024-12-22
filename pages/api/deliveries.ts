@@ -26,7 +26,7 @@ export default async function handler(
     pageSize = '40',
     search = '',
     scheduledDate = 'all',
-    type
+    type = 'all'  // Set default value to 'all'
   } = req.query
 
   if (!['pending', 'delivered'].includes(state as string)) {
@@ -70,8 +70,8 @@ export default async function handler(
       .eq('state', state)
       .range(start, end)
 
-    // Apply delivery type filter if provided
-    if (type) {
+    // Apply delivery type filter only if it's not 'all'
+    if (type && type !== 'all') {
       query = query.eq('type', type)
     }
 
