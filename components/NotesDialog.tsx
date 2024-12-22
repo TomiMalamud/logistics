@@ -21,7 +21,7 @@ export default function NotesDialog({
   }) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Notas</DialogTitle>
           </DialogHeader>
@@ -30,7 +30,7 @@ export default function NotesDialog({
               <ul className="list-disc list-inside space-y-2">
                 {notes.map((note, index) => (
                   <li
-                    className="text-sm text-slate-600 leading-6"
+                    className="text-sm text-slate-600 leading-6 lowercase"
                     key={note.id || index}
                   >
                     {note.text} | {formatNoteDate(note.created_at || "")}

@@ -2,12 +2,19 @@ import React from "react";
 import { useDeliveryLogic } from "@/lib/hooks/useDeliveryLogic";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
-import { titleCase } from "title-case";
 import StateDialog from "./StateDialog";
 import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
 import Balance from "./Balance";
-import { Calendar, Factory, Home, MoreHorizontal, PiggyBank, StickyNote, Store } from "lucide-react";
+import {
+  Calendar,
+  Factory,
+  Home,
+  MoreHorizontal,
+  PiggyBank,
+  StickyNote,
+  Store
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,7 +98,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           <AlertDescription>{deliveryLogic.error}</AlertDescription>
         </Alert>
       )}
-
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
         <div className="flex items-center">
@@ -135,7 +141,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </TooltipProvider>
         </div>
       </div>
-
       {/* Delivery Date Section */}
       <div className="flex items-center py-4 justify-between">
         {deliveryLogic.isUpdating ? (
@@ -259,7 +264,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <PiggyBank size={12}/>
+                <PiggyBank size={12} />
                 <CostCarrierDialog
                   initialDeliveryCost={delivery.delivery_cost}
                   initialCarrierId={delivery.carrier_id}
@@ -268,28 +273,29 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => {
-              setDropdownOpen(false);
-              setIsNotesDialogOpen(true);
-            }}>
-              <StickyNote size={12}/>
-              Crear nota
-            </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setDropdownOpen(false);
+                  setIsNotesDialogOpen(true);
+                }}
+              >
+                <StickyNote size={12} />
+                Notas
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <NotesDialog
-        isOpen={isNotesDialogOpen}
-        onClose={() => setIsNotesDialogOpen(false)}
-        notes={deliveryLogic.newNotas}
-        newNote={deliveryLogic.newNote}
-        setNewNote={deliveryLogic.setNewNote}
-        isAddingNote={deliveryLogic.isAddingNote}
-        onAddNote={deliveryLogic.handleAddNote}
-        formatNoteDate={deliveryLogic.formatNoteDate}
-      />
+          isOpen={isNotesDialogOpen}
+          onClose={() => setIsNotesDialogOpen(false)}
+          notes={deliveryLogic.newNotas}
+          newNote={deliveryLogic.newNote}
+          setNewNote={deliveryLogic.setNewNote}
+          isAddingNote={deliveryLogic.isAddingNote}
+          onAddNote={deliveryLogic.handleAddNote}
+          formatNoteDate={deliveryLogic.formatNoteDate}
+        />
       </div>
-
       {/* Product Alert */}
       <Alert className="bg-slate-50">
         <AlertDescription>
@@ -297,8 +303,8 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
             <div className="space-y-1">
               {delivery.products_new.map((product, index) => (
                 <div key={index} className="flex items-center text-sm">
-                  <span className='font-medium'>{product.quantity}x</span>
-                  <span className="ml-2">{titleCase(product.name)}</span>
+                  <span className="font-medium">{product.quantity}x</span>
+                  <span className="ml-2 capitalize">{product.name.toLowerCase()}</span>
                   {product.sku && (
                     <span className="ml-2 text-slate-500">({product.sku})</span>
                   )}
@@ -306,7 +312,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               ))}
             </div>
           ) : (
-            titleCase(delivery.products)
+            delivery.products.toLowerCase()
           )}
         </AlertDescription>
       </Alert>
@@ -316,25 +322,35 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           <p className="text-sm text-slate-600 mr-5">{displayAddress}</p>
         </div>
       )}
-
       {delivery.state === "pending" && delivery.type !== "supplier_pickup" && (
         <Balance invoice_id={delivery.invoice_id} />
       )}
-
       {/* Notes Section */}
       <div className="border-t pt-4">
-        <ul className="list-disc list-inside">
-          {deliveryLogic.newNotas.map((note, index) => (
-            <li
-              className="text-sm text-slate-600 leading-6"
-              key={note.id || index}
-            >
-              {note.text} |{" "}
-              {deliveryLogic.formatNoteDate(note.created_at || "")}
-            </li>
-          ))}
-        </ul>
-      </div>
+        {deliveryLogic.newNotas.length > 0 ? (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-600">
+              {deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1].text} |{" "}
+              {deliveryLogic.formatNoteDate(
+                deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1]
+                  .created_at || ""
+              )}
+            </p>
+            {deliveryLogic.newNotas.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsNotesDialogOpen(true)}
+                className="text-xs text-slate-500"
+              >
+                Ver {deliveryLogic.newNotas.length - 1} notas más
+              </Button>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">No hay notas</p>
+        )}
+      </div>{" "}
     </div>
   );
 }

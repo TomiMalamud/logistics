@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { titleCase } from "title-case";
 import {
   Tooltip,
   TooltipContent,
@@ -78,11 +77,11 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
                   : "bg-blue-50 hover:bg-blue-100"
               }
             `}>
-            <div className="truncate">
-              {titleCase(delivery.customers?.name.toLowerCase())}
+            <div className="truncate capitalize">
+              {delivery.customers?.name.toLowerCase()}
             </div>
-            <div className="truncate text-gray-500">
-              {titleCase(delivery.products.toLowerCase())}
+            <div className="truncate capitalize text-gray-500">
+              {delivery.products.toLowerCase()}
             </div>
             {delivery.balance > 0 && delivery.state == "pending" && (
               <div className="text-red-600">Saldo {delivery.balance}</div>
@@ -90,9 +89,9 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <div className="space-y-1">
-            <p>🛏️ {titleCase(delivery.products.toLowerCase())}</p>
-            <p>📍 {titleCase(delivery.customers?.address.toLowerCase())}</p>
+          <div className="space-y-1 capitalize">
+            <p>🛏️ {delivery.products.toLowerCase()}</p>
+            <p>📍 {delivery.customers?.address.toLowerCase()}</p>
             <p>📱 {delivery.customers?.phone}</p>
             {showCosts && delivery.delivery_cost && (
               <p>

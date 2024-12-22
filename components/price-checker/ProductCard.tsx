@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle
 } from "../ui/card";
-import { titleCase } from "title-case";
 import FinancingOptions from "./FinancingOptions";
 
 interface ProductCardProps {
@@ -22,7 +21,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Card className="transition mb-2">
         <CardHeader className="pb-4">
-          <CardTitle>{titleCase(product.Nombre.toLowerCase())}</CardTitle>
+          <CardTitle className="capitalize">{product.Nombre.toLowerCase()}</CardTitle>
           <CardDescription>
             {product.Codigo} | Stock: {product.Stock}
           </CardDescription>
