@@ -55,6 +55,8 @@ export interface Customer {
     name: string;
   }
   
+  export type Store = 'cd' | '9dejulio' | 'carcano'
+
   // Props for Delivery Component
   export interface DeliveryProps {
     delivery: Delivery;

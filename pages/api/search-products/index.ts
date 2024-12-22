@@ -14,9 +14,9 @@ export default async function handler(
 
   try {
     // Validate query parameter
-    if (typeof query !== 'string' || query.length < 2) {
+    if (typeof query !== 'string' || query.length < 4) {
       return res.status(400).json({ 
-        message: "Query parameter must be a string with at least 2 characters" 
+        message: "Query parameter must be a string with at least 4 characters" 
       });
     }
 

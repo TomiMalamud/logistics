@@ -4,7 +4,7 @@ import { SearchProductsResponse, APIError } from '@/lib/api';
 const PRODUCTS_CACHE_KEY = 'products';
 
 async function fetchProducts(query: string): Promise<SearchProductsResponse> {
-  if (!query || query.length < 2) {
+  if (!query || query.length < 4) {
     return { Items: [], TotalItems: 0, TotalPage: 0 };
   }
 
@@ -22,11 +22,11 @@ export function useProducts(query: string) {
   return useQuery({
     queryKey: [PRODUCTS_CACHE_KEY, query],
     queryFn: () => fetchProducts(query),
-    enabled: query.length >= 2,
+    enabled: query.length >= 4,
     select: (data) => ({
       ...data,
       Items: data.Items.filter(product => 
-        product.Estado === 'Activo' && product.PrecioFinal > 0
+        product.Estado === 'Activo' && product.PrecioFinal >0 && product.Nombre !== '-'
       )
     }),
   });

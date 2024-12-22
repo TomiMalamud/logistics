@@ -304,7 +304,7 @@ export const searchProducts = async (
 
   const url = new URL(`${API_URL_BASE}/api/conceptos/search`);
   url.searchParams.append("page", "1");
-  url.searchParams.append("pageSize", "10");
+  url.searchParams.append("pageSize", "15");
   if (query) {
     url.searchParams.append("filtro", query);
   }

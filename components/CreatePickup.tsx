@@ -21,7 +21,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
+  CommandList
 } from "@/components/ui/command";
 import {
   Popover,
@@ -70,7 +70,9 @@ export default function CreatePickup({ user }: Props) {
     scheduled_date: new Date().toISOString().split("T")[0]
   });
   const [open, setOpen] = useState(false);
-  const [suppliers, setSuppliers] = useState<Array<{ id: number; name: string }>>([]);
+  const [suppliers, setSuppliers] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,7 +183,7 @@ export default function CreatePickup({ user }: Props) {
                         )?.name
                       : isLoadingSuppliers
                       ? "Cargando proveedores..."
-                      : "Seleccionar proveedor..."}
+                      : "Seleccioná un Proveedor"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -257,7 +259,6 @@ export default function CreatePickup({ user }: Props) {
                 }
               />
             </FormField>
-
             <FormField error={costError}>
               <CostCarrierForm
                 initialDeliveryCost={formData.delivery_cost}

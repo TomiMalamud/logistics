@@ -212,13 +212,13 @@ export default function Index({ user, profile }: IndexProps) {
             </Button>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>
-                <Link href={"/create-delivery"}>Entrega</Link>
+                <Link href={"/create/delivery"}>Entrega</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={"/create-pickup"}>Retiro</Link>
+                <Link href={"/create/pickup"}>Retiro</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="hidden">
-                <Link href={"/create-delivery"}>Entrega</Link>
+              <DropdownMenuItem asChild>
+                <Link href={"/create/store-mov"}>Entre Locales</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

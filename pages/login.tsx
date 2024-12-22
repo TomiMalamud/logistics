@@ -63,7 +63,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="max-w-md mt-20 container mx-auto min-h-screen bg-gray-100">
+    <div className="max-w-md mt-20 container mx-auto min-h-screen bg-gray-50">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
