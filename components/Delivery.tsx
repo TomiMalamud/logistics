@@ -2,13 +2,12 @@ import React from "react";
 import { useDeliveryLogic } from "@/lib/hooks/useDeliveryLogic";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
-import { Input } from "./ui/input";
 import { titleCase } from "title-case";
 import StateDialog from "./StateDialog";
 import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
 import Balance from "./Balance";
-import { Factory, Home, MoreHorizontal, Store } from "lucide-react";
+import { Calendar, Factory, Home, MoreHorizontal, PiggyBank, StickyNote, Store } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "./ui/tooltip";
-
+import NotesDialog from "./NotesDialog";
 
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({
@@ -37,6 +36,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     fetchURL
   });
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
 
   const PICKUP_STORES = [
     { value: "cd", label: "CD" },
@@ -45,38 +45,42 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   ] as const;
 
   const getStoreLabel = (storeValue: string) => {
-    const store = PICKUP_STORES.find(store => store.value === storeValue);
+    const store = PICKUP_STORES.find((store) => store.value === storeValue);
     return store ? store.label : storeValue;
   };
 
   const getDisplayName = () => {
     switch (delivery.type) {
-      case 'supplier_pickup':
+      case "supplier_pickup":
         return delivery.suppliers?.name;
-      case 'stores_movement':
-        return `Movimiento de ${getStoreLabel(delivery.origin_store)} a ${getStoreLabel(delivery.dest_store)}`;
+      case "stores_movement":
+        return `Movimiento de ${getStoreLabel(
+          delivery.origin_store
+        )} a ${getStoreLabel(delivery.dest_store)}`;
       default:
         return delivery.customers?.name;
     }
   };
-  
-  const displayName = getDisplayName();
-  
-  const displayPhone = delivery.type === 'home_delivery' ? delivery.customers?.phone : null;
 
-  const displayAddress = delivery.type === 'home_delivery' ? delivery.customers?.address : null;
+  const displayName = getDisplayName();
+
+  const displayPhone =
+    delivery.type === "home_delivery" ? delivery.customers?.phone : null;
+
+  const displayAddress =
+    delivery.type === "home_delivery" ? delivery.customers?.address : null;
 
   const getDisplayIcon = () => {
     switch (delivery.type) {
-      case 'supplier_pickup':
+      case "supplier_pickup":
         return <Factory className="h-4 w-4" />;
-      case 'stores_movement':
+      case "stores_movement":
         return <Store className="h-4 w-4" />;
       default:
         return <Home size={16} />;
     }
   };
-  
+
   const displayIcon = getDisplayIcon();
 
   return (
@@ -91,7 +95,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:justify-between text-sm pb-4 text-slate-500 border-b">
         <div className="flex items-center">
-          <p className="font-bold text-lg flex items-center gap-x-2">            
+          <p className="font-bold text-lg flex items-center gap-x-2">
             {displayIcon}
             {displayName}
           </p>
@@ -119,7 +123,9 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               <TooltipContent>
                 <p>
                   Creado el{" "}
-                  {new Date(new Date(delivery.created_at).getTime()- 6 * 60 * 60 * 1000)
+                  {new Date(
+                    new Date(delivery.created_at).getTime() - 6 * 60 * 60 * 1000
+                  )
                     .toISOString()
                     .replace("T", " a las ")
                     .slice(0, -5)}
@@ -138,13 +144,15 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               Actualizando fecha de entrega...
             </h1>
             <p className="text-sm mt-1 text-slate-500">
-              {delivery.type === 'supplier_pickup' ? 'Programando retiro...' : 'Visitaremos el domicilio...'}
+              {delivery.type === "supplier_pickup"
+                ? "Programando retiro..."
+                : "Visitaremos el domicilio..."}
             </p>
           </div>
         ) : delivery.state === "delivered" ? (
           <div>
             <h1 className="font-medium text-black">
-              {delivery.type === 'supplier_pickup' ? 'Retirado' : 'Entregado'}
+              {delivery.type === "supplier_pickup" ? "Retirado" : "Entregado"}
             </h1>
             <p className="text-sm mt-1 text-slate-500">
               {delivery.delivery_date &&
@@ -157,36 +165,46 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
             new Date().toISOString().split("T")[0] ? (
               <div>
                 <h1 className="font-medium text-red-500">
-                  {delivery.type === 'supplier_pickup' ? '!!! Retiro en fárbica atrasado' : '!!! Entrega atrasada'}
+                  {delivery.type === "supplier_pickup"
+                    ? "!!! Retiro en fárbica atrasado"
+                    : "!!! Entrega atrasada"}
                 </h1>
                 <p className="text-sm mt-1 text-red-500">
-                  {delivery.type === 'supplier_pickup' 
-                    ? `Teníamos que retirar el ${deliveryLogic.formatDate(delivery.scheduled_date)}, reprogramá el retiro y actualizá la fecha acá`
-                    : `Teníamos que entregar el ${deliveryLogic.formatDate(delivery.scheduled_date)}, reprogramá la entrega con el cliente y actualizá la fecha acá`
-                  }
+                  {delivery.type === "supplier_pickup"
+                    ? `Teníamos que retirar el ${deliveryLogic.formatDate(
+                        delivery.scheduled_date
+                      )}, reprogramá el retiro y actualizá la fecha acá`
+                    : `Teníamos que entregar el ${deliveryLogic.formatDate(
+                        delivery.scheduled_date
+                      )}, reprogramá la entrega con el cliente y actualizá la fecha acá`}
                 </p>
               </div>
             ) : (
               <div>
                 <h1 className="font-medium">
-                  {delivery.type === 'supplier_pickup' ? 'Retiro en fábrica programado' : 'Entrega programada'}
+                  {delivery.type === "supplier_pickup"
+                    ? "Retiro en fábrica programado"
+                    : "Entrega programada"}
                 </h1>
                 <p className="text-sm mt-1 text-slate-500">
                   {deliveryLogic.isToday(new Date(delivery.scheduled_date)) ? (
                     <span>
-                      {delivery.type === 'supplier_pickup' 
-                        ? 'Retiro programado '
-                        : 'Visitaremos el domicilio '}
+                      {delivery.type === "supplier_pickup"
+                        ? "Retiro programado "
+                        : "Visitaremos el domicilio "}
                       <span className="font-bold text-black">
                         hoy, {deliveryLogic.formatDate(delivery.scheduled_date)}
                       </span>
                     </span>
                   ) : (
                     <span>
-                      {delivery.type === 'supplier_pickup'
-                        ? `Retiro programado para el ${deliveryLogic.formatDate(delivery.scheduled_date)}`
-                        : `Visitaremos el domicilio el ${deliveryLogic.formatDate(delivery.scheduled_date)}`
-                      }
+                      {delivery.type === "supplier_pickup"
+                        ? `Retiro programado para el ${deliveryLogic.formatDate(
+                            delivery.scheduled_date
+                          )}`
+                        : `Visitaremos el domicilio el ${deliveryLogic.formatDate(
+                            delivery.scheduled_date
+                          )}`}
                     </span>
                   )}
                 </p>
@@ -196,16 +214,14 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         ) : (
           <div>
             <h1 className="text-orange-500">
-              {delivery.type === 'supplier_pickup' 
-                ? 'Fecha de retiro en fábrica no programada'
-                : 'Fecha de entrega no programada'
-              }
+              {delivery.type === "supplier_pickup"
+                ? "Fecha de retiro en fábrica no programada"
+                : "Fecha de entrega no programada"}
             </h1>
             <p className="text-sm mt-1 text-slate-500">
-              {delivery.type === 'supplier_pickup'
-                ? 'Coordinar retiro cuanto antes'
-                : 'Coordinar cuanto antes con el cliente'
-              }
+              {delivery.type === "supplier_pickup"
+                ? "Coordinar retiro cuanto antes"
+                : "Coordinar cuanto antes con el cliente"}
             </p>
           </div>
         )}
@@ -230,6 +246,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Calendar size={12} />
                 <ScheduledDateDialog
                   scheduledDate={deliveryLogic.scheduledDate}
                   setScheduledDate={deliveryLogic.setScheduledDate}
@@ -242,6 +259,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <PiggyBank size={12}/>
                 <CostCarrierDialog
                   initialDeliveryCost={delivery.delivery_cost}
                   initialCarrierId={delivery.carrier_id}
@@ -249,26 +267,57 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   isUpdating={deliveryLogic.isUpdatingDeliveryDetails}
                 />
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => {
+              setDropdownOpen(false);
+              setIsNotesDialogOpen(true);
+            }}>
+              <StickyNote size={12}/>
+              Crear nota
+            </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        <NotesDialog
+        isOpen={isNotesDialogOpen}
+        onClose={() => setIsNotesDialogOpen(false)}
+        notes={deliveryLogic.newNotas}
+        newNote={deliveryLogic.newNote}
+        setNewNote={deliveryLogic.setNewNote}
+        isAddingNote={deliveryLogic.isAddingNote}
+        onAddNote={deliveryLogic.handleAddNote}
+        formatNoteDate={deliveryLogic.formatNoteDate}
+      />
       </div>
 
       {/* Product Alert */}
       <Alert className="bg-slate-50">
-        <AlertDescription>{titleCase(delivery.products)}</AlertDescription>
+        <AlertDescription>
+          {delivery.products_new && delivery.products_new.length > 0 ? (
+            <div className="space-y-1">
+              {delivery.products_new.map((product, index) => (
+                <div key={index} className="flex items-center text-sm">
+                  <span className='font-medium'>{product.quantity}x</span>
+                  <span className="ml-2">{titleCase(product.name)}</span>
+                  {product.sku && (
+                    <span className="ml-2 text-slate-500">({product.sku})</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            titleCase(delivery.products)
+          )}
+        </AlertDescription>
       </Alert>
-
       {/* Address */}
       {displayAddress && (
         <div className="flex py-2 items-center justify-between">
-          <p className="text-sm text-slate-600 mr-5">
-            {displayAddress}
-          </p>
+          <p className="text-sm text-slate-600 mr-5">{displayAddress}</p>
         </div>
       )}
 
-      {delivery.state === "pending" && delivery.type !== 'supplier_pickup' && (
+      {delivery.state === "pending" && delivery.type !== "supplier_pickup" && (
         <Balance invoice_id={delivery.invoice_id} />
       )}
 
@@ -285,33 +334,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
             </li>
           ))}
         </ul>
-      </div>
-
-      {/* Add Note Input */}
-      <div className="w-full space-x-2 pt-4 flex items-center justify-between">
-        <Input
-          type="text"
-          value={deliveryLogic.newNote}
-          onChange={(e) => deliveryLogic.setNewNote(e.target.value)}
-          onKeyPress={(e) => {
-            if (
-              e.key === "Enter" &&
-              !deliveryLogic.isAddingNote &&
-              deliveryLogic.newNote.trim()
-            ) {
-              deliveryLogic.handleAddNote();
-            }
-          }}
-          placeholder="Añadir nueva nota"
-          disabled={deliveryLogic.isAddingNote}
-        />
-        <Button
-          variant="outline"
-          onClick={deliveryLogic.handleAddNote}
-          disabled={deliveryLogic.isAddingNote || !deliveryLogic.newNote.trim()}
-        >
-          {deliveryLogic.isAddingNote ? "Guardando..." : "Guardar"}
-        </Button>
       </div>
     </div>
   );

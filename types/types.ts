@@ -26,7 +26,11 @@ export interface Customer {
     name: string | null;
   }
   
-
+  export type Product = {
+    name: string;
+    quantity: number;
+    sku?: string;
+  };
   // Delivery Interface
   export interface Delivery {
     id: number;
@@ -50,6 +54,7 @@ export interface Customer {
     origin_store: Store | null,
     dest_store: Store | null,
     carrier_id: number | null,
+    products_new: Product[] | null,
   }
 
   export interface Supplier {

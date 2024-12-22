@@ -75,13 +75,11 @@ export default async function handler(
       query = query.eq('type', type)
     }
 
-    // Apply search if present - only search customer fields for home/store deliveries
     if (search) {
       const searchTerm = `*${search}*`
-      query = query.or(
-        `products.ilike.${searchTerm},` +
-        `customers.name.ilike.${searchTerm},customers.address.ilike.${searchTerm},`
-      )
+      query = query.or(`name.ilike.${searchTerm},address.ilike.${searchTerm}`, { 
+        referencedTable: 'customers' 
+      })
     }
 
     // Apply scheduled date filter

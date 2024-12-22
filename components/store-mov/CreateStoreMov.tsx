@@ -212,7 +212,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
                                 key={product.Id}
                                 value={titleCase(product.Nombre.toLowerCase())}
                                 onSelect={() => {
-                                  handleProductSelect(product);
+                                  handleProductSelect(product);                            
                                 }}
                               >
                                 <Check
