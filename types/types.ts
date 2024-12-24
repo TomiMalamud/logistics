@@ -75,3 +75,13 @@ export interface Customer {
     delivery: Delivery;
     fetchURL?: string;
   }
+
+  export interface InvoiceItem {
+    Codigo: string;
+    Cantidad: number;
+    Concepto: string;
+  }
+  
+  export interface InvoiceData {
+    Items: InvoiceItem[];
+  }

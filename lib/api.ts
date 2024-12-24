@@ -262,6 +262,29 @@ export const getComprobanteById = async (id: number): Promise<Comprobante> => {
   return data;
 };
 
+export const getInventarios = async (): Promise<Comprobante> => {
+  const token = await getAccessToken();
+
+  const url = `${API_URL_BASE}/api/inventarios/getDepositos`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error fetching invoice_number by ID:", errorData);
+    throw new Error(errorData.message || "Error fetching invoice_number by ID");
+  }
+
+  const data: Comprobante = await response.json();
+  return data;
+};
+
 interface Product {
   Id: string;
   Codigo: string;

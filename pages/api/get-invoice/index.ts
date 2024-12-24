@@ -1,10 +1,19 @@
-// pages/api/get-invoice_number/index.ts
-
+// pages/api/get-invoice/index.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getComprobanteById } from '@/lib/api';
+import { INVENTORY_LOCATIONS } from '@/utils/constants';
+
+interface InvoiceItem {
+  Id: number;
+  Cantidad: number;
+  Concepto: string;
+  Codigo: string;
+}
 
 type SuccessResponse = {
+  inventarioNombre: string;
   Saldo: string;
+  Items: InvoiceItem[];
 };
 
 type ErrorResponse = {
@@ -22,7 +31,6 @@ export default async function handler(
 
   const { invoice_id } = req.query;
 
-  // Validate the invoice_id parameter
   if (!invoice_id || Array.isArray(invoice_id)) {
     return res.status(400).json({ error: 'Invalid or missing invoice_id parameter' });
   }
@@ -33,13 +41,21 @@ export default async function handler(
   }
 
   try {
-    // Fetch the invoice_number using the provided ID
-    const invoice_number = await getComprobanteById(id);
-
-    // Return the Saldo field
-    return res.status(200).json({ Saldo: invoice_number.Saldo });
+    const invoice = await getComprobanteById(id);
+    const inventoryId = invoice.Inventario.toString()
+    const locationName = INVENTORY_LOCATIONS[inventoryId] ?? 'Unknown Location';
+    
+    return res.status(200).json({
+      inventarioNombre: locationName,
+      Saldo: invoice.Saldo,
+      Items: invoice.Items.map(item => ({
+        Cantidad: item.Cantidad,
+        Concepto: item.Concepto,
+        Codigo: item.Codigo
+      }))
+    });
   } catch (error: any) {
-    console.error('Error fetching invoice_number:', error);
+    console.error('Error fetching invoice:', error);
     return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
 }

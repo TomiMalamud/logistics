@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Comprobante } from "@/types/api";
 import type { User } from "@supabase/supabase-js";
 import InvoiceSelection from "@/components/InvoiceSelection";
+import InvoiceItems from "@/components/InvoiceItems";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -13,17 +14,17 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/phone";
-import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import Link from "next/link";
+import { InvoiceItem } from "@/types/types";
+import { Save } from "lucide-react";
 
 interface CreateProps {
   user: User;
 }
 
 interface FormData {
-  products: string;
   address: string;
   phone: string;
   scheduled_date: string;
@@ -32,7 +33,6 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  products: "",
   address: "",
   phone: "",
   scheduled_date: "",
@@ -68,29 +68,18 @@ function FormField({
   return (
     <div>
       <Label>{label}</Label>
-      {children ||
-        (isTextarea ? (
-          <Textarea
-            name={name}
-            value={value}
-            onChange={onChange}
-            className="mt-1"
-            required
-            disabled={disabled}
-            placeholder={placeholder}
-          />
-        ) : (
-          <Input
-            name={name}
-            value={value}
-            onChange={onChange}
-            type={type || "text"}
-            className="mt-1"
-            required={name !== "scheduled_date" && name !== "notes"}
-            disabled={disabled}
-            placeholder={placeholder}
-          />
-        ))}
+      {children || (
+        <Input
+          name={name}
+          value={value}
+          onChange={onChange}
+          type={type || "text"}
+          className="mt-1"
+          required={name !== "scheduled_date" && name !== "notes"}
+          disabled={disabled}
+          placeholder={placeholder}
+        />
+      )}
       {error && <p className="text-sm text-red-500">{error}</p>}
       {(name === "address" || name === "phone") && (
         <span className="text-sm mt-2 text-gray-500">
@@ -109,6 +98,8 @@ export default function CreateDelivery({ user }: CreateProps) {
   const [fieldsLoading, setFieldsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState("");
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -133,8 +124,12 @@ export default function CreateDelivery({ user }: CreateProps) {
     }
   };
 
-  const handleComprobanteSelect = async (invoice_number: Comprobante) => {
-    setSelectedComprobante(invoice_number);
+  // First, remove this line completely since we'll handle items differently
+  // const { items } = useInvoiceItems(selectedComprobante?.Id ?? null);
+
+  // Instead, modify the fetch to get items along with customer data
+  const handleComprobanteSelect = async (invoice: Comprobante) => {
+    setSelectedComprobante(invoice);
     setFieldsLoading(true);
     setFormData((prev) => ({
       ...prev,
@@ -142,47 +137,99 @@ export default function CreateDelivery({ user }: CreateProps) {
       phone: "Cargando..."
     }));
 
-    if (invoice_number?.IdCliente) {
+    if (invoice?.Id) {
       try {
-        const res = await fetch(`/api/customer/${invoice_number.IdCliente}`);
-        if (!res.ok) throw new Error("Failed to fetch customer data");
-        const customer = await res.json();
+        // First fetch customer data
+        if (invoice.IdCliente) {
+          const customerRes = await fetch(`/api/customer/${invoice.IdCliente}`);
+          if (!customerRes.ok) throw new Error("Failed to fetch customer data");
+          const customer = await customerRes.json();
 
-        const sanitizedPhone = sanitizePhoneNumber(customer.Telefono || "");
+          const sanitizedPhone = sanitizePhoneNumber(customer.Telefono || "");
 
-        setFormData((prev) => ({
-          ...prev,
-          address:
-            customer.Ciudad !== "VILLA CARLOS PAZ" &&
-            customer.Ciudad !== "SIN IDENTIFICAR" &&
-            customer.Ciudad !== ""
-              ? `${customer.Domicilio} - ${customer.Ciudad}`
-              : customer.Domicilio,
-          phone: sanitizedPhone,
-          email: customer.Email || null
-        }));
+          setFormData((prev) => ({
+            ...prev,
+            address:
+              customer.Ciudad !== "VILLA CARLOS PAZ" &&
+              customer.Ciudad !== "SIN IDENTIFICAR" &&
+              customer.Ciudad !== ""
+                ? `${customer.Domicilio} - ${customer.Ciudad}`
+                : customer.Domicilio,
+            phone: sanitizedPhone,
+            email: customer.Email || null
+          }));
 
-        if (sanitizedPhone && !validatePhoneNumber(sanitizedPhone)) {
-          setPhoneError(
-            "El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones."
-          );
-        } else {
-          setPhoneError("");
+          if (sanitizedPhone && !validatePhoneNumber(sanitizedPhone)) {
+            setPhoneError(
+              "El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones."
+            );
+          } else {
+            setPhoneError("");
+          }
         }
+
+        // Then fetch invoice items
+        const itemsRes = await fetch(
+          `/api/get-invoice?invoice_id=${invoice.Id}`
+        );
+        if (!itemsRes.ok) throw new Error("Failed to fetch invoice items");
+        const itemsData = await itemsRes.json();
+
+        setInvoiceItems(itemsData.Items || []);
       } catch (error) {
-        console.error("Error fetching customer data:", error);
+        console.error("Error fetching data:", error);
         setFormData((prev) => ({
           ...prev,
           address: "",
           phone: "",
           email: null
         }));
+        setInvoiceItems([]);
       } finally {
         setFieldsLoading(false);
       }
     } else {
       setFieldsLoading(false);
+      setInvoiceItems([]);
     }
+  };
+
+  const handleSaveItems = (items: InvoiceItem[]) => {
+    const transformedItems = items.map((item) => ({
+      name: `${item.Concepto} (${item.Codigo})`,
+      quantity: item.Cantidad
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      products: JSON.stringify(transformedItems),
+      products_new: JSON.stringify(transformedItems)
+    }));
+    setInvoiceItems(items);
+    setIsEditing(false);
+  };
+
+  const prepareRequestBody = () => {
+    if (!selectedComprobante) return null;
+
+    const transformedItems = invoiceItems.map((item) => ({
+      name: `${item.Concepto} (${item.Codigo})`,
+      quantity: item.Cantidad
+    }));
+
+    return {
+      ...formData,
+      phone: sanitizePhoneNumber(formData.phone),
+      order_date: new Date(selectedComprobante.FechaAlta)
+        .toISOString()
+        .split("T")[0],
+      invoice_number: `${selectedComprobante.TipoFc} ${selectedComprobante.Numero}`,
+      invoice_id: selectedComprobante.Id,
+      balance: parseFloat(selectedComprobante.Saldo.replace(",", ".")) || 0,
+      name: selectedComprobante.RazonSocial,
+      created_by: user.id,
+      products: transformedItems,
+      products_new: transformedItems
+    };
   };
 
   const submitData = async (e: React.SyntheticEvent) => {
@@ -202,18 +249,8 @@ export default function CreateDelivery({ user }: CreateProps) {
 
     setLoading(true);
     try {
-      const body = {
-        ...formData,
-        phone: sanitizedPhone,
-        order_date: new Date(selectedComprobante.FechaAlta)
-          .toISOString()
-          .split("T")[0],
-        invoice_number: `${selectedComprobante.TipoFc} ${selectedComprobante.Numero}`,
-        invoice_id: selectedComprobante.Id,
-        balance: parseFloat(selectedComprobante.Saldo.replace(",", ".")) || 0,
-        name: selectedComprobante.RazonSocial,
-        created_by: user.id
-      };
+      const body = prepareRequestBody();
+      if (!body) throw new Error("Failed to prepare request body");
 
       const response = await fetch("/api/create-delivery", {
         method: "POST",
@@ -236,20 +273,20 @@ export default function CreateDelivery({ user }: CreateProps) {
       setLoading(false);
     }
   };
-
   return (
-    <Card className="w-full md:w-[540px]">
+    <Card className="mx-auto max-w-4xl w-[600px]">
       <CardHeader>
         <CardTitle>Nueva entrega</CardTitle>
       </CardHeader>
       <form onSubmit={submitData}>
-        <CardContent>
-          <div className="max-w-xl space-y-3">
+        <CardContent className="w-full">
+          <div className="space-y-3">
             <FormField label="Factura">
               <InvoiceSelection
                 onSelect={handleComprobanteSelect}
                 placeholder="Seleccioná un comprobante"
               />
+
               {selectedComprobante && selectedComprobante?.Saldo !== "0,00" && (
                 <Alert className="text-yellow-600 mt-3">
                   <AlertTitle>Factura adeudada</AlertTitle>
@@ -262,6 +299,48 @@ export default function CreateDelivery({ user }: CreateProps) {
                 </Alert>
               )}
             </FormField>
+
+            {selectedComprobante && (
+              <div className="justify-end text-right">
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <InvoiceItems
+                    invoice_id={selectedComprobante.Id}
+                    initialItems={invoiceItems}
+                    editable={isEditing}
+                    onSubmit={handleSaveItems}
+                  />
+                </div>
+                <div className="mt-2 space-x-2 flex items-center justify-end">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        onClick={() => setIsEditing(false)}
+                        type="button"
+                        variant="outline"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={() => handleSaveItems(invoiceItems)}
+                        type="button"
+                        variant="default"
+                      >
+                        <Save className="mr-2" size={12} />
+                        Guardar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      type="button"
+                      variant="outline"
+                    >
+                      Editar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
             <FormField
               label="Domicilio"
               name="address"
@@ -278,15 +357,6 @@ export default function CreateDelivery({ user }: CreateProps) {
               disabled={loading || fieldsLoading || !selectedComprobante}
               error={phoneError}
               placeholder="Se completa con Contabilium"
-            />
-            <FormField
-              label="Producto"
-              name="products"
-              value={formData.products}
-              onChange={handleInputChange}
-              disabled={loading}
-              isTextarea
-              placeholder="Euro 140x190 + 2 Almohadas ZIP + 2 Bases 70x190"
             />
             <FormField
               label="Fecha de Entrega Programada (opcional)"
@@ -306,18 +376,21 @@ export default function CreateDelivery({ user }: CreateProps) {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button type="button" variant="link" asChild>
-            <Link href="/">Cancelar</Link>
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Cargando..." : "Guardar"}
-          </Button>
-        </CardFooter>
+        <CardFooter className="flex flex-col gap-4">
+          <div className="flex justify-between w-full">
+            <Button type="button" variant="link" asChild>
+              <Link href="/">Cancelar</Link>
+            </Button>
+            <Button type="submit" disabled={loading || isEditing}>
+              {loading ? "Cargando..." : "Guardar"}
+            </Button>
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </CardFooter>{" "}
         {error && <p className="text-sm text-red-500">{error}</p>}
       </form>
     </Card>
   );
 }
 
-CreateDelivery.displayName = 'CreateDelivery';
+CreateDelivery.displayName = "CreateDelivery";

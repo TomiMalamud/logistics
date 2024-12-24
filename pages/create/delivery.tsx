@@ -6,7 +6,7 @@ import CreateDelivery from "@/components/CreateDelivery";
 export default function CreateDeliveryPage({ user }) {
   return (
     <div className="min-h-screen bg-gray-100 py-8">
-      <div className="w-[540px] container px-0">
+      <div className="mx-auto container px-0">
       <CreateDelivery user={user} />
       </div>
     </div>

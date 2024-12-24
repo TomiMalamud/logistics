@@ -1,4 +1,4 @@
-// Saldo.tsx
+// Balance.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Button } from './ui/button';
@@ -27,7 +27,7 @@ export default function Balance({ invoice_id }: BalanceProps) {
     }
 
     try {
-      const response = await fetch(`/api/get-invoice_number?invoice_id=${invoice_id}`);
+      const response = await fetch(`/api/get-invoice?invoice_id=${invoice_id}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

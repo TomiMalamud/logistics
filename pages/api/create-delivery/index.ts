@@ -12,6 +12,7 @@ export default async function handler(
       const {
         order_date,
         products,
+        products_new,
         invoice_number,
         invoice_id,
         balance,
@@ -80,7 +81,8 @@ export default async function handler(
             created_by: created_by,
             invoice_number,
             invoice_id,
-            balance
+            balance,
+            products_new
           }
         ])
         .select("*")
