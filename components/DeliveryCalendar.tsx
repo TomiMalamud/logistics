@@ -94,12 +94,15 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
             <p>📍 {delivery.customers?.address.toLowerCase()}</p>
             <p>📱 {delivery.customers?.phone}</p>
             {showCosts && delivery.delivery_cost && (
+              <>
               <p>
                 💲{" "}
                 {delivery.delivery_cost.toLocaleString("es-AR", {
                   maximumFractionDigits: 0
                 })}{" "}
               </p>
+              <p>🚚 {delivery.carriers?.name}</p>
+              </>
             )}
             {delivery.state === "delivered" && <p>✅ Entregado</p>}
           </div>
