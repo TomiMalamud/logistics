@@ -1,3 +1,4 @@
+// pages/api/deliveries.ts
 import { supabase } from '@/lib/supabase'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
@@ -26,7 +27,7 @@ export default async function handler(
     pageSize = '40',
     search = '',
     scheduledDate = 'all',
-    type = 'all'  // Set default value to 'all'
+    type = 'all'
   } = req.query
 
   if (!['pending', 'delivered'].includes(state as string)) {
@@ -41,6 +42,24 @@ export default async function handler(
     const start = (Number(page) - 1) * Number(pageSize)
     const end = start + Number(pageSize) - 1
 
+    // First, get customer IDs that match the search
+    let customerQuery = supabase
+      .from('customers')
+      .select('id')
+      
+    if (search) {
+      const searchTerm = `%${search}%`
+      customerQuery = customerQuery.or(`name.ilike.${searchTerm},address.ilike.${searchTerm}`)
+    }
+
+    const { data: customerIds, error: customerError } = await customerQuery
+    
+    if (customerError) {
+      console.error('Error fetching customer ids:', customerError)
+      return res.status(500).json({ error: 'Failed to fetch customers.' })
+    }
+
+    // Then use these IDs to filter deliveries
     let query = supabase
       .from('deliveries')
       .select(`
@@ -68,18 +87,15 @@ export default async function handler(
         )
       `, { count: 'exact' })
       .eq('state', state)
-      .range(start, end)
 
-    // Apply delivery type filter only if it's not 'all'
+    // Apply delivery type filter
     if (type && type !== 'all') {
       query = query.eq('type', type)
     }
 
-    if (search) {
-      const searchTerm = `*${search}*`
-      query = query.or(`name.ilike.${searchTerm},address.ilike.${searchTerm}`, { 
-        referencedTable: 'customers' 
-      })
+    // Apply search filter using customer IDs
+    if (search && customerIds) {
+      query = query.in('customer_id', customerIds.map(c => c.id))
     }
 
     // Apply scheduled date filter
@@ -98,6 +114,9 @@ export default async function handler(
       query = query.order('order_date', { ascending: false })
     }
 
+    // Apply pagination
+    query = query.range(start, end)
+
     const { data, error, count } = await query
 
     if (error) {
@@ -109,23 +128,8 @@ export default async function handler(
       return res.status(500).json({ error: 'Count not available' })
     }
 
-    // Transform the data to handle different delivery types
-    const transformedData = data?.map(delivery => ({
-      ...delivery,
-      // For supplier pickups, ensure we show relevant info
-      displayName: delivery.type === 'supplier_pickup' 
-        ? delivery.suppliers?.name 
-        : delivery.customers?.name,
-      displayAddress: delivery.type === 'supplier_pickup'
-        ? null
-        : delivery.customers?.address,
-      displayPhone: delivery.type === 'supplier_pickup'
-        ? delivery.suppliers?.phone
-        : delivery.customers?.phone
-    }))
-
     return res.status(200).json({
-      feed: transformedData,
+      feed: data,
       page: Number(page),
       totalPages: Math.ceil(count / Number(pageSize)),
       totalItems: count

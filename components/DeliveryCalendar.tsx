@@ -28,6 +28,8 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import _ from "lodash";
 import Link from "next/link";
 import { useRole } from "@/lib/hooks/useRole";
+import { titleCase } from "title-case";
+import { useDeliveryBalance } from "@/lib/hooks/useDeliveryBalance";
 
 interface DropResult {
   date: string;
@@ -39,7 +41,12 @@ interface DroppableCellProps {
 }
 
 
-const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
+export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
+  const { balance, isRefreshing } = useDeliveryBalance({
+    invoice_id: delivery.invoice_id || null
+  });
+
+  const hasBalance = balance && balance !== "0,00";
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "DELIVERY",
     item: { id: delivery.id },
@@ -80,17 +87,30 @@ const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
             <div className="truncate capitalize">
               {delivery.customers?.name.toLowerCase()}
             </div>
-            <div className="truncate capitalize text-gray-500">
-              {delivery.products.toLowerCase()}
-            </div>
-            {delivery.balance > 0 && delivery.state == "pending" && (
-              <div className="text-red-600">Saldo {delivery.balance}</div>
+            {hasBalance && delivery.state === "pending" && (
+              <div className={`text-red-600 ${isRefreshing ? 'opacity-50' : ''}`}>
+                Saldo $ {balance}
+              </div>
             )}
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className="space-y-1 capitalize">
-            <p>🛏️ {delivery.products.toLowerCase()}</p>
+            <p>{delivery.products_new && delivery.products_new.length > 0 ? (
+            <div className="space-y-1">
+              {delivery.products_new.map((product, index) => (
+                <div key={index}>
+                  <span className="mr-2">{product.quantity}x</span>
+                  <span>{titleCase(product.name.toLowerCase())}</span>
+                  {product.sku && (
+                    <span>({product.sku})</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            delivery.products.toLowerCase()
+          )}</p>
             <p>📍 {delivery.customers?.address.toLowerCase()}</p>
             <p>📱 {delivery.customers?.phone}</p>
             {showCosts && delivery.delivery_cost && (

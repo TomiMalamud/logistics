@@ -166,7 +166,7 @@ export default function CreatePickup({ user }: Props) {
       <form onSubmit={handleSubmit}>
         <CardContent>
           <div className="max-w-xl space-y-4">
-            <FormField label="Proveedor">
+            <FormField label="Proveedor *">
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -235,7 +235,7 @@ export default function CreatePickup({ user }: Props) {
               </Popover>
             </FormField>
 
-            <FormField label="Productos">
+            <FormField label="Productos *">
               <Textarea
                 value={formData.products}
                 onChange={(e) =>

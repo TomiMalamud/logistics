@@ -1,59 +1,15 @@
 // Balance.tsx
-import { useState, useEffect, useCallback } from 'react';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useDeliveryBalance } from '@/lib/hooks/useDeliveryBalance';
 import { Button } from './ui/button';
 import { RefreshCw } from 'lucide-react';
-import { getSaldoFromCache as getBalanceFromCache, setSaldoInCache, removeFromCache } from '@/lib/balanceCache';
 
 interface BalanceProps {
   invoice_id: number;
 }
 
 export default function Balance({ invoice_id }: BalanceProps) {
-  const [balance, setBalance] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const fetchBalance = useCallback(async (skipCache = false) => {
-    if (!invoice_id) return;
-
-    // Check cache unless skipCache is true
-    if (!skipCache) {
-      const cachedBalance = getBalanceFromCache(invoice_id);
-      if (cachedBalance !== undefined) {
-        setBalance(cachedBalance);
-        return;
-      }
-    }
-
-    try {
-      const response = await fetch(`/api/get-invoice?invoice_id=${invoice_id}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const fetchedBalance = data.Saldo.toString();
-      
-      setBalance(fetchedBalance);
-      setSaldoInCache(invoice_id, fetchedBalance);
-      setError(null);
-    } catch (err) {
-      setError('No se encontró la factura y no conocemos el saldo pendiente. Recargá la página.');
-    }
-  }, [invoice_id]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    removeFromCache(invoice_id);
-    await fetchBalance(true);
-    setIsRefreshing(false);
-  };
-
-  useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
+  const { balance, error, isRefreshing, refetch } = useDeliveryBalance({ invoice_id });
 
   if (error) {
     return (
@@ -62,7 +18,7 @@ export default function Balance({ invoice_id }: BalanceProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleRefresh}
+          onClick={refetch}
           disabled={isRefreshing}
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -84,7 +40,7 @@ export default function Balance({ invoice_id }: BalanceProps) {
           <Button
             variant="secondary"
             size="sm"
-            onClick={handleRefresh}
+            onClick={refetch}
             disabled={isRefreshing}
             className="hidden absolute group-hover:block top-4 right-2"
           >

@@ -124,10 +124,6 @@ export default function CreateDelivery({ user }: CreateProps) {
     }
   };
 
-  // First, remove this line completely since we'll handle items differently
-  // const { items } = useInvoiceItems(selectedComprobante?.Id ?? null);
-
-  // Instead, modify the fetch to get items along with customer data
   const handleComprobanteSelect = async (invoice: Comprobante) => {
     setSelectedComprobante(invoice);
     setFieldsLoading(true);
@@ -281,7 +277,7 @@ export default function CreateDelivery({ user }: CreateProps) {
       <form onSubmit={submitData}>
         <CardContent className="w-full">
           <div className="space-y-3">
-            <FormField label="Factura">
+            <FormField label="Factura *">
               <InvoiceSelection
                 onSelect={handleComprobanteSelect}
                 placeholder="Seleccioná un comprobante"
@@ -311,38 +307,20 @@ export default function CreateDelivery({ user }: CreateProps) {
                   />
                 </div>
                 <div className="mt-2 space-x-2 flex items-center justify-end">
-                  {isEditing ? (
-                    <>
-                      <Button
-                        onClick={() => setIsEditing(false)}
-                        type="button"
-                        variant="outline"
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        onClick={() => handleSaveItems(invoiceItems)}
-                        type="button"
-                        variant="default"
-                      >
-                        <Save className="mr-2" size={12} />
-                        Guardar
-                      </Button>
-                    </>
-                  ) : (
+                  {!isEditing && (
                     <Button
-                      onClick={() => setIsEditing(true)}
-                      type="button"
-                      variant="outline"
-                    >
-                      Editar
-                    </Button>
+                    onClick={() => setIsEditing(true)}
+                    type="button"
+                    variant="outline"
+                  >
+                    Editar
+                  </Button>
                   )}
                 </div>
               </div>
             )}
             <FormField
-              label="Domicilio"
+              label="Domicilio *"
               name="address"
               value={fieldsLoading ? "Cargando..." : formData.address}
               onChange={handleInputChange}
@@ -350,7 +328,7 @@ export default function CreateDelivery({ user }: CreateProps) {
               placeholder="Se completa con Contabilium"
             />
             <FormField
-              label="Celular"
+              label="Celular *"
               name="phone"
               value={fieldsLoading ? "Cargando..." : formData.phone}
               onChange={handleInputChange}
@@ -359,7 +337,7 @@ export default function CreateDelivery({ user }: CreateProps) {
               placeholder="Se completa con Contabilium"
             />
             <FormField
-              label="Fecha de Entrega Programada (opcional)"
+              label="Fecha de Entrega Programada"
               name="scheduled_date"
               value={formData.scheduled_date}
               onChange={handleInputChange}
