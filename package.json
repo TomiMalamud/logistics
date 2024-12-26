@@ -39,6 +39,7 @@
     "lucide-react": "^0.309.0",
     "next": "^14.2.14",
     "next-rate-limit": "^0.0.3",
+    "node-mocks-http": "^1.16.2",
     "papaparse": "^5.4.1",
     "react": "^18.3.1",
     "react-big-calendar": "^1.16.3",
@@ -58,6 +59,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@swc/jest": "^0.2.37",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
@@ -72,6 +74,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.26",
     "tailwindcss": "^3.3.3",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

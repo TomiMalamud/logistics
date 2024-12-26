@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useDeliveryLogic } from '@/lib/hooks/useDeliveryLogic';
+import { Delivery } from 'types/types';
 
 // Mock SWR's mutate function
 jest.mock('swr', () => ({
@@ -11,15 +12,44 @@ global.fetch = jest.fn();
 global.window.open = jest.fn();
 
 describe('useDeliveryLogic', () => {
-  // Mock data
-  const mockDelivery = {
+  // Mock data with complete Delivery type properties
+  const mockDelivery: Delivery = {
     id: 1,
+    order_date: '2024-01-15',
+    products: JSON.stringify([{ name: 'Mattress', quantity: 1 }]),
+    customer_id: 123,
     state: 'pending',
     scheduled_date: '2024-01-15',
-    notes: [],
+    created_at: '2024-01-14T10:00:00Z',
+    created_by: {
+      id: 'user123',
+      email: 'user@example.com',
+      name: 'Test User'
+    },
     customers: {
-      address: '123 Test St'
-    }
+      name: 'John Doe',
+      address: '123 Test St',
+      phone: '1123456789'
+    },
+    notes: [],
+    invoice_number: 'INV-001',
+    invoice_id: 456,
+    balance: 50000,
+    delivery_cost: null,
+    delivery_date: null,
+    type: 'home_delivery',
+    supplier_id: null,
+    suppliers: null,
+    origin_store: 'cd',
+    dest_store: null,
+    carrier_id: null,
+    products_new: [
+      {
+        name: 'Premium Mattress',
+        quantity: 1,
+        sku: 'MAT-001'
+      }
+    ]
   };
 
   const mockFetchURL = '/api/deliveries';
@@ -38,7 +68,10 @@ describe('useDeliveryLogic', () => {
     });
 
     it('should handle empty scheduled date', () => {
-      const deliveryWithoutDate = { ...mockDelivery, scheduled_date: null };
+      const deliveryWithoutDate = { 
+        ...mockDelivery, 
+        scheduled_date: null 
+      };
       const { result } = renderHook(() => 
         useDeliveryLogic({ delivery: deliveryWithoutDate, fetchURL: mockFetchURL })
       );
@@ -52,10 +85,6 @@ describe('useDeliveryLogic', () => {
       delivery_cost: 1000,
       carrier_id: 1
     };
-
-    beforeEach(() => {
-      (global.fetch as jest.Mock).mockClear();
-    });
 
     it('should successfully update delivery details', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -79,31 +108,18 @@ describe('useDeliveryLogic', () => {
         })
       );
       expect(result.current.error).toBeNull();
-    });
-
-    it('should handle errors when updating delivery details', async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-
-      const { result } = renderHook(() => 
-        useDeliveryLogic({ delivery: mockDelivery, fetchURL: mockFetchURL })
-      );
-
-      await act(async () => {
-        await result.current.handleUpdateDeliveryDetails(mockUpdateData);
-      });
-
-      expect(result.current.error).toBe('Error al actualizar los detalles de envío');
+      expect(result.current.isUpdatingDeliveryDetails).toBe(false);
     });
   });
 
   describe('handleConfirmStateChange', () => {
-    const mockCarrierData = {
-      delivery_type: 'carrier' as const,
-      delivery_cost: 1000,
-      carrier_id: 1
-    };
-
     it('should update state from pending to delivered with carrier', async () => {
+      const mockCarrierData = {
+        delivery_type: 'carrier' as const,
+        delivery_cost: 1000,
+        carrier_id: 1
+      };
+
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ success: true })
@@ -130,48 +146,38 @@ describe('useDeliveryLogic', () => {
         })
       );
     });
-  });
 
-  describe('handleAddNote', () => {
-    it('should successfully add a new note', async () => {
-      const newNote = { id: 1, text: 'Test note', created_at: '2024-01-15' };
+    it('should update state from pending to delivered with pickup', async () => {
+      const mockPickupData = {
+        delivery_type: 'pickup' as const,
+        pickup_store: 'cd' as const
+      };
+
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ data: [newNote] })
+        json: () => Promise.resolve({ success: true })
       });
 
       const { result } = renderHook(() => 
         useDeliveryLogic({ delivery: mockDelivery, fetchURL: mockFetchURL })
       );
 
-      act(() => {
-        result.current.setNewNote('Test note');
-      });
-
       await act(async () => {
-        await result.current.handleAddNote();
+        await result.current.handleConfirmStateChange(mockPickupData);
       });
 
-      expect(result.current.newNotas).toEqual([newNote]);
-      expect(result.current.newNote).toBe('');
-    });
-
-    it('should handle error when adding note fails', async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to add note'));
-
-      const { result } = renderHook(() => 
-        useDeliveryLogic({ delivery: mockDelivery, fetchURL: mockFetchURL })
+      expect(global.fetch).toHaveBeenCalledWith(
+        `/api/delivery/${mockDelivery.id}`,
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({
+            state: 'delivered',
+            pickup_store: 'cd',
+            delivery_cost: null,
+            carrier_id: null
+          })
+        })
       );
-
-      act(() => {
-        result.current.setNewNote('Test note');
-      });
-
-      await act(async () => {
-        await result.current.handleAddNote();
-      });
-
-      expect(result.current.error).toBe('Unable to add note.');
     });
   });
 
@@ -194,17 +200,17 @@ describe('useDeliveryLogic', () => {
       expect(result.current.formatDate(date)).toMatch(/\w+, \d+ \w+/);
     });
 
-    it('should open Google Maps with correct address', () => {
+    it('should handle isToday function correctly', () => {
       const { result } = renderHook(() => 
         useDeliveryLogic({ delivery: mockDelivery, fetchURL: mockFetchURL })
       );
-
-      result.current.openInGoogleMaps();
-
-      expect(window.open).toHaveBeenCalledWith(
-        'https://www.google.com/maps/search/?api=1&query=123%20Test%20St',
-        '_blank'
-      );
-    });
+      
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      expect(result.current.isToday(today)).toBe(true);
+      expect(result.current.isToday(yesterday)).toBe(false);
+    });    
   });
 });

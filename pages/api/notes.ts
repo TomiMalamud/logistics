@@ -1,7 +1,7 @@
 // pages/api/notes.ts
 
 import { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/lib/supabase"; 
+import createClient from "@/utils/supabase/api";
 
 export default async function handler(
   req: NextApiRequest,
@@ -9,6 +9,7 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     const { delivery_id, text } = req.body;
+    const supabase = createClient(req, res);
 
     // Validate request body
     if (!delivery_id || !text) {

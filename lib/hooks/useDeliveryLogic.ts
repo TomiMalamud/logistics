@@ -246,17 +246,6 @@ export const useDeliveryLogic = ({
     handleAddNote,
     handleConfirmScheduledDate,
     handleDeleteScheduledDate,
-    openInGoogleMaps: () => {
-      if (!delivery.customers.address) {
-        alert("No registered address available");
-        return;
-      }
-      const encodedAddress = encodeURIComponent(delivery.customers.address);
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`,
-        "_blank"
-      );
-    },
     handleUpdateDeliveryDetails,      
   };
 };

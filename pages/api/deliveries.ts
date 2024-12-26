@@ -1,5 +1,5 @@
 // pages/api/deliveries.ts
-import { supabase } from '@/lib/supabase'
+import createClient from '@/utils/supabase/api'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 type FeedResponse = {
@@ -20,6 +20,7 @@ export default async function handler(
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+  const supabase = createClient(req, res)
 
   const {
     state = 'pending',
@@ -123,9 +124,9 @@ export default async function handler(
       console.error(`Error fetching ${state} deliveries:`, error)
       return res.status(500).json({ error: 'Failed to fetch deliveries.' })
     }
-
-    if (count === null || count === undefined) {
-      return res.status(500).json({ error: 'Count not available' })
+    
+    if (!data || count === null || count === undefined) {
+      return res.status(500).json({ error: 'Failed to fetch deliveries.' })
     }
 
     return res.status(200).json({
