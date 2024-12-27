@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 
 const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 const STORE_URL = 'https://rohisommiers.com';
-const VIDEO_URL = process.env.VIDEO_URL;
+const VIDEO_URL = 'https://wqtuxffimzzyjnnkxcla.supabase.co/storage/v1/object/public/video/video.mp4'
 
 const DisplayController = () => {
   const [showingVideo, setShowingVideo] = useState(true);
@@ -30,9 +30,10 @@ const DisplayController = () => {
       {/* Controls */}
       <div className="absolute right-5 top-5 z-10 flex items-center gap-2.5">
         {showingVideo && (
-          <Button variant="ghost"
+          <Button 
+            variant="ghost"
             onClick={() => setShowingVideo(false)}
-            className="h-8 w-8 rounded-full"
+            className="h-8 w-8 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -40,14 +41,14 @@ const DisplayController = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex h-full w-full items-center justify-center bg-black">
+      <div className="h-full w-full bg-black">
         {showingVideo ? (
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="h-full w-full max-h-screen max-w-screen-2xl object-contain"
+            className="h-full w-full object-cover"
           >
             <source src={VIDEO_URL} type="video/mp4" />
             Tu navegador no soporta el elemento video.

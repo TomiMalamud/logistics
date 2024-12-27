@@ -117,7 +117,7 @@ const Layout = ({
       </Head>
 
       <header className="bg-white justify-between p-3 flex border-b  border-grid">
-        <nav className="flex overflow-x-scroll">{renderNavButtons()}</nav>
+        <nav className="flex md:overflow-x-scroll">{renderNavButtons()}</nav>
         <Button
           variant="link"
           className="text-gray-600 md:block hidden"
