@@ -40,7 +40,7 @@ export interface Customer {
     state: string;
     scheduled_date: string | null;
     created_at: string;
-    created_by: Profile | string | null;
+    created_by: Profile | null;
     customers: Customer | null;
     notes?: Note[] | null;
     invoice_number: string | null,

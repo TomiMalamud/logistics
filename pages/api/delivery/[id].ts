@@ -8,7 +8,8 @@ export default async function handler(
 ) {
   if (req.method === "PUT") {
     const { id } = req.query;
-    const { state, scheduled_date, delivery_cost, carrier_id, pickup_store } = req.body;
+    const { state, scheduled_date, delivery_cost, carrier_id, pickup_store } =
+      req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Missing delivery ID" });
@@ -18,45 +19,54 @@ export default async function handler(
       // Fetch existing delivery with customer data
       const { data: existingDelivery, error: fetchError } = await supabase
         .from("deliveries")
-        .select(`
-          *,
-          customers (
-            name,
-            email,
-            address,
-            phone
-          ),
-          suppliers (
-            name
-          )
-        `)
+        .select(
+          `
+        *,
+        customers (
+          name,
+          email,
+          address,
+          phone
+        ),
+        suppliers (
+          name
+        ),
+        created_by (
+          email,
+          name
+        )
+      `
+        )
         .eq("id", id)
         .single();
 
-      if (fetchError) throw new Error(`Error fetching delivery: ${fetchError.message}`);
-      if (!existingDelivery) return res.status(404).json({ error: "Delivery not found" });
+      if (fetchError)
+        throw new Error(`Error fetching delivery: ${fetchError.message}`);
+      if (!existingDelivery)
+        return res.status(404).json({ error: "Delivery not found" });
 
       // Check if scheduled_date has changed
       const isScheduleDateChanged =
         scheduled_date &&
         (!existingDelivery.scheduled_date ||
           new Date(scheduled_date).getTime() !==
-          new Date(existingDelivery.scheduled_date).getTime());
+            new Date(existingDelivery.scheduled_date).getTime());
 
       // Update delivery
       const updates = {
-        ...(state && ["pending", "delivered"].includes(state) && {
-          state,
-          ...(state === "delivered" && {
-            delivery_date: new Date().toLocaleString("en-US", {
-              timeZone: "America/Argentina/Buenos_Aires",
-            }),
+        ...(state &&
+          ["pending", "delivered"].includes(state) && {
+            state,
+            ...(state === "delivered" && {
+              delivery_date: new Date().toLocaleString("en-US", {
+                timeZone: "America/Argentina/Buenos_Aires"
+              })
+            })
           }),
-        }),
         ...(scheduled_date && { scheduled_date }),
         ...(delivery_cost && { delivery_cost }),
         ...(carrier_id && { carrier_id }),
-        ...(pickup_store && { pickup_store }),
+        ...(pickup_store && { pickup_store })
       };
 
       const { data, error: updateError } = await supabase
@@ -65,35 +75,66 @@ export default async function handler(
         .eq("id", id)
         .select();
 
-      if (updateError) throw new Error(`Error updating delivery: ${updateError.message}`);
+      if (updateError)
+        throw new Error(`Error updating delivery: ${updateError.message}`);
 
       // Handle email notifications for scheduled date changes
       if (isScheduleDateChanged) {
         console.log(`Delivery ${id}: Schedule changed to ${scheduled_date}`);
-        
-        const shouldSendEmail = 
-          existingDelivery.type !== 'supplier_pickup' && // Not a supplier pickup
+
+        const shouldSendEmail =
+          existingDelivery.type !== "supplier_pickup" && // Not a supplier pickup
           existingDelivery.customers && // Has customer
           existingDelivery.customers.email && // Customer has email
-          existingDelivery.customers.email.includes('@'); // Basic email validation
-        
+          existingDelivery.customers.email.includes("@"); // Basic email validation
+
         if (shouldSendEmail) {
-          console.log(`Sending schedule update email to ${existingDelivery.customers.email}`);
+          console.log(
+            `Sending schedule update email to ${existingDelivery.customers.email}`
+          );
           await sendDeliveryScheduleEmail({
             email: existingDelivery.customers.email,
             customerName: existingDelivery.customers.name,
             scheduledDate: scheduled_date,
             phone: existingDelivery.customers.phone,
-            address: existingDelivery.customers.address,
+            address: existingDelivery.customers.address
           });
         } else {
-          console.log('No email notification sent: ', {
+          console.log("No email notification sent: ", {
             type: existingDelivery.type,
             hasCustomer: Boolean(existingDelivery.customers),
             hasEmail: Boolean(existingDelivery.customers?.email)
           });
         }
       }
+
+      if (state === "delivered" && state !== existingDelivery.state) {
+        console.log("Scheduling follow-up email for delivery:", id);
+        
+        const shouldScheduleEmail = 
+          existingDelivery.created_by?.email && // Has sales person email
+          existingDelivery.created_by?.name && // Has sales person name
+          existingDelivery.customers; // Has customer data
+
+        if (shouldScheduleEmail) {
+          console.log(`Scheduling follow-up email to ${existingDelivery.created_by.email}`);
+          
+          const { scheduleFollowUpEmail } = await import("@/utils/emails");
+          await scheduleFollowUpEmail({
+            salesPersonEmail: existingDelivery.created_by.email,
+            salesPersonName: existingDelivery.created_by.name,
+            customerName: existingDelivery.customers.name || "Cliente",
+            customerPhone: existingDelivery.customers.phone || "",
+          });
+        } else {
+          console.log('No follow-up email scheduled: ', {
+            hasSalesPerson: Boolean(existingDelivery.created_by),
+            hasEmail: Boolean(existingDelivery.created_by?.email),
+            hasCustomer: Boolean(existingDelivery.customers)
+          });
+        }
+      }
+
 
       // Add state change note
       if (state && state !== existingDelivery.state) {
@@ -105,7 +146,7 @@ export default async function handler(
             const storeNames = {
               cd: "CD",
               "9dejulio": "9 de Julio",
-              carcano: "Carcano",
+              carcano: "Carcano"
             };
             noteText = `Retiro en sucursal: ${storeNames[pickup_store]}`;
           } else if (carrier_id) {
@@ -115,7 +156,10 @@ export default async function handler(
               .eq("id", carrier_id)
               .single();
 
-            if (carrierError) throw new Error(`Error fetching carrier: ${carrierError.message}`);
+            if (carrierError)
+              throw new Error(
+                `Error fetching carrier: ${carrierError.message}`
+              );
             noteText = `Entregado por ${carrier.name} con un costo de $${delivery_cost}`;
           }
         } else if (state === "pending") {
@@ -126,7 +170,8 @@ export default async function handler(
           .from("notes")
           .insert([{ text: noteText, delivery_id: deliveryId }]);
 
-        if (noteError) throw new Error(`Error adding note: ${noteError.message}`);
+        if (noteError)
+          throw new Error(`Error adding note: ${noteError.message}`);
       }
 
       res.status(200).json({ message: "Delivery updated successfully" });

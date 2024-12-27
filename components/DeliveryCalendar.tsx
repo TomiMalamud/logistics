@@ -124,6 +124,7 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
               <p>🚚 {delivery.carriers?.name}</p>
               </>
             )}
+            <p>✏️ {delivery.created_by?.name}</p>
             {delivery.state === "delivered" && <p>✅ Entregado</p>}
           </div>
         </TooltipContent>

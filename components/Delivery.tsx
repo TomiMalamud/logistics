@@ -35,10 +35,17 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({
     delivery: {
       ...delivery,
-      created_by:
-        typeof delivery.created_by === "string"
-          ? delivery.created_by
-          : delivery.created_by?.id ?? null
+      created_by: {
+        id: typeof delivery.created_by === "string" 
+          ? delivery.created_by 
+          : delivery.created_by?.id ?? '',
+        name: typeof delivery.created_by === "string"
+          ? '' // default empty string when we only have the id
+          : delivery.created_by?.name ?? '',
+        email: typeof delivery.created_by === "string"
+          ? '' // default empty string when we only have the id
+          : delivery.created_by?.email ?? ''
+      }
     },
     fetchURL
   });

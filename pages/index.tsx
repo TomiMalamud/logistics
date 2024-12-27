@@ -5,7 +5,15 @@ import Layout from "@/components/Layout";
 import DeliveryList from "@/components/DeliveryList";
 import TablePlaceholder from "@/components/TablePlaceholder";
 import { Input } from "@/components/ui/input";
-import { Calendar, CalendarOff, ChevronDown, Factory, Home, Search, Store } from "lucide-react";
+import {
+  Calendar,
+  CalendarOff,
+  ChevronDown,
+  Factory,
+  Home,
+  Search,
+  Store
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -219,48 +227,49 @@ export default function Index({ user, profile }: IndexProps) {
               </DropdownMenuTrigger>
             </Button>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>              
+              <DropdownMenuItem asChild>
                 <Link href={"/create/delivery"}>
-                <Home size={12} className=" text-gray-600" />
-                Entrega</Link>
+                  <Home size={12} className=" text-gray-600" />
+                  Entrega
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild >
+              <DropdownMenuItem asChild>
                 <Link href={"/create/pickup"}>
-                <Factory size={12} className=" text-gray-600" />
-                Retiro
+                  <Factory size={12} className=" text-gray-600" />
+                  Retiro
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={"/create/store-mov"}>
-                <Store size={12} className="text-gray-600" />
-                Entre Locales</Link>
+                  <Store size={12} className="text-gray-600" />
+                  Entre Locales
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <p className="text-yellow-800 font-medium">
-          Hola {profile ? profile.name : user.email.split("@")[0]}!
+          Hola {profile && profile.name}!
         </p>
         <div className="bg-gray-50">
-          <Tabs
-            value={currentFilters.state}
-            className="w-full mb-4 mt-6"
-            onValueChange={handleTabChange}
-          >
-            <TabsList aria-label="Filter by state">
-              <TabsTrigger value="pending">
-                Pendientes
-                <span className="text-gray-500 font-light ml-2">
-                  {data && data.totalItems}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="delivered">Entregadas</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex-row inline-flex items-center gap-x-2 justify-start mb-4 mt-6">
+            <Tabs
+              value={currentFilters.state}
+              className="w-full"
+              onValueChange={handleTabChange}
+            >
+              <TabsList aria-label="Filter by state">
+                <TabsTrigger value="pending">Pendientes</TabsTrigger>
+                <TabsTrigger value="delivered">Entregadas</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <span className="text-gray-500 font-light ml-2">
+              {data && data.totalItems}
+            </span>
+          </div>
 
           <form onSubmit={(e) => e.preventDefault()}>
             <div className="flex space-x-2">
-              {/* Existing search input */}
               <div className="relative w-full pb-2">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -290,18 +299,28 @@ export default function Index({ user, profile }: IndexProps) {
                       <SelectLabel>Tipo de Entrega</SelectLabel>
                       <SelectItem value="all">Tipo</SelectItem>
                       <SelectItem value="home_delivery">
-                        <Home className="inline-block mr-2 text-gray-700" size={12} />
+                        <Home
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
                         Entrega a Domicilio
                       </SelectItem>
                       <SelectItem value="supplier_pickup">
-                      <Factory className="inline-block mr-2 text-gray-700" size={12} />
+                        <Factory
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
                         Retiro de Proveedor
                       </SelectItem>
                       <SelectItem
                         value="stores_movement"
                         className="flex items-center"
                       >
-                        <Store className="inline-block mr-2 text-gray-700" size={12} />Entre Locales
+                        <Store
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
+                        Entre Locales
                       </SelectItem>
                     </SelectGroup>
                   </SelectContent>
@@ -325,13 +344,19 @@ export default function Index({ user, profile }: IndexProps) {
                       <SelectLabel>Fecha Programada</SelectLabel>
                       <SelectItem value="all">Con y Sin Fecha</SelectItem>
                       <SelectItem value="hasDate">
-                        <Calendar className="inline-block mr-2 text-gray-700" size={12} />
+                        <Calendar
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
                         Con fecha
-                        </SelectItem>
+                      </SelectItem>
                       <SelectItem value="noDate">
-                        <CalendarOff className="inline-block mr-2 text-gray-700" size={12} />
+                        <CalendarOff
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
                         Sin fecha
-                        </SelectItem>
+                      </SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -343,7 +368,6 @@ export default function Index({ user, profile }: IndexProps) {
     ),
     [
       profile,
-      user.email,
       searchInput,
       currentFilters,
       data,
