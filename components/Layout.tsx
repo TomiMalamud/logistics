@@ -57,6 +57,12 @@ const Layout = ({
         label: "Actualizar Precios",
         showOnMobile: false,
         roles: ["admin"]
+      },
+      {
+        path: "/tv",
+        label: "📺 Teles",
+        showOnMobile: false,
+        roles: ["admin", "sales"]
       }
     ],
     []
@@ -111,18 +117,18 @@ const Layout = ({
       </Head>
 
       <header className="bg-white justify-between p-3 flex border-b  border-grid">
-        <nav className="flex overflow-x-scroll">
-            {renderNavButtons()}
-        </nav>        
+        <nav className="flex overflow-x-scroll">{renderNavButtons()}</nav>
         <Button
-            variant="link"
-            className="text-gray-600 md:block hidden"
-            onClick={handleSignOut}
-          >
-            Cerrar Sesión
-          </Button>
+          variant="link"
+          className="text-gray-600 md:block hidden"
+          onClick={handleSignOut}
+        >
+          Cerrar Sesión
+        </Button>
       </header>
-        <main className="p-4 md:p-8 mx-auto max-w-7xl min-h-screen">{children}</main>
+      <main className="p-4 md:p-8 mx-auto max-w-7xl min-h-screen">
+        {children}
+      </main>
     </>
   );
 };

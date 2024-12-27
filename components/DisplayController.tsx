@@ -1,0 +1,67 @@
+import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { Button } from './ui/button';
+
+const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const STORE_URL = 'https://rohisommiers.com';
+const VIDEO_URL = process.env.VIDEO_URL;
+
+const DisplayController = () => {
+  const [showingVideo, setShowingVideo] = useState(true);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (!showingVideo) {
+      timeoutId = setTimeout(() => {
+        setShowingVideo(true);
+      }, TIMEOUT_DURATION);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [showingVideo]);
+
+  return (
+    <div className="relative h-screen w-full overflow-hidden">
+      {/* Controls */}
+      <div className="absolute right-5 top-5 z-10 flex items-center gap-2.5">
+        {showingVideo && (
+          <Button variant="ghost"
+            onClick={() => setShowingVideo(false)}
+            className="h-8 w-8 rounded-full"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div className="flex h-full w-full items-center justify-center bg-black">
+        {showingVideo ? (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="h-full w-full max-h-screen max-w-screen-2xl object-contain"
+          >
+            <source src={VIDEO_URL} type="video/mp4" />
+            Tu navegador no soporta el elemento video.
+          </video>
+        ) : (
+          <iframe
+            src={STORE_URL}
+            className="h-full w-full border-none"
+            title="ROHI Sommiers Store"
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default DisplayController;
