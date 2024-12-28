@@ -7,6 +7,8 @@ const createJestConfig = nextJest({
 
 const customConfig: Config = {
   coverageProvider: 'v8',
+  verbose: true,
+  silent: false,
   projects: [
     {
       displayName: 'api',

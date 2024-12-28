@@ -19,14 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
-
-type DeliveryType = "carrier" | "pickup";
-type PickupStore = "cd" | "9dejulio" | "carcano";
+import { PICKUP_STORES } from "@/utils/constants";
+import { DeliveryType, Store } from "@/types/types";
 
 interface FormData {
   delivery_cost?: number;
   carrier_id?: number;
-  pickup_store?: PickupStore;
+  pickup_store?: Store;
   delivery_type: DeliveryType;
 }
 
@@ -40,11 +39,6 @@ interface StateDialogProps {
   isConfirming: boolean;
 }
 
-const PICKUP_STORES = [
-  { value: "cd", label: "CD" },
-  { value: "9dejulio", label: "9 de Julio" },
-  { value: "carcano", label: "Carcano" }
-] as const;
 
 export default function StateDialog({ 
   state,
@@ -59,7 +53,7 @@ export default function StateDialog({
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("carrier");
   const [deliveryCost, setDeliveryCost] = useState('');
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
-  const [selectedStore, setSelectedStore] = useState<PickupStore | undefined>();
+  const [selectedStore, setSelectedStore] = useState<Store | undefined>();
 
   // Reset form when delivery type changes
   const handleDeliveryTypeChange = (value: string) => {
@@ -142,7 +136,7 @@ export default function StateDialog({
           ) : (
             <PickupStoreSelector
               selectedStore={selectedStore}
-              onStoreChange={(value) => setSelectedStore(value as PickupStore)}
+              onStoreChange={(value) => setSelectedStore(value as Store)}
             />
           )}
         </div>
@@ -190,7 +184,7 @@ function PickupStoreSelector({
   selectedStore,
   onStoreChange
 }: {
-  selectedStore?: PickupStore;
+  selectedStore?: Store;
   onStoreChange: (value: string) => void;
 }) {
   return (

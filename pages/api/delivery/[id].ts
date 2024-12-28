@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
 import { sendDeliveryScheduleEmail } from "@/utils/emails";
+import { PICKUP_STORES } from "@/utils/constants";
 
 export default async function handler(
   req: NextApiRequest,
@@ -143,12 +144,8 @@ export default async function handler(
 
         if (state === "delivered") {
           if (pickup_store) {
-            const storeNames = {
-              cd: "CD",
-              "9dejulio": "9 de Julio",
-              carcano: "Carcano"
-            };
-            noteText = `Retiro en sucursal: ${storeNames[pickup_store]}`;
+            const store = PICKUP_STORES.find(s => s.value === pickup_store);
+            noteText = `Retiro en sucursal: ${store?.label ?? pickup_store}`;
           } else if (carrier_id) {
             const { data: carrier, error: carrierError } = await supabase
               .from("carriers")

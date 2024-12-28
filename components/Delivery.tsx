@@ -30,6 +30,7 @@ import {
   TooltipTrigger
 } from "./ui/tooltip";
 import NotesDialog from "./NotesDialog";
+import { PICKUP_STORES } from "@/utils/constants";
 
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({
@@ -51,12 +52,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   });
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
-
-  const PICKUP_STORES = [
-    { value: "cd", label: "CD" },
-    { value: "9dejulio", label: "9 de Julio" },
-    { value: "carcano", label: "Cárcano" }
-  ] as const;
 
   const getStoreLabel = (storeValue: string) => {
     const store = PICKUP_STORES.find((store) => store.value === storeValue);

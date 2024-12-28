@@ -30,6 +30,7 @@ import Link from "next/link";
 import { useRole } from "@/lib/hooks/useRole";
 import { titleCase } from "title-case";
 import { useDeliveryBalance } from "@/lib/hooks/useDeliveryBalance";
+import { PICKUP_STORES } from "@/utils/constants";
 
 interface DropResult {
   date: string;
@@ -40,6 +41,10 @@ interface DroppableCellProps {
   children: React.ReactNode;
 }
 
+const getStoreLabel = (storeValue: string) => {
+  const store = PICKUP_STORES.find((store) => store.value === storeValue);
+  return store ? store.label : storeValue;
+};
 
 export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
   const { balance, isRefreshing } = useDeliveryBalance({
@@ -126,6 +131,7 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
             )}
             <p>✏️ {delivery.created_by?.name}</p>
             {delivery.state === "delivered" && <p>✅ Entregado</p>}
+            {delivery.pickup_store && <p>Retiró en {getStoreLabel(delivery.pickup_store)}</p>}
           </div>
         </TooltipContent>
       </Tooltip>

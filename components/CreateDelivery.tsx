@@ -18,7 +18,6 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import Link from "next/link";
 import { InvoiceItem } from "@/types/types";
-import { Save } from "lucide-react";
 
 interface CreateProps {
   user: User;

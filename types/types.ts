@@ -31,6 +31,7 @@ export interface Customer {
     quantity: number;
     sku?: string;
   };
+
   // Delivery Interface
   export interface Delivery {
     id: number;
@@ -63,6 +64,8 @@ export interface Customer {
   }
   
   export type Store = 'cd' | '9dejulio' | 'carcano'
+
+  export type DeliveryType = "carrier" | "pickup"
 
   // Props for Delivery Component
   export interface DeliveryProps {

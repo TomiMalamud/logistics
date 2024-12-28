@@ -11,7 +11,6 @@ export default async function handler(
     try {
       const {
         order_date,
-        products,
         products_new,
         invoice_number,
         invoice_id,
@@ -21,11 +20,12 @@ export default async function handler(
         phone,
         scheduled_date,
         notes,
-        created_by
+        created_by,
+        email
       } = req.body;
 
       // Check for missing required fields
-      if (!order_date || !products || !name || !address || !phone) {
+      if (!order_date || !products_new || !name || !address || !phone) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -49,13 +49,13 @@ export default async function handler(
         customer_id = customerData.id;
         await supabase
           .from("customers")
-          .update({ email: req.body.email })
+          .update({ email })
           .eq("id", customer_id);
       } else {
         // Insert new customer and retrieve the id
         const { data: newCustomer, error: newCustomerError } = await supabase
           .from("customers")
-          .insert([{ name, address, phone, email: req.body.email || null }])
+          .insert([{ name, address, phone, email }])
           .select("id")
           .single();
 
@@ -74,15 +74,14 @@ export default async function handler(
         .insert([
           {
             order_date,
-            products,
+            products_new,
             customer_id,
             state: "pending",
             scheduled_date: scheduled_date || null,
-            created_by: created_by,
+            created_by,
             invoice_number,
             invoice_id,
-            balance,
-            products_new
+            balance
           }
         ])
         .select("*")
@@ -99,7 +98,7 @@ export default async function handler(
         );
       }
 
-      if (notes && notes.trim() !== "") {
+      if (notes?.trim()) {
         const { error: noteError } = await supabase
           .from("notes")
           .insert([{ text: notes, delivery_id: deliveryData.id }]);
@@ -109,17 +108,18 @@ export default async function handler(
         }
       }
 
-      res.status(200).json({ message: "Delivery created successfully" });
-      // In your POST handler, after successful delivery creation:
-      if (scheduled_date && req.body.email) {
+      // Send email if scheduled date and email are provided
+      if (scheduled_date && email) {
         await sendDeliveryScheduleEmail({
-          email: req.body.email,
+          email,
           customerName: name,
           scheduledDate: scheduled_date,
           phone,
           address
         });
       }
+
+      res.status(200).json({ message: "Delivery created successfully" });
     } catch (error) {
       console.error("Unexpected error:", error);
       res.status(400).json({ error: (error as Error).message });

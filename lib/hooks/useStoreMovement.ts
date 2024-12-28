@@ -5,15 +5,10 @@ import { User } from "@supabase/supabase-js";
 import { useDebouncedCallback } from "use-debounce";
 import { useProducts } from "./useProducts";
 import { titleCase } from "title-case";
+import { PICKUP_STORES } from "@/utils/constants";
 
-export const stores = [
-  { id: "cd", name: "CD" },
-  { id: "9dejulio", name: "9 de Julio" },
-  { id: "carcano", name: "Cárcano" }
-] as const;
-
-export type Store = (typeof stores)[number];
-export type StoreId = Store["id"];
+export type Store = (typeof PICKUP_STORES)[number];
+export type StoreId = Store["value"];
 
 export interface ProductItem {
   id: string;

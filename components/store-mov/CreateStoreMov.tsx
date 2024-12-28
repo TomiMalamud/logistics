@@ -37,9 +37,9 @@ import { cn } from "@/lib/utils";
 import { ProductList } from "./ProductList";
 import {
   useStoreMovement,
-  stores,
   StoreId
 } from "@/lib/hooks/useStoreMovement";
+import { PICKUP_STORES } from "@/utils/constants";
 
 interface FormFieldProps {
   label?: string;
@@ -131,13 +131,13 @@ export default function CreateStoreMov({ user }: { user: User }) {
                   <SelectValue placeholder="Seleccionar origen" />
                 </SelectTrigger>
                 <SelectContent>
-                  {stores.map((store) => (
+                  {PICKUP_STORES.map((store) => (
                     <SelectItem
-                      key={store.id}
-                      value={store.id}
-                      disabled={store.id === formData.dest_store}
+                      key={store.value}
+                      value={store.value}
+                      disabled={store.value === formData.dest_store}
                     >
-                      {store.name}
+                      {store.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -153,13 +153,13 @@ export default function CreateStoreMov({ user }: { user: User }) {
                   <SelectValue placeholder="Seleccionar destino" />
                 </SelectTrigger>
                 <SelectContent>
-                  {stores.map((store) => (
+                {PICKUP_STORES.map((store) => (
                     <SelectItem
-                      key={store.id}
-                      value={store.id}
-                      disabled={store.id === formData.origin_store}
+                      key={store.value}
+                      value={store.value}
+                      disabled={store.value === formData.dest_store}
                     >
-                      {store.name}
+                      {store.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
