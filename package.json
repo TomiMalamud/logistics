@@ -1,6 +1,6 @@
 {
   "name": "logistics-app",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "A logistics management app built for ROHI Sommiers",
   "scripts": {
     "dev": "next",
