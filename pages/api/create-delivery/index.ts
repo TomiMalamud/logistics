@@ -11,7 +11,7 @@ export default async function handler(
     try {
       const {
         order_date,
-        products_new,
+        products,
         invoice_number,
         invoice_id,
         balance,
@@ -25,7 +25,7 @@ export default async function handler(
       } = req.body;
 
       // Check for missing required fields
-      if (!order_date || !products_new || !name || !address || !phone) {
+      if (!order_date || !products || !name || !address || !phone) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -74,7 +74,7 @@ export default async function handler(
         .insert([
           {
             order_date,
-            products_new,
+            products,
             customer_id,
             state: "pending",
             scheduled_date: scheduled_date || null,

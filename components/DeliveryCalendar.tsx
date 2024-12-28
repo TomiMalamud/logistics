@@ -107,9 +107,9 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
         <TooltipContent>
           <div className="space-y-1 capitalize">
             <p>
-              {delivery.products_new && delivery.products_new.length > 0 && (
+              {delivery.products && delivery.products.length > 0 && (
                 <div className="space-y-1">
-                  {delivery.products_new.map((product, index) => (
+                  {delivery.products.map((product, index) => (
                     <div key={index}>
                       <span className="mr-2">{product.quantity}x</span>
                       <span>{titleCase(product.name.toLowerCase())}</span>
