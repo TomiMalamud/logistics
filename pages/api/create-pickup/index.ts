@@ -22,7 +22,7 @@ export default async function handler(
     } = req.body;
 
     // Validate required fields
-    if (!products || !supplier_id) {
+    if (!products?.length || !supplier_id) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
