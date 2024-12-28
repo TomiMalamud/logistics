@@ -78,7 +78,9 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div ref={drag as unknown as React.RefObject<HTMLDivElement>} className={`
+          <div
+            ref={drag as unknown as React.RefObject<HTMLDivElement>}
+            className={`
               text-xs p-1 rounded cursor-move
               ${isDragging ? "opacity-50" : "opacity-100"}
               ${
@@ -88,12 +90,15 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
                   ? "bg-red-200 hover:bg-red-300"
                   : "bg-blue-50 hover:bg-blue-100"
               }
-            `}>
+            `}
+          >
             <div className="truncate capitalize">
               {delivery.customers?.name.toLowerCase()}
             </div>
             {hasBalance && delivery.state === "pending" && (
-              <div className={`text-red-600 ${isRefreshing ? 'opacity-50' : ''}`}>
+              <div
+                className={`text-red-600 ${isRefreshing ? "opacity-50" : ""}`}
+              >
                 Saldo $ {balance}
               </div>
             )}
@@ -101,37 +106,37 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
         </TooltipTrigger>
         <TooltipContent>
           <div className="space-y-1 capitalize">
-            <p>{delivery.products_new && delivery.products_new.length > 0 ? (
-            <div className="space-y-1">
-              {delivery.products_new.map((product, index) => (
-                <div key={index}>
-                  <span className="mr-2">{product.quantity}x</span>
-                  <span>{titleCase(product.name.toLowerCase())}</span>
-                  {product.sku && (
-                    <span>({product.sku})</span>
-                  )}
+            <p>
+              {delivery.products_new && delivery.products_new.length > 0 && (
+                <div className="space-y-1">
+                  {delivery.products_new.map((product, index) => (
+                    <div key={index}>
+                      <span className="mr-2">{product.quantity}x</span>
+                      <span>{titleCase(product.name.toLowerCase())}</span>
+                      {product.sku && <span>({product.sku})</span>}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            delivery.products.toLowerCase()
-          )}</p>
+              )}
+            </p>
             <p>📍 {delivery.customers?.address.toLowerCase()}</p>
             <p>📱 {delivery.customers?.phone}</p>
             {showCosts && delivery.delivery_cost && (
               <>
-              <p>
-                💲{" "}
-                {delivery.delivery_cost.toLocaleString("es-AR", {
-                  maximumFractionDigits: 0
-                })}{" "}
-              </p>
-              <p>🚚 {delivery.carriers?.name}</p>
+                <p>
+                  💲{" "}
+                  {delivery.delivery_cost.toLocaleString("es-AR", {
+                    maximumFractionDigits: 0
+                  })}{" "}
+                </p>
+                <p>🚚 {delivery.carriers?.name}</p>
               </>
             )}
             <p>✏️ {delivery.created_by?.name}</p>
             {delivery.state === "delivered" && <p>✅ Entregado</p>}
-            {delivery.pickup_store && <p>Retiró en {getStoreLabel(delivery.pickup_store)}</p>}
+            {delivery.pickup_store && (
+              <p>Retiró en {getStoreLabel(delivery.pickup_store)}</p>
+            )}
           </div>
         </TooltipContent>
       </Tooltip>
@@ -143,7 +148,7 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
 const DroppableCell = ({ date, children }: DroppableCellProps) => {
   const [{ isOver }, drop] = useDrop<
     { id: number }, // Item type
-    DropResult,     // DropResult type
+    DropResult, // DropResult type
     { isOver: boolean } // Collect props type
   >(() => ({
     accept: "DELIVERY",
@@ -164,7 +169,6 @@ const DroppableCell = ({ date, children }: DroppableCellProps) => {
     </div>
   );
 };
-
 
 const DeliveryCalendar = ({ searchUrl }) => {
   const [date, setDate] = useState(new Date());

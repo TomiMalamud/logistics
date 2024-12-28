@@ -196,8 +196,7 @@ export default function CreateDelivery({ user }: CreateProps) {
     }));
     setFormData((prev) => ({
       ...prev,
-      products: JSON.stringify(transformedItems),
-      products_new: JSON.stringify(transformedItems)
+      products: JSON.stringify(transformedItems)
     }));
     setInvoiceItems(items);
     setIsEditing(false);
@@ -222,8 +221,7 @@ export default function CreateDelivery({ user }: CreateProps) {
       balance: parseFloat(selectedComprobante.Saldo.replace(",", ".")) || 0,
       name: selectedComprobante.RazonSocial,
       created_by: user.id,
-      products: transformedItems,
-      products_new: transformedItems
+      products: transformedItems
     };
   };
 

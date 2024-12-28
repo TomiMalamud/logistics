@@ -16,7 +16,6 @@ describe('useDeliveryLogic', () => {
   const mockDelivery: Delivery = {
     id: 1,
     order_date: '2024-01-15',
-    products: JSON.stringify([{ name: 'Mattress', quantity: 1 }]),
     customer_id: 123,
     state: 'pending',
     scheduled_date: '2024-01-15',
@@ -43,7 +42,7 @@ describe('useDeliveryLogic', () => {
     origin_store: 'cd',
     dest_store: null,
     carrier_id: null,
-    products_new: [
+    products: [
       {
         name: 'Premium Mattress',
         quantity: 1,

@@ -37,7 +37,7 @@ interface Props {
 }
 
 interface FormData {
-  products: string;
+  products_legacy: string;
   supplier_id: number | null;
   scheduled_date?: string;
   delivery_cost?: number;
@@ -65,7 +65,7 @@ function FormField({
 export default function CreatePickup({ user }: Props) {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
-    products: "",
+    products_legacy: "",
     supplier_id: null,
     scheduled_date: new Date().toISOString().split("T")[0]
   });
@@ -237,9 +237,9 @@ export default function CreatePickup({ user }: Props) {
 
             <FormField label="Productos *">
               <Textarea
-                value={formData.products}
+                value={formData.products_legacy}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, products: e.target.value }))
+                  setFormData((prev) => ({ ...prev, products_legacy: e.target.value }))
                 }
                 placeholder="Detalle de los productos"
                 className="min-h-[100px]"

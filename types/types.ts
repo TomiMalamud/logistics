@@ -36,7 +36,6 @@ export interface Customer {
   export interface Delivery {
     id: number;
     order_date: string;
-    products: string;
     customer_id: number;
     state: string;
     scheduled_date: string | null;
@@ -55,7 +54,7 @@ export interface Customer {
     origin_store: Store | null,
     dest_store: Store | null,
     carrier_id: number | null,
-    products_new: Product[] | null,
+    products: Product[] | null,
   }
 
   export interface Supplier {

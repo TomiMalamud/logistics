@@ -37,15 +37,18 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     delivery: {
       ...delivery,
       created_by: {
-        id: typeof delivery.created_by === "string" 
-          ? delivery.created_by 
-          : delivery.created_by?.id ?? '',
-        name: typeof delivery.created_by === "string"
-          ? '' // default empty string when we only have the id
-          : delivery.created_by?.name ?? '',
-        email: typeof delivery.created_by === "string"
-          ? '' // default empty string when we only have the id
-          : delivery.created_by?.email ?? ''
+        id:
+          typeof delivery.created_by === "string"
+            ? delivery.created_by
+            : delivery.created_by?.id ?? "",
+        name:
+          typeof delivery.created_by === "string"
+            ? "" // default empty string when we only have the id
+            : delivery.created_by?.name ?? "",
+        email:
+          typeof delivery.created_by === "string"
+            ? "" // default empty string when we only have the id
+            : delivery.created_by?.email ?? ""
       }
     },
     fetchURL
@@ -281,7 +284,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   setIsNotesDialogOpen(true);
                 }}
               >
-                <StickyNote size={12} className="text-gray-600"/>
+                <StickyNote size={12} className="text-gray-600" />
                 Notas
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -301,27 +304,29 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       {/* Product Alert */}
       <Alert className="bg-slate-50">
         <AlertDescription>
-          {delivery.products_new && delivery.products_new.length > 0 ? (
+          {delivery.products && delivery.products.length > 0 && (
             <div className="space-y-1">
-              {delivery.products_new.map((product, index) => (
+              {delivery.products.map((product, index) => (
                 <div key={index} className="flex items-center text-sm">
                   <span className="font-medium">{product.quantity}x</span>
-                  <span className="ml-2 capitalize">{product.name.toLowerCase()}</span>
+                  <span className="ml-2 capitalize">
+                    {product.name.toLowerCase()}
+                  </span>
                   {product.sku && (
                     <span className="ml-2 text-slate-500">({product.sku})</span>
                   )}
                 </div>
               ))}
             </div>
-          ) : (
-            delivery.products.toLowerCase()
           )}
         </AlertDescription>
       </Alert>
       {/* Address */}
       {displayAddress && (
         <div className="flex py-2 items-center justify-between">
-          <p className="text-sm text-slate-600 mr-5 capitalize">{displayAddress.toLowerCase()}</p>
+          <p className="text-sm text-slate-600 mr-5 capitalize">
+            {displayAddress.toLowerCase()}
+          </p>
         </div>
       )}
       {delivery.state === "pending" && delivery.type !== "supplier_pickup" && (
@@ -332,7 +337,10 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         {deliveryLogic.newNotas.length > 0 ? (
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">
-              {deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1].text.toLowerCase()} |{" "}
+              {deliveryLogic.newNotas[
+                deliveryLogic.newNotas.length - 1
+              ].text.toLowerCase()}{" "}
+              |{" "}
               {deliveryLogic.formatNoteDate(
                 deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1]
                   .created_at || ""
