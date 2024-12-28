@@ -1,7 +1,7 @@
 import React from "react";
 import type { GetServerSidePropsContext } from "next";
 import { createClient } from "@/utils/supabase/server-props";
-import CreateStoreMov from "@/components/store-mov/CreateStoreMov";
+import CreateStoreMov from "@/components/CreateStoreMov";
 
 export default function CreateStoreMovPage({ user }) {
   return (

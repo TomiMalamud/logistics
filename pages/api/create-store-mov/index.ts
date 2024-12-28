@@ -1,8 +1,7 @@
-// pages/api/create-store-mov/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
+import { Product } from "@/types/types";
 
-// pages/api/create-store-mov/index.ts
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -21,17 +20,27 @@ export default async function handler(
       created_by
     } = req.body;
 
-    // Validate required fields
-    if (!products || !origin_store || !dest_store) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // Validate required fields and product structure
+    if (!products || !origin_store || !dest_store || !Array.isArray(products)) {
+      return res.status(400).json({ error: "Missing or invalid required fields" });
     }
 
-    // Create delivery
+    // Validate product structure
+    const isValidProduct = (p: any): p is Product => 
+      typeof p === "object" && 
+      typeof p.name === "string" && 
+      typeof p.quantity === "number";
+
+    if (!products.every(isValidProduct)) {
+      return res.status(400).json({ error: "Invalid product format" });
+    }
+
+    // Create delivery with JSONB products
     const { data: delivery, error: deliveryError } = await supabase
       .from("deliveries")
       .insert([
         {
-          products,
+          products,  // This will be stored as JSONB
           created_by,
           scheduled_date: scheduled_date || null,
           type: "stores_movement",
@@ -45,7 +54,7 @@ export default async function handler(
       .single();
 
     if (deliveryError) {
-      console.error("Delivery error details:", deliveryError); // Added for better debugging
+      console.error("Delivery error details:", deliveryError);
       throw new Error(`Error creating delivery: ${deliveryError.message}`);
     }
 
