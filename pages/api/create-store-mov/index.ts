@@ -58,7 +58,6 @@ export default async function handler(
     await Promise.all(
       products.map(async (product) => {
         try {
-          console.log(`Moving product ${product.sku} from ${originDepositId} to ${destDepositId}`);
           await createInventoryMovement({
             idDepositoOrigen: originDepositId,
             idDepositoDestino: destDepositId,

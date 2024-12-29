@@ -313,7 +313,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                     {product.name.toLowerCase()}
                   </span>
                   {product.sku && (
-                    <span className="ml-2 text-slate-500">({product.sku})</span>
+                    <span className="ml-2 text-slate-500">{product.sku}</span>
                   )}
                 </div>
               ))}

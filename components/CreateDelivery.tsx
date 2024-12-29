@@ -191,7 +191,8 @@ export default function CreateDelivery({ user }: CreateProps) {
 
   const handleSaveItems = (items: InvoiceItem[]) => {
     const transformedItems = items.map((item) => ({
-      name: `${item.Concepto} (${item.Codigo})`,
+      name: item.Concepto,
+      sku: item.Codigo,
       quantity: item.Cantidad
     }));
     setFormData((prev) => ({
@@ -206,7 +207,8 @@ export default function CreateDelivery({ user }: CreateProps) {
     if (!selectedComprobante) return null;
 
     const transformedItems = invoiceItems.map((item) => ({
-      name: `${item.Concepto} (${item.Codigo})`,
+      name: item.Concepto,
+      sku: item.Codigo,
       quantity: item.Cantidad
     }));
 

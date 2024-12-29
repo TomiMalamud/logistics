@@ -114,7 +114,8 @@ export default function CreatePickup({ user }: Props) {
     setLoading(true);
     try {
       const productsFormatted = formData.products.map(product => ({
-        name: `${product.name} (${product.sku})`,
+        name: product.name,
+        sku: product.sku,
         quantity: product.quantity
       }));
 

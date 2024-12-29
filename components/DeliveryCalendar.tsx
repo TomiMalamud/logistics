@@ -113,7 +113,7 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
                     <div key={index}>
                       <span className="mr-2">{product.quantity}x</span>
                       <span>{titleCase(product.name.toLowerCase())}</span>
-                      {product.sku && <span>({product.sku})</span>}
+                      {product.sku && <span>{product.sku}</span>}
                     </div>
                   ))}
                 </div>
