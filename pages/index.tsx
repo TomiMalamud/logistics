@@ -313,7 +313,7 @@ export default function Index({ user, profile }: IndexProps) {
                         Retiro de Proveedor
                       </SelectItem>
                       <SelectItem
-                        value="stores_movement"
+                        value="store_movement"
                         className="flex items-center"
                       >
                         <Store

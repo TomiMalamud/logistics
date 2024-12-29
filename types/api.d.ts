@@ -87,6 +87,7 @@ export interface Product {
   Id: string;
   Codigo: string;
   Nombre: string;
+  Estado: string;
   PrecioFinal: number;
   Stock: number;
 }

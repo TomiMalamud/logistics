@@ -2,6 +2,7 @@
 
 import {
   TokenResponse,
+  Product,
   Customer,
   Comprobante,
   SearchComprobanteResponse
@@ -262,38 +263,6 @@ export const getComprobanteById = async (id: number): Promise<Comprobante> => {
   return data;
 };
 
-export const getInventarios = async (): Promise<Comprobante> => {
-  const token = await getAccessToken();
-
-  const url = `${API_URL_BASE}/api/inventarios/getDepositos`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    }
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error("Error fetching invoice_number by ID:", errorData);
-    throw new Error(errorData.message || "Error fetching invoice_number by ID");
-  }
-
-  const data: Comprobante = await response.json();
-  return data;
-};
-
-interface Product {
-  Id: string;
-  Codigo: string;
-  Nombre: string;
-  PrecioFinal: number;
-  Stock: number;
-  Estado: string;
-}
-
 export interface SearchProductsResponse {
   Items: Product[];
   TotalItems: number;
@@ -390,5 +359,61 @@ export const searchProducts = async (
 
     console.error("Unexpected error in searchProducts:", error);
     throw new APIError(error.message || "Error searching products");
+  }
+};
+
+interface InventoryMovement {
+  idDepositoOrigen: string;
+  idDepositoDestino: string;
+  codigo: string;
+  cantidad: number;
+}
+
+/**
+ * Creates an internal inventory movement in the ERP system
+ */
+export const createInventoryMovement = async (movement: InventoryMovement): Promise<void> => {
+  const token = await getAccessToken();
+  
+  const url = new URL(`${API_URL_BASE}/api/inventarios/movimientoInterno`);
+  url.searchParams.append('idDepositoOrigen', movement.idDepositoOrigen);
+  url.searchParams.append('idDepositoDestino', movement.idDepositoDestino);
+  url.searchParams.append('codigo', movement.codigo);
+  url.searchParams.append('cantidad', movement.cantidad.toString());
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Inventory Movement Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+
+      throw new APIError(`Error creating inventory movement: ${errorText}`, response.status);
+    }
+  } catch (error: any) {
+    if (error instanceof APIError) throw error;
+
+    // Handle unauthorized errors by refreshing token
+    if (error.message?.includes('401') || error.status === 401) {
+      tokenCache = { access_token: null, expires_at: null };
+      try {
+        return await createInventoryMovement(movement);
+      } catch (retryError) {
+        console.error('Retry failed:', retryError);
+        throw new APIError('Authentication failed', 401);
+      }
+    }
+
+    throw new APIError(error.message || 'Error creating inventory movement');
   }
 };

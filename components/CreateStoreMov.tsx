@@ -90,7 +90,8 @@ export default function CreateStoreMov({ user }: { user: User }) {
         type: "store_movement",
         created_by: user.id,
         products: formData.products.map(p => ({
-          name: `${p.name} (${p.code})`,
+          name: `${p.name} (${p.sku})`,
+          sku: p.sku,
           quantity: p.quantity
         }))
       };

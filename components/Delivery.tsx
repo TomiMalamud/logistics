@@ -65,7 +65,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     switch (delivery.type) {
       case "supplier_pickup":
         return delivery.suppliers?.name;
-      case "stores_movement":
+      case "store_movement":
         return `Movimiento de ${getStoreLabel(
           delivery.origin_store
         )} a ${getStoreLabel(delivery.dest_store)}`;
@@ -86,7 +86,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     switch (delivery.type) {
       case "supplier_pickup":
         return <Factory className="h-4 w-4" />;
-      case "stores_movement":
+      case "store_movement":
         return <Store className="h-4 w-4" />;
       default:
         return <Home size={16} />;

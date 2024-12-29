@@ -24,7 +24,7 @@ import { useProducts } from "@/lib/hooks/useProducts";
 
 export interface ProductItem {
   id: string;
-  code: string;
+  sku: string;
   name: string;
   quantity: number;
 }
@@ -56,7 +56,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
   
   const [currentProduct, setCurrentProduct] = useState<ProductItem>({
     id: "",
-    code: "",
+    sku: "",
     name: "",
     quantity: 1,
   });
@@ -75,7 +75,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
     setCurrentProduct((prev) => ({
       ...prev,
       id: product.Id,
-      code: product.Codigo,
+      sku: product.Codigo,
       name: titleCase(product.Nombre.toLowerCase()),
     }));
     setOpen(false);
@@ -86,7 +86,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
     if (products.some((p) => p.id === currentProduct.id)) return;
 
     onChange([...products, { ...currentProduct }]);
-    setCurrentProduct({ id: "", code: "", name: "", quantity: 1 });
+    setCurrentProduct({ id: "", sku: "", name: "", quantity: 1 });
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -197,7 +197,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
               className="flex group items-center justify-between p-2 bg-gray-50 min-h-12 rounded-md"
             >
               <div className="space-x-2 flex-1">
-                <span className="text-sm text-gray-500">{product.code}</span>
+                <span className="text-sm text-gray-500">{product.sku}</span>
                 <span className="text-gray-900">{product.name}</span>
                 <span className="ml-2 text-gray-500">{product.quantity}</span>
               </div>
