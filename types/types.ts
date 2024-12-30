@@ -45,7 +45,6 @@ export interface Customer {
     notes?: Note[] | null;
     invoice_number: string | null,
     invoice_id: number | null,
-    balance: number | null,
     delivery_cost: number | null,
     delivery_date: string | null,
     type: string,

@@ -18,6 +18,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import Link from "next/link";
 import { InvoiceItem } from "@/types/types";
+import CustomerInfo from "./CustomerInfo";
 
 interface CreateProps {
   user: User;
@@ -29,6 +30,7 @@ interface FormData {
   scheduled_date: string;
   notes: string;
   email: string | null;
+  emailBypassReason?: string;
 }
 
 const initialFormData: FormData = {
@@ -36,7 +38,8 @@ const initialFormData: FormData = {
   phone: "",
   scheduled_date: "",
   notes: "",
-  email: null
+  email: "",
+  emailBypassReason: ""
 };
 
 function FormField({
@@ -46,7 +49,6 @@ function FormField({
   onChange,
   disabled,
   error,
-  isTextarea,
   type,
   placeholder,
   children
@@ -59,7 +61,6 @@ function FormField({
   ) => void;
   disabled?: boolean;
   error?: string;
-  isTextarea?: boolean;
   type?: string;
   placeholder?: string;
   children?: React.ReactNode;
@@ -82,7 +83,7 @@ function FormField({
       {error && <p className="text-sm text-red-500">{error}</p>}
       {(name === "address" || name === "phone") && (
         <span className="text-sm mt-2 text-gray-500">
-          Podés editarlo si no es correcto
+          Si no es correcto, modificalo en Contabilium y volvé a intentar acá.
         </span>
       )}
     </div>
@@ -97,6 +98,8 @@ export default function CreateDelivery({ user }: CreateProps) {
   const [fieldsLoading, setFieldsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState("");
+  const [addressError, setAddressError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -112,15 +115,44 @@ export default function CreateDelivery({ user }: CreateProps) {
       if (!sanitizedPhone) {
         setPhoneError("");
       } else if (!validatePhoneNumber(sanitizedPhone)) {
-        setPhoneError(
-          "El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones."
-        );
+        setPhoneError("Sin 0 ni 15, sin espacios ni guiones.");
       } else {
         setPhoneError("");
       }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+  const validateForm = () => {
+    let isValid = true;
+
+    // Reset errors
+    setAddressError("");
+    setPhoneError("");
+    setEmailError("");
+
+    if (!formData.address.trim()) {
+      setAddressError("La dirección es requerida.");
+      isValid = false;
+    }
+
+    const sanitizedPhone = sanitizePhoneNumber(formData.phone);
+    if (!sanitizedPhone) {
+      setPhoneError("El teléfono es requerido.");
+      isValid = false;
+    } else if (!validatePhoneNumber(sanitizedPhone)) {
+      setPhoneError("Sin 0 ni 15, sin espacios ni guiones.");
+      isValid = false;
+    }
+
+    if (!formData.email && !formData.emailBypassReason) {
+      setEmailError(
+        "El email es requerido o se debe indicar por qué no lo tenemos haciendo click en Sin Email."
+      );
+      isValid = false;
+    }
+
+    return isValid;
   };
 
   const handleComprobanteSelect = async (invoice: Comprobante) => {
@@ -129,7 +161,8 @@ export default function CreateDelivery({ user }: CreateProps) {
     setFormData((prev) => ({
       ...prev,
       address: "Cargando...",
-      phone: "Cargando..."
+      phone: "Cargando...",
+      email: "Cargando..."
     }));
 
     if (invoice?.Id) {
@@ -151,13 +184,12 @@ export default function CreateDelivery({ user }: CreateProps) {
                 ? `${customer.Domicilio} - ${customer.Ciudad}`
                 : customer.Domicilio,
             phone: sanitizedPhone,
-            email: customer.Email || null
+            email: customer.Email || null,
+            emailBypassReason: ""
           }));
 
           if (sanitizedPhone && !validatePhoneNumber(sanitizedPhone)) {
-            setPhoneError(
-              "El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones."
-            );
+            setPhoneError("Sin 0 ni 15, sin espacios ni guiones.");
           } else {
             setPhoneError("");
           }
@@ -220,11 +252,17 @@ export default function CreateDelivery({ user }: CreateProps) {
         .split("T")[0],
       invoice_number: `${selectedComprobante.TipoFc} ${selectedComprobante.Numero}`,
       invoice_id: selectedComprobante.Id,
-      balance: parseFloat(selectedComprobante.Saldo.replace(",", ".")) || 0,
       name: selectedComprobante.RazonSocial,
       created_by: user.id,
       products: transformedItems
     };
+  };
+  const handleEmailBypass = (reason: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      emailBypassReason: reason
+    }));
+    setEmailError(""); // Clear any existing email error
   };
 
   const submitData = async (e: React.SyntheticEvent) => {
@@ -234,11 +272,13 @@ export default function CreateDelivery({ user }: CreateProps) {
       return;
     }
 
+    if (!validateForm()) {
+      return;
+    }
+
     const sanitizedPhone = sanitizePhoneNumber(formData.phone);
     if (!validatePhoneNumber(sanitizedPhone)) {
-      setPhoneError(
-        "El número debe tener 10 dígitos. Sin 0 ni 15, sin espacios ni guiones."
-      );
+      setPhoneError("Sin 0 ni 15, sin espacios ni guiones.");
       return;
     }
 
@@ -276,19 +316,18 @@ export default function CreateDelivery({ user }: CreateProps) {
       <form onSubmit={submitData}>
         <CardContent className="w-full">
           <div className="space-y-3">
-            <FormField label="Factura *">
+            <FormField label="Factura">
               <InvoiceSelection
                 onSelect={handleComprobanteSelect}
                 placeholder="Seleccioná un comprobante"
               />
-
               {selectedComprobante && selectedComprobante?.Saldo !== "0,00" && (
                 <Alert className="text-yellow-600 mt-3">
                   <AlertTitle>Factura adeudada</AlertTitle>
                   <AlertDescription>
                     Saldo: ${" "}
                     {selectedComprobante?.Saldo ||
-                      "No se pudo obtener el balance. Aclarar en Notas si la factura está adeudada."}
+                      "No se pudo obtener el saldo. Aclarar en Notas si la factura está adeudada."}
                     . Recordá registrar la cobranza cuando cobremos.
                   </AlertDescription>
                 </Alert>
@@ -296,61 +335,58 @@ export default function CreateDelivery({ user }: CreateProps) {
             </FormField>
 
             {selectedComprobante && (
-              <div className="justify-end text-right">
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <InvoiceItems
-                    invoice_id={selectedComprobante.Id}
-                    initialItems={invoiceItems}
-                    editable={isEditing}
-                    onSubmit={handleSaveItems}
-                  />
+              <>
+                <CustomerInfo
+                  address={formData.address}
+                  phone={formData.phone}
+                  email={formData.email}
+                  isLoading={fieldsLoading}
+                  phoneError={phoneError}
+                  addressError={addressError}
+                  emailError={emailError}
+                  onBypassEmail={handleEmailBypass}
+                  emailBypassReason={formData.emailBypassReason}
+                />
+                <div className="justify-end text-right">
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <InvoiceItems
+                      invoice_id={selectedComprobante.Id}
+                      initialItems={invoiceItems}
+                      editable={isEditing}
+                      onSubmit={handleSaveItems}
+                    />
+                  </div>
+                  <div className="mt-2 space-x-2 flex items-center justify-end">
+                    {!isEditing && (
+                      <Button
+                        onClick={() => setIsEditing(true)}
+                        type="button"
+                        variant="outline"
+                      >
+                        Editar
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-2 space-x-2 flex items-center justify-end">
-                  {!isEditing && (
-                    <Button
-                    onClick={() => setIsEditing(true)}
-                    type="button"
-                    variant="outline"
-                  >
-                    Editar
-                  </Button>
-                  )}
-                </div>
-              </div>
+
+                <FormField
+                  label="Fecha de Entrega Programada"
+                  name="scheduled_date"
+                  value={formData.scheduled_date}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  type="date"
+                />
+                <FormField
+                  label="Notas"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  placeholder="Agregar notas y entre qué calles está"
+                />
+              </>
             )}
-            <FormField
-              label="Domicilio *"
-              name="address"
-              value={fieldsLoading ? "Cargando..." : formData.address}
-              onChange={handleInputChange}
-              disabled={loading || fieldsLoading || !selectedComprobante}
-              placeholder="Se completa con Contabilium"
-            />
-            <FormField
-              label="Celular *"
-              name="phone"
-              value={fieldsLoading ? "Cargando..." : formData.phone}
-              onChange={handleInputChange}
-              disabled={loading || fieldsLoading || !selectedComprobante}
-              error={phoneError}
-              placeholder="Se completa con Contabilium"
-            />
-            <FormField
-              label="Fecha de Entrega Programada"
-              name="scheduled_date"
-              value={formData.scheduled_date}
-              onChange={handleInputChange}
-              disabled={loading}
-              type="date"
-            />
-            <FormField
-              label="Notas"
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              disabled={loading}
-              placeholder="Agregar notas y entre qué calles está"
-            />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">

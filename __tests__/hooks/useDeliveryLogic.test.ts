@@ -33,7 +33,6 @@ describe('useDeliveryLogic', () => {
     notes: [],
     invoice_number: 'INV-001',
     invoice_id: 456,
-    balance: 50000,
     delivery_cost: null,
     delivery_date: null,
     type: 'home_delivery',

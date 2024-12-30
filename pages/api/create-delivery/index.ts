@@ -3,56 +3,93 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
 import { sendDeliveryScheduleEmail } from "@/utils/emails";
 
+interface DeliveryRequest {
+  order_date: string;
+  products: string;
+  invoice_number: string;
+  invoice_id: string;
+  name: string;
+  address: string;
+  phone: string;
+  scheduled_date?: string;
+  notes?: string;
+  created_by: string;
+  email: string | null;
+  emailBypassReason?: string;
+}
+
+const validateRequest = (body: DeliveryRequest) => {
+  const {
+    order_date,
+    products,
+    name,
+    address,
+    phone,
+    email,
+    emailBypassReason
+  } = body;
+
+  if (!order_date || !products || !name || !address || !phone) {
+    throw new Error("Missing required fields");
+  }
+
+  if (!email && !emailBypassReason) {
+    throw new Error("Either email or email bypass reason must be provided");
+  }
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method === "POST") {
-    try {
-      const {
-        order_date,
-        products,
-        invoice_number,
-        invoice_id,
-        balance,
-        name,
-        address,
-        phone,
-        scheduled_date,
-        notes,
-        created_by,
-        email
-      } = req.body;
+  if (req.method !== "POST") {
+    res.setHeader("Allow", ["POST"]);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
 
-      // Check for missing required fields
-      if (!order_date || !products || !name || !address || !phone) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
+  try {
+    const body = req.body as DeliveryRequest;
+    validateRequest(body);
 
-      // Check if customer exists
-      const { data: customerData, error: customerError } = await supabase
-        .from("customers")
-        .select("id")
-        .eq("name", name)
-        .eq("address", address)
-        .eq("phone", phone)
-        .maybeSingle();
+    const {
+      order_date,
+      products,
+      invoice_number,
+      invoice_id,
+      name,
+      address,
+      phone,
+      scheduled_date,
+      notes,
+      created_by,
+      email,
+      emailBypassReason
+    } = body;
 
-      if (customerError) {
-        throw new Error(`Error fetching customer: ${customerError.message}`);
-      }
+    // Check if customer exists
+    const { data: customerData, error: customerError } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("name", name)
+      .eq("address", address)
+      .eq("phone", phone)
+      .maybeSingle();
 
-      let customer_id: string;
+    if (customerError) {
+      throw new Error(`Error fetching customer: ${customerError.message}`);
+    }
 
+    // Handle customer creation or update
+    const customer_id = await (async () => {
       if (customerData) {
-        // Customer exists
-        customer_id = customerData.id;
+        // Update existing customer
         await supabase
           .from("customers")
           .update({ email })
-          .eq("id", customer_id);
+          .eq("id", customerData.id);
+        return customerData.id;
       } else {
-        // Insert new customer and retrieve the id
+        // Create new customer
         const { data: newCustomer, error: newCustomerError } = await supabase
           .from("customers")
           .insert([{ name, address, phone, email }])
@@ -65,67 +102,62 @@ export default async function handler(
           );
         }
 
-        customer_id = newCustomer.id;
+        return newCustomer.id;
       }
+    })();
 
-      // Insert delivery with the obtained customer_id
-      const { data: deliveryData, error: deliveryError } = await supabase
-        .from("deliveries")
-        .insert([
-          {
-            order_date,
-            products,
-            customer_id,
-            state: "pending",
-            scheduled_date: scheduled_date || null,
-            created_by,
-            invoice_number,
-            invoice_id,
-            balance
-          }
-        ])
-        .select("*")
-        .single();
-
-      if (deliveryError) {
-        throw new Error(`Error creating delivery: ${deliveryError.message}`);
-      }
-
-      // Ensure we have valid delivery data
-      if (!deliveryData || !deliveryData.id) {
-        throw new Error(
-          "Delivery creation failed, delivery data is null or invalid"
-        );
-      }
-
-      if (notes?.trim()) {
-        const { error: noteError } = await supabase
-          .from("notes")
-          .insert([{ text: notes, delivery_id: deliveryData.id }]);
-
-        if (noteError) {
-          throw new Error(`Error creating note: ${noteError.message}`);
+    // Insert delivery
+    const { data: deliveryData, error: deliveryError } = await supabase
+      .from("deliveries")
+      .insert([
+        {
+          order_date,
+          products,
+          customer_id,
+          state: "pending",
+          scheduled_date: scheduled_date || null,
+          created_by,
+          invoice_number,
+          invoice_id,
+          email_bypass_reason: emailBypassReason
         }
-      }
+      ])
+      .select("*")
+      .single();
 
-      // Send email if scheduled date and email are provided
-      if (scheduled_date && email) {
-        await sendDeliveryScheduleEmail({
-          email,
-          customerName: name,
-          scheduledDate: scheduled_date,
-          phone,
-          address
-        });
-      }
-
-      res.status(200).json({ message: "Delivery created successfully" });
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      res.status(400).json({ error: (error as Error).message });
+    if (deliveryError) {
+      throw new Error(`Error creating delivery: ${deliveryError.message}`);
     }
-  } else {
-    res.setHeader("Allow", ["POST"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+
+    if (!deliveryData?.id) {
+      throw new Error("Delivery creation failed");
+    }
+
+    // Handle notes if provided
+    if (notes?.trim()) {
+      const { error: noteError } = await supabase
+        .from("notes")
+        .insert([{ text: notes, delivery_id: deliveryData.id }]);
+
+      if (noteError) {
+        throw new Error(`Error creating note: ${noteError.message}`);
+      }
+    }
+
+    // Send email notification if applicable
+    if (scheduled_date && email) {
+      await sendDeliveryScheduleEmail({
+        email,
+        customerName: name,
+        scheduledDate: scheduled_date,
+        phone,
+        address
+      });
+    }
+
+    res.status(200).json({ message: "Delivery created successfully" });
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    res.status(400).json({ error: (error as Error).message });
   }
 }
