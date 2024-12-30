@@ -147,12 +147,19 @@ export default function CreateDelivery({ user }: CreateProps) {
 
     if (!formData.email && !formData.emailBypassReason) {
       setEmailError(
-        "El email es requerido o se debe indicar por qué no lo tenemos haciendo click en Sin Email."
+        "El email es requerido o se debe indicar por qué no lo tenemos haciendo click en 'Sin email.'"
       );
       isValid = false;
     }
 
     return isValid;
+  };
+  const handleAddressUpdate = (newAddress: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      address: newAddress
+    }));
+    setAddressError(""); // Clear any existing address error
   };
 
   const handleComprobanteSelect = async (invoice: Comprobante) => {
@@ -345,6 +352,7 @@ export default function CreateDelivery({ user }: CreateProps) {
                   addressError={addressError}
                   emailError={emailError}
                   onBypassEmail={handleEmailBypass}
+                  onUpdateAddress={handleAddressUpdate}
                   emailBypassReason={formData.emailBypassReason}
                 />
                 <div className="justify-end text-right">
