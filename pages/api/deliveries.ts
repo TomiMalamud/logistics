@@ -1,6 +1,7 @@
 // pages/api/deliveries.ts
 import createClient from '@/utils/supabase/api'
 import type { NextApiRequest, NextApiResponse } from 'next'
+import type { User } from '@supabase/supabase-js'
 
 type FeedResponse = {
   feed: any[]
@@ -13,6 +14,10 @@ type ErrorResponse = {
   error: string
 }
 
+type UserWithRole = User & {
+  role?: string
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<FeedResponse | ErrorResponse>
@@ -20,7 +25,26 @@ export default async function handler(
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
   const supabase = createClient(req, res)
+
+  // Get authenticated user and their role
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  // Get user role from profiles table
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError) {
+    console.error('Error fetching user role:', profileError)
+    return res.status(500).json({ error: 'Failed to fetch user role' })
+  }
 
   const {
     state = 'pending',
@@ -60,7 +84,7 @@ export default async function handler(
       return res.status(500).json({ error: 'Failed to fetch customers.' })
     }
 
-    // Then use these IDs to filter deliveries
+    // Base query for deliveries
     let query = supabase
       .from('deliveries')
       .select(`
@@ -88,6 +112,11 @@ export default async function handler(
         )
       `, { count: 'exact' })
       .eq('state', state)
+
+    // Apply role-based filtering
+    if (profile.role === 'sales') {
+      query = query.eq('created_by', user.id)
+    }
 
     // Apply delivery type filter
     if (type && type !== 'all') {
