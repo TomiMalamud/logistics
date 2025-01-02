@@ -21,11 +21,11 @@ interface FinancingOptionsProps {
 
 const FinancingOptions = ({ price }: FinancingOptionsProps) => {
   const options = [
-    { months: 12, discount: 0, label: "12 cuotas" },
-    { months: 6, discount: 15, label: "6 cuotas" },
-    { months: 3, discount: 20, label: "3 cuotas" },
+    { months: 6, discount: 0, label: "6 cuotas" },
+    { months: 3, discount: 5, label: "3 cuotas" },
+    { months: 1, discount: 15, label: "1 cuota" },
   ];
-  const calculateMonthlyPrice = (price: number) => Math.floor(price / 12);
+  const calculateMonthlyPrice = (price: number) => Math.floor(price / 6);
 
   return (
     <Dialog>
@@ -35,7 +35,7 @@ const FinancingOptions = ({ price }: FinancingOptionsProps) => {
           className="p-0 hover:text-green-600 text-md"
         >
           <Plus className="h-4 w-4 text-gray-500 text-xs" />
-          12x $ {calculateMonthlyPrice(price).toLocaleString("es-AR")}
+          6x $ {calculateMonthlyPrice(price).toLocaleString("es-AR")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
