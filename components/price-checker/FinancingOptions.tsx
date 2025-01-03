@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DialogDescription } from '@radix-ui/react-dialog';
 
 const calculateInstallment = (price: number, months: number, discount = 0) => {
   const discountedPrice = price * (1 - discount / 100);
@@ -22,7 +23,7 @@ interface FinancingOptionsProps {
 const FinancingOptions = ({ price }: FinancingOptionsProps) => {
   const options = [
     { months: 6, discount: 0, label: "6 cuotas" },
-    { months: 3, discount: 5, label: "3 cuotas" },
+    { months: 3, discount: 5, label: "3 cuotas o Plan Z" },
     { months: 1, discount: 15, label: "1 cuota" },
   ];
   const calculateMonthlyPrice = (price: number) => Math.floor(price / 6);
@@ -41,6 +42,7 @@ const FinancingOptions = ({ price }: FinancingOptionsProps) => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Opciones de financiación</DialogTitle>
+          <DialogDescription className='text-gray-500'>Descuentos para Naranja y todas las tarjetas bancarias</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {options.map((option) => (
