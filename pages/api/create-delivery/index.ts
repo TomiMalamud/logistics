@@ -1,7 +1,6 @@
 // pages/api/create-delivery/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
-import { sendDeliveryScheduleEmail } from "@/utils/emails";
 
 interface DeliveryRequest {
   order_date: string;
@@ -142,17 +141,6 @@ export default async function handler(
       if (noteError) {
         throw new Error(`Error creating note: ${noteError.message}`);
       }
-    }
-
-    // Send email notification if applicable
-    if (scheduled_date && email) {
-      await sendDeliveryScheduleEmail({
-        email,
-        customerName: name,
-        scheduledDate: scheduled_date,
-        phone,
-        address
-      });
     }
 
     res.status(200).json({ message: "Delivery created successfully" });
