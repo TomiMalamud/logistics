@@ -95,3 +95,17 @@ export interface Customer {
   export type Result<T, E = Error> = 
     | { ok: true; value: T }
     | { ok: false; error: E };
+
+export interface PerfitContact {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface PerfitResponse {
+  data: {
+    id: number;
+    email: string;
+    [key: string]: any;
+  };
+}

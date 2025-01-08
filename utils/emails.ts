@@ -1,12 +1,9 @@
 // utils/emails.ts
 import { Resend } from "resend";
-import DeliveryScheduleEmail from "@/components/emails/EmailSchedule";
 import FollowUpEmail from "@/components/emails/FollowUpEmail";
 import WarrantyEmail from "@/components/emails/WarrantyEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-
 
 export async function scheduleFollowUpEmail({
   salesPersonEmail,

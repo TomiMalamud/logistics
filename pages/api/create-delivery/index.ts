@@ -1,6 +1,8 @@
 // pages/api/create-delivery/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
+import { createOrUpdateContact, formatPerfitContact } from "@/lib/perfit";
+import { titleCase } from "title-case";
 
 interface DeliveryRequest {
   order_date: string;
@@ -64,6 +66,17 @@ export default async function handler(
       email,
       emailBypassReason
     } = body;
+
+    // Sync with Perfit if email is provided
+    if (email) {
+      try {
+        const perfitContact = formatPerfitContact(email, titleCase(name.toLowerCase()));
+        await createOrUpdateContact(perfitContact);
+      } catch (error) {
+        console.error('Failed to sync contact with Perfit:', error);
+        // Continue with delivery creation even if Perfit sync fails
+      }
+    }
 
     // Check if customer exists
     const { data: customerData, error: customerError } = await supabase
