@@ -1,6 +1,6 @@
 const WEBHOOK_URL = process.env.PERFIT_WEBHOOK;
 
-export async function triggerWarrantyEmail(customerEmail: string) {
+export async function triggerEmail(customerEmail: string, trigger_key: string) {
   if (!WEBHOOK_URL) {
     console.error('Missing PERFIT_WEBHOOK environment variable');
     return;
@@ -13,7 +13,7 @@ export async function triggerWarrantyEmail(customerEmail: string) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        trigger_key: 'garantia_gani',
+        trigger_key: trigger_key,
         contact: customerEmail,
         context: {}
       })
@@ -23,8 +23,8 @@ export async function triggerWarrantyEmail(customerEmail: string) {
       throw new Error(`Webhook failed with status ${response.status}`);
     }
 
-    console.log(`Warranty email triggered for ${customerEmail}`);
+    console.log(`Email triggered for ${customerEmail}`);
   } catch (error) {
-    console.error('Error triggering warranty email:', error);
+    console.error('Error triggering email:', error);
   }
 }

@@ -5,22 +5,20 @@ import { Product } from "@/types/types";
 
 const hasGaniProduct = (products: Product[] | string | null): boolean => {
   if (!products) return false;
-  
+
   try {
     // Handle both string and array cases
-    const productsArray: Product[] = typeof products === 'string' 
-      ? JSON.parse(products) 
-      : products;
+    const productsArray: Product[] =
+      typeof products === "string" ? JSON.parse(products) : products;
 
-    return productsArray.some(product => 
-      product.name.toLowerCase().includes('colchon gani')
+    return productsArray.some((product) =>
+      product.name.toLowerCase().includes("colchon gani")
     );
   } catch (error) {
-    console.error('Error parsing products:', error);
+    console.error("Error parsing products:", error);
     return false;
   }
 };
-
 
 export default async function handler(
   req: NextApiRequest,
@@ -97,11 +95,9 @@ export default async function handler(
 
       if (updateError)
         throw new Error(`Error updating delivery: ${updateError.message}`);
-      
 
+      // Schedule emails if delivery is marked as delivered
       if (state === "delivered" && state !== existingDelivery.state) {
-        console.log("Scheduling follow-up email for delivery:", id);
-
         const shouldScheduleEmail =
           existingDelivery.created_by?.email && // Has sales person email
           existingDelivery.created_by?.name && // Has sales person name
@@ -112,7 +108,7 @@ export default async function handler(
             `Scheduling follow-up email to ${existingDelivery.created_by.email}`
           );
 
-          const { scheduleFollowUpEmail } = await import("@/utils/emails");
+          const { scheduleFollowUpEmail } = await import("@/utils/resend");
           await scheduleFollowUpEmail({
             salesPersonEmail: existingDelivery.created_by.email,
             salesPersonName: existingDelivery.created_by.name,
@@ -126,11 +122,22 @@ export default async function handler(
             hasCustomer: Boolean(existingDelivery.customers)
           });
         }
+
+        // Trigger warranty email for Gani products
         const hasGani = hasGaniProduct(existingDelivery.products);
 
         if (hasGani && existingDelivery.customers?.email) {
-          const { triggerWarrantyEmail } = await import("@/utils/warranty");
-          await triggerWarrantyEmail(existingDelivery.customers.email);
+          const { triggerEmail: triggerEmail } = await import("@/utils/email");
+          await triggerEmail(existingDelivery.customers.email, "gani_warranty");
+        }
+
+        // Trigger email for review request
+        if (existingDelivery.customers?.email) {
+          const { triggerEmail: triggerEmail } = await import("@/utils/email");
+          await triggerEmail(
+            existingDelivery.customers.email,
+            "review_request"
+          );
         }
       }
 
