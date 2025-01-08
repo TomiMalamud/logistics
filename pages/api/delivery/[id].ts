@@ -128,20 +128,9 @@ export default async function handler(
         }
         const hasGani = hasGaniProduct(existingDelivery.products);
 
-        if (
-          hasGani &&
-          existingDelivery.customers?.email &&
-          existingDelivery.customers?.name
-        ) {
-          console.log(
-            `Scheduling warranty activation email for Gani product to ${existingDelivery.customers.email}`
-          );
-
-          const { scheduleWarrantyEmail } = await import("@/utils/emails");
-          await scheduleWarrantyEmail({
-            email: existingDelivery.customers.email,
-            customerName: existingDelivery.customers.name
-          });
+        if (hasGani && existingDelivery.customers?.email) {
+          const { triggerWarrantyEmail } = await import("@/utils/warranty");
+          await triggerWarrantyEmail(existingDelivery.customers.email);
         }
       }
 
