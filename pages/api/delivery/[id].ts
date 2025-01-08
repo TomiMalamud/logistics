@@ -1,7 +1,26 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
-import { sendDeliveryScheduleEmail } from "@/utils/emails";
 import { PICKUP_STORES } from "@/utils/constants";
+import { Product } from "@/types/types";
+
+const hasGaniProduct = (products: Product[] | string | null): boolean => {
+  if (!products) return false;
+  
+  try {
+    // Handle both string and array cases
+    const productsArray: Product[] = typeof products === 'string' 
+      ? JSON.parse(products) 
+      : products;
+
+    return productsArray.some(product => 
+      product.name.toLowerCase().includes('colchon gani')
+    );
+  } catch (error) {
+    console.error('Error parsing products:', error);
+    return false;
+  }
+};
+
 
 export default async function handler(
   req: NextApiRequest,
@@ -78,64 +97,53 @@ export default async function handler(
 
       if (updateError)
         throw new Error(`Error updating delivery: ${updateError.message}`);
-
-      // Handle email notifications for scheduled date changes
-      if (isScheduleDateChanged) {
-        console.log(`Delivery ${id}: Schedule changed to ${scheduled_date}`);
-
-        const shouldSendEmail =
-          existingDelivery.type !== "supplier_pickup" && // Not a supplier pickup
-          existingDelivery.customers && // Has customer
-          existingDelivery.customers.email && // Customer has email
-          existingDelivery.customers.email.includes("@"); // Basic email validation
-
-        if (shouldSendEmail) {
-          console.log(
-            `Sending schedule update email to ${existingDelivery.customers.email}`
-          );
-          await sendDeliveryScheduleEmail({
-            email: existingDelivery.customers.email,
-            customerName: existingDelivery.customers.name,
-            scheduledDate: scheduled_date,
-            phone: existingDelivery.customers.phone,
-            address: existingDelivery.customers.address
-          });
-        } else {
-          console.log("No email notification sent: ", {
-            type: existingDelivery.type,
-            hasCustomer: Boolean(existingDelivery.customers),
-            hasEmail: Boolean(existingDelivery.customers?.email)
-          });
-        }
-      }
+      
 
       if (state === "delivered" && state !== existingDelivery.state) {
         console.log("Scheduling follow-up email for delivery:", id);
-        
-        const shouldScheduleEmail = 
+
+        const shouldScheduleEmail =
           existingDelivery.created_by?.email && // Has sales person email
           existingDelivery.created_by?.name && // Has sales person name
           existingDelivery.customers; // Has customer data
 
         if (shouldScheduleEmail) {
-          console.log(`Scheduling follow-up email to ${existingDelivery.created_by.email}`);
-          
+          console.log(
+            `Scheduling follow-up email to ${existingDelivery.created_by.email}`
+          );
+
           const { scheduleFollowUpEmail } = await import("@/utils/emails");
           await scheduleFollowUpEmail({
             salesPersonEmail: existingDelivery.created_by.email,
             salesPersonName: existingDelivery.created_by.name,
             customerName: existingDelivery.customers.name || "Cliente",
-            customerPhone: existingDelivery.customers.phone || "",
+            customerPhone: existingDelivery.customers.phone || ""
           });
         } else {
-          console.log('No follow-up email scheduled: ', {
+          console.log("No follow-up email scheduled: ", {
             hasSalesPerson: Boolean(existingDelivery.created_by),
             hasEmail: Boolean(existingDelivery.created_by?.email),
             hasCustomer: Boolean(existingDelivery.customers)
           });
         }
-      }
+        const hasGani = hasGaniProduct(existingDelivery.products);
 
+        if (
+          hasGani &&
+          existingDelivery.customers?.email &&
+          existingDelivery.customers?.name
+        ) {
+          console.log(
+            `Scheduling warranty activation email for Gani product to ${existingDelivery.customers.email}`
+          );
+
+          const { scheduleWarrantyEmail } = await import("@/utils/emails");
+          await scheduleWarrantyEmail({
+            email: existingDelivery.customers.email,
+            customerName: existingDelivery.customers.name
+          });
+        }
+      }
 
       // Add state change note
       if (state && state !== existingDelivery.state) {
@@ -144,7 +152,7 @@ export default async function handler(
 
         if (state === "delivered") {
           if (pickup_store) {
-            const store = PICKUP_STORES.find(s => s.value === pickup_store);
+            const store = PICKUP_STORES.find((s) => s.value === pickup_store);
             noteText = `Retiro en sucursal: ${store?.label ?? pickup_store}`;
           } else if (carrier_id) {
             const { data: carrier, error: carrierError } = await supabase
