@@ -173,11 +173,10 @@ export const searchComprobantes = async (
     return {
       Items: sortedItems,
       TotalItems: sortedItems.length,
-      TotalPage: 1 // Since all items are fetched and consolidated into a single page
+      TotalPage: 1
     };
   } catch (error: any) {
     if (error.message.includes("401")) {
-      // Unauthorized, possibly token expired
       // Reset token cache
       tokenCache = { access_token: null, expires_at: null };
       try {
@@ -197,7 +196,7 @@ export const searchComprobantes = async (
         return {
           Items: sortedItems,
           TotalItems: sortedItems.length,
-          TotalPage: 1 // Since all items are fetched and consolidated into a single page
+          TotalPage: 1 
         };
       } catch (retryError: any) {
         throw retryError;

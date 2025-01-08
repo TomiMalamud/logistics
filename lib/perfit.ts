@@ -1,5 +1,6 @@
 // lib/perfit.ts
 import { PerfitContact, PerfitResponse } from '@/types/types';
+import { isEmailValid } from '@/utils/emailVal';
 
 const PERFIT_BASE_URL = 'https://api.myperfit.com/v2';
 const PERFIT_ACCOUNT = 'rohisommiers2';
@@ -39,6 +40,10 @@ const perfitFetch = async <T>(
 export const createOrUpdateContact = async (
   contact: PerfitContact
 ): Promise<PerfitResponse> => {
+  if (!isEmailValid(contact.email)) {
+    throw new Error(`Invalid or blocked email address: ${contact.email}`);
+  }
+
   try {
     // First try to create the contact
     const result = await perfitFetch<PerfitResponse>('/contacts', {
@@ -65,6 +70,10 @@ export const formatPerfitContact = (
   email: string,
   name: string,
 ): PerfitContact => {
+  if (!isEmailValid(email)) {
+    throw new Error(`Invalid or blocked email address: ${email}`);
+  }
+
   const [firstName, ...lastNameParts] = name.trim().split(' ');
   const lastName = lastNameParts.join(' ');
 

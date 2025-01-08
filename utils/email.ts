@@ -1,8 +1,16 @@
+// utils/email.ts
+import { isEmailValid } from './emailVal';
+
 const WEBHOOK_URL = process.env.PERFIT_WEBHOOK;
 
 export async function triggerEmail(customerEmail: string, trigger_key: string) {
   if (!WEBHOOK_URL) {
     console.error('Missing PERFIT_WEBHOOK environment variable');
+    return;
+  }
+
+  if (!isEmailValid(customerEmail)) {
+    console.warn(`Invalid or blocked email address: ${customerEmail}`);
     return;
   }
 
