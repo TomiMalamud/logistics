@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 import { PICKUP_STORES } from "@/utils/constants";
 import { DeliveryType, Store } from "@/types/types";
@@ -39,7 +40,6 @@ interface StateDialogProps {
   isConfirming: boolean;
 }
 
-
 export default function StateDialog({ 
   state,
   setState,
@@ -54,8 +54,8 @@ export default function StateDialog({
   const [deliveryCost, setDeliveryCost] = useState('');
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
   const [selectedStore, setSelectedStore] = useState<Store | undefined>();
+  const [isCurrentAccountChecked, setIsCurrentAccountChecked] = useState(false);
 
-  // Reset form when delivery type changes
   const handleDeliveryTypeChange = (value: string) => {
     setDeliveryType(value as DeliveryType);
     setDeliveryCost("");
@@ -97,7 +97,11 @@ export default function StateDialog({
 
   const isSubmitDisabled = 
     isConfirming || 
-    (deliveryType === "carrier" && (!selectedCarrierId || !isDeliveryCostValid(deliveryCost))) ||
+    (deliveryType === "carrier" && (
+      !selectedCarrierId || 
+      !isDeliveryCostValid(deliveryCost) ||
+      (selectedCarrierId === 7 && !isCurrentAccountChecked)
+    )) ||
     (deliveryType === "pickup" && !selectedStore);
 
   return (
@@ -125,15 +129,37 @@ export default function StateDialog({
             onChange={handleDeliveryTypeChange}
           />
 
-          {deliveryType === "carrier" ? (
-            <CostCarrierForm
-              initialDeliveryCost={initialDeliveryCost}
-              initialCarrierId={initialCarrierId}
-              onCarrierChange={setSelectedCarrierId}
-              onCostChange={setDeliveryCost}
-              required
-            />
-          ) : (
+          {deliveryType === "carrier" && (
+            <>
+              <CostCarrierForm
+                initialDeliveryCost={initialDeliveryCost}
+                initialCarrierId={initialCarrierId}
+                onCarrierChange={setSelectedCarrierId}
+                onCostChange={setDeliveryCost}
+                required
+              />
+              
+              {selectedCarrierId === 7 && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="current-account"
+                    checked={isCurrentAccountChecked}
+                    onCheckedChange={(checked) => setIsCurrentAccountChecked(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="current-account"
+                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Antes de marcar como entregada se completa su{" "}
+                     <a className="text-blue-600 hover:underline hover:text-blue-800 hover:underline-offset-2" href="https://docs.google.com/spreadsheets/d/1KDYAYsNY0IL1Bdd5UWzwNbJNbj-bbtcjpwHtCtmbwJs/edit?usp=sharing" target="_blank">Cuenta Corriente</a>.
+                     ¿Ya la completaste?
+                  </label>
+                </div>
+              )}
+            </>
+          )}
+
+          {deliveryType === "pickup" && (
             <PickupStoreSelector
               selectedStore={selectedStore}
               onStoreChange={(value) => setSelectedStore(value as Store)}

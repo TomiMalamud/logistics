@@ -5,10 +5,6 @@ import { isEmailValid } from '@/utils/emailVal';
 const PERFIT_BASE_URL = 'https://api.myperfit.com/v2';
 const PERFIT_ACCOUNT = 'rohisommiers2';
 
-if (!process.env.PERFIT_API_KEY) {
-  throw new Error('PERFIT_API_KEY is not defined');
-}
-
 const perfitFetch = async <T>(
   endpoint: string,
   options: RequestInit
