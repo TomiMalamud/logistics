@@ -113,9 +113,11 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           {displayPhone && (
             <>
               <span className="mx-2">|</span>
-              <p className="text-slate-600 text-sm">
+              <a href={`https://wa.me/549${displayPhone}`} target="_blank" rel="noreferrer">
+              <p className="text-slate-600 text-sm hover:underline-offset-4 hover:underline ">
                 {deliveryLogic.formatArgentinePhoneNumber(displayPhone)}
               </p>
+              </a>
             </>
           )}
         </div>
