@@ -111,9 +111,7 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
                 <div className="space-y-1">
                   {delivery.products.map((product, index) => (
                     <div key={index}>
-                      <span className="mr-2">{product.quantity}x</span>
-                      <span>{titleCase(product.name.toLowerCase())}</span>
-                      {product.sku && <span>{product.sku}</span>}
+                      {product.quantity}x {titleCase(product.name.toLowerCase())}                      
                     </div>
                   ))}
                 </div>
