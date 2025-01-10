@@ -54,7 +54,6 @@ export default function StateDialog({
   const [deliveryCost, setDeliveryCost] = useState('');
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
   const [selectedStore, setSelectedStore] = useState<Store | undefined>();
-  const [isCurrentAccountChecked, setIsCurrentAccountChecked] = useState(false);
 
   const handleDeliveryTypeChange = (value: string) => {
     setDeliveryType(value as DeliveryType);
@@ -99,8 +98,7 @@ export default function StateDialog({
     isConfirming || 
     (deliveryType === "carrier" && (
       !selectedCarrierId || 
-      !isDeliveryCostValid(deliveryCost) ||
-      (selectedCarrierId === 7 && !isCurrentAccountChecked)
+      !isDeliveryCostValid(deliveryCost)
     )) ||
     (deliveryType === "pickup" && !selectedStore);
 
@@ -138,24 +136,6 @@ export default function StateDialog({
                 onCostChange={setDeliveryCost}
                 required
               />
-              
-              {selectedCarrierId === 7 && (
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="current-account"
-                    checked={isCurrentAccountChecked}
-                    onCheckedChange={(checked) => setIsCurrentAccountChecked(checked as boolean)}
-                  />
-                  <label
-                    htmlFor="current-account"
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Antes de marcar como entregada se completa su{" "}
-                     <a className="text-blue-600 hover:underline hover:text-blue-800 hover:underline-offset-2" href="https://docs.google.com/spreadsheets/d/1KDYAYsNY0IL1Bdd5UWzwNbJNbj-bbtcjpwHtCtmbwJs/edit?usp=sharing" target="_blank">Cuenta Corriente</a>.
-                     ¿Ya la completaste?
-                  </label>
-                </div>
-              )}
             </>
           )}
 

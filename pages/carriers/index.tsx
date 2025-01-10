@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { validatePhoneNumber, sanitizePhoneNumber } from "@/utils/phone";
 import Layout from "@/components/Layout";
+import Link from "next/link";
 
 type CarrierType = "local" | "national";
 
@@ -338,6 +339,15 @@ export default function CarriersPage() {
                 </a>
               </div>
               <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild                  
+                >
+                  <Link href={`/carriers/${carrier.id}/balance`}>
+                  <DollarSign className="w-4 h-4" />
+                  </Link>
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
