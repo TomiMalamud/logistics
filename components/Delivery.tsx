@@ -31,6 +31,8 @@ import {
 } from "./ui/tooltip";
 import NotesDialog from "./NotesDialog";
 import { PICKUP_STORES } from "@/utils/constants";
+import { RemitoDownload } from "./RemitoDownload";
+import { formatLongDate } from "@/utils/format";
 
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({
@@ -113,10 +115,14 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           {displayPhone && (
             <>
               <span className="mx-2">|</span>
-              <a href={`https://wa.me/549${displayPhone}`} target="_blank" rel="noreferrer">
-              <p className="text-slate-600 text-sm hover:underline-offset-4 hover:underline ">
-                {deliveryLogic.formatArgentinePhoneNumber(displayPhone)}
-              </p>
+              <a
+                href={`https://wa.me/549${displayPhone}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <p className="text-slate-600 text-sm hover:underline-offset-4 hover:underline ">
+                  {deliveryLogic.formatArgentinePhoneNumber(displayPhone)}
+                </p>
               </a>
             </>
           )}
@@ -131,7 +137,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <p>{deliveryLogic.formatDate(delivery.order_date)}</p>
+                <p>{formatLongDate(delivery.order_date)}</p>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
@@ -168,7 +174,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
             </h1>
             <p className="text-sm mt-1 text-slate-500">
               {delivery.delivery_date &&
-                `El ${deliveryLogic.formatDate(delivery.delivery_date)}`}
+                `El ${formatLongDate(delivery.delivery_date)}`}
             </p>
           </div>
         ) : delivery.scheduled_date ? (
@@ -183,10 +189,10 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 </h1>
                 <p className="text-sm mt-1 text-red-500">
                   {delivery.type === "supplier_pickup"
-                    ? `Teníamos que retirar el ${deliveryLogic.formatDate(
+                    ? `Teníamos que retirar el ${formatLongDate(
                         delivery.scheduled_date
                       )}, reprogramá el retiro y actualizá la fecha acá`
-                    : `Teníamos que entregar el ${deliveryLogic.formatDate(
+                    : `Teníamos que entregar el ${formatLongDate(
                         delivery.scheduled_date
                       )}, reprogramá la entrega con el cliente y actualizá la fecha acá`}
                 </p>
@@ -205,16 +211,16 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                         ? "Retiro programado "
                         : "Visitaremos el domicilio "}
                       <span className="font-bold text-black">
-                        hoy, {deliveryLogic.formatDate(delivery.scheduled_date)}
+                        hoy, {formatLongDate(delivery.scheduled_date)}
                       </span>
                     </span>
                   ) : (
                     <span>
                       {delivery.type === "supplier_pickup"
-                        ? `Retiro programado para el ${deliveryLogic.formatDate(
+                        ? `Retiro programado para el ${formatLongDate(
                             delivery.scheduled_date
                           )}`
-                        : `Visitaremos el domicilio el ${deliveryLogic.formatDate(
+                        : `Visitaremos el domicilio el ${formatLongDate(
                             delivery.scheduled_date
                           )}`}
                     </span>
@@ -269,7 +275,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   isConfirming={deliveryLogic.isUpdating}
                 />
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <PiggyBank size={12} className="text-gray-600" />
                 <CostCarrierDialog
@@ -279,7 +284,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   isUpdating={deliveryLogic.isUpdatingDeliveryDetails}
                 />
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false);
@@ -288,6 +292,12 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               >
                 <StickyNote size={12} className="text-gray-600" />
                 Notas
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <RemitoDownload
+                  delivery={delivery}
+                  customer={delivery.customers}
+                />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

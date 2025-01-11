@@ -118,21 +118,6 @@ export const useDeliveryLogic = ({
     }
   };
   
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-
-    if (isNaN(date.getTime())) {
-      return "Fecha inválida";
-    }
-
-    return date.toLocaleDateString("es-AR", {
-      weekday: "long",
-      day: "numeric",
-      month: "short",
-      timeZone: "UTC"
-    });
-  };
-
   const formatNoteDate = (dateString: string) => {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Invalid Date";
@@ -238,7 +223,6 @@ export const useDeliveryLogic = ({
 
     // Utility functions
     isToday,
-    formatDate,
     formatNoteDate,
     formatArgentinePhoneNumber,
 

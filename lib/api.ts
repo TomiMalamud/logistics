@@ -233,7 +233,6 @@ export const getClientById = async (id: number): Promise<Customer> => {
 };
 
 /**
- * **NEW FUNCTION**
  * Fetches a single invoice_number by its ID.
  *
  * @param id - The ID of the invoice_number to fetch.

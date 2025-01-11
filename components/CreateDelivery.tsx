@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/phone";
+import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/format";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import Link from "next/link";

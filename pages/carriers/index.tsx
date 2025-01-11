@@ -24,7 +24,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { validatePhoneNumber, sanitizePhoneNumber } from "@/utils/phone";
+import { validatePhoneNumber, sanitizePhoneNumber, formatDate } from "@/utils/format";
 import Layout from "@/components/Layout";
 import Link from "next/link";
 
@@ -49,20 +49,7 @@ export default function CarriersPage() {
   const [error, setError] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   const [currentCarrier, setCurrentCarrier] = useState<Carrier | null>(null);
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
 
-    if (isNaN(date.getTime())) {
-      return "Fecha inválida";
-    }
-
-    return date.toLocaleDateString("es-AR", {
-      weekday: "long",
-      day: "numeric",
-      month: "short",
-      timeZone: "UTC"
-    });
-  };
   useEffect(() => {
     fetchCarriers();
   }, []);

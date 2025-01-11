@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import type { BalanceResponse } from "@/pages/api/carriers/[id]/balance";
 import PaymentForm from "./PaymentForm";
 import Link from "next/link";
+import { formatDate } from "@/utils/format";
 
 interface CarrierBalanceProps {
   carrierId: string;
@@ -23,11 +24,6 @@ interface DeliveryUpdateData {
   delivery_cost: number;
   carrier_id: number;
 }
-
-// Helper function to format date
-const formatDate = (dateString: string): string => {
-  return new Date(`${dateString}T12:00:00`).toLocaleDateString();
-};
 
 // Helper function to format currency
 const formatCurrency = (amount: number): string => {
