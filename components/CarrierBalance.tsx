@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import type { BalanceResponse } from "@/pages/api/carriers/[id]/balance";
 import PaymentForm from "./PaymentForm";
-import CostCarrierDialog from "./CostCarrierDialog";
 import Link from "next/link";
 
 interface CarrierBalanceProps {
@@ -155,6 +154,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
                     <Link
                       href={`/?search=${transaction.concept.split('-').pop()?.trim()}&state=delivered`}
                       className="underline-offset-4 hover:underline transition duration-200 underline decoration-white hover:decoration-slate-800"
+                      target="_blank"
                     >
                       {transaction.concept}
                     </Link>

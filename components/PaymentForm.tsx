@@ -115,6 +115,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ carrierId, onSuccess, trigger
               name="notes"
               value={formData.notes}
               onChange={handleChange}
+              placeholder='Si pagó el cliente, indicá cuál'
             />
           </div>
 
