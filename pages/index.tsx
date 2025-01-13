@@ -261,6 +261,7 @@ export default function Index({ user, profile }: IndexProps) {
               <TabsList aria-label="Filter by state">
                 <TabsTrigger value="pending">Pendientes</TabsTrigger>
                 <TabsTrigger value="delivered">Entregadas</TabsTrigger>
+                <TabsTrigger value="cancelled">Canceladas</TabsTrigger>
               </TabsList>
             </Tabs>
             <span className="text-gray-500 font-light ml-2">
