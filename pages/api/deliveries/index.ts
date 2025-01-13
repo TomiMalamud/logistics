@@ -55,7 +55,7 @@ export default async function handler(
     type = 'all'
   } = req.query
 
-  if (!['pending', 'delivered'].includes(state as string)) {
+  if (!['pending', 'delivered', 'cancelled'].includes(state as string)) {
     return res.status(400).json({ error: 'Invalid state parameter' })
   }
 

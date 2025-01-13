@@ -72,7 +72,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
       try {
         setState((prev) => ({ ...prev, isUpdating: true }));
 
-        const response = await fetch(`/api/delivery/${deliveryId}`, {
+        const response = await fetch(`/api/deliveries/${deliveryId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)

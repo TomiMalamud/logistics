@@ -189,7 +189,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
 
   const handleDeliveryDragEnd = async (deliveryId, newDate) => {
     try {
-      const response = await fetch(`/api/delivery/${deliveryId}`, {
+      const response = await fetch(`/api/deliveries/${deliveryId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

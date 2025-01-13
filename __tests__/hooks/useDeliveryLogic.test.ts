@@ -99,7 +99,7 @@ describe('useDeliveryLogic', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `/api/delivery/${mockDelivery.id}`,
+        `/api/deliveries/${mockDelivery.id}`,
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify(mockUpdateData)
@@ -132,7 +132,7 @@ describe('useDeliveryLogic', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `/api/delivery/${mockDelivery.id}`,
+        `/api/deliveries/${mockDelivery.id}`,
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify({
@@ -165,7 +165,7 @@ describe('useDeliveryLogic', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `/api/delivery/${mockDelivery.id}`,
+        `/api/deliveries/${mockDelivery.id}`,
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify({

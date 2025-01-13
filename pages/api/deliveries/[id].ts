@@ -63,24 +63,23 @@ export default async function handler(
       if (!existingDelivery)
         return res.status(404).json({ error: "Delivery not found" });
 
-      // Check if scheduled_date has changed
-      const isScheduleDateChanged =
-        scheduled_date &&
-        (!existingDelivery.scheduled_date ||
-          new Date(scheduled_date).getTime() !==
-            new Date(existingDelivery.scheduled_date).getTime());
-
       // Update delivery
       const updates = {
-        ...(state &&
-          ["pending", "delivered"].includes(state) && {
-            state,
-            ...(state === "delivered" && {
-              delivery_date: new Date().toLocaleString("en-US", {
-                timeZone: "America/Argentina/Buenos_Aires"
-              })
+        ...(state && {
+          state,
+          ...(state === "delivered" && {
+            delivery_date: new Date().toLocaleString("en-US", {
+              timeZone: "America/Argentina/Buenos_Aires"
             })
           }),
+          ...(state === "cancelled" && {
+            delivery_date: null,
+            delivery_cost: null,
+            carrier_id: null,
+            pickup_store: null,
+            scheduled_date: null
+          })
+        }),
         ...(scheduled_date && { scheduled_date }),
         ...(delivery_cost && { delivery_cost }),
         ...(carrier_id && { carrier_id }),
@@ -96,18 +95,14 @@ export default async function handler(
       if (updateError)
         throw new Error(`Error updating delivery: ${updateError.message}`);
 
-      // Schedule emails if delivery is marked as delivered
+      // Handle email notifications for delivered state
       if (state === "delivered" && state !== existingDelivery.state) {
         const shouldScheduleEmail =
-          existingDelivery.created_by?.email && // Has sales person email
-          existingDelivery.created_by?.name && // Has sales person name
-          existingDelivery.customers; // Has customer data
+          existingDelivery.created_by?.email && 
+          existingDelivery.created_by?.name && 
+          existingDelivery.customers;
 
         if (shouldScheduleEmail) {
-          console.log(
-            `Scheduling follow-up email to ${existingDelivery.created_by.email}`
-          );
-
           const { scheduleFollowUpEmail } = await import("@/utils/resend");
           await scheduleFollowUpEmail({
             salesPersonEmail: existingDelivery.created_by.email,
@@ -115,29 +110,19 @@ export default async function handler(
             customerName: existingDelivery.customers.name || "Cliente",
             customerPhone: existingDelivery.customers.phone || ""
           });
-        } else {
-          console.log("No follow-up email scheduled: ", {
-            hasSalesPerson: Boolean(existingDelivery.created_by),
-            hasEmail: Boolean(existingDelivery.created_by?.email),
-            hasCustomer: Boolean(existingDelivery.customers)
-          });
         }
 
-        // Trigger warranty email for Gani products
-        const hasGani = hasGaniProduct(existingDelivery.products);
-
-        if (hasGani && existingDelivery.customers?.email) {
-          const { triggerEmail: triggerEmail } = await import("@/utils/email");
-          await triggerEmail(existingDelivery.customers.email, "gani_warranty");
-        }
-
-        // Trigger email for review request
+        // Handle product-specific emails
         if (existingDelivery.customers?.email) {
-          const { triggerEmail: triggerEmail } = await import("@/utils/email");
-          await triggerEmail(
-            existingDelivery.customers.email,
-            "review_request"
-          );
+          const { triggerEmail } = await import("@/utils/email");
+          
+          // Send warranty email for Gani products
+          if (hasGaniProduct(existingDelivery.products)) {
+            await triggerEmail(existingDelivery.customers.email, "gani_warranty");
+          }
+          
+          // Send review request email
+          await triggerEmail(existingDelivery.customers.email, "review_request");
         }
       }
 
@@ -146,25 +131,29 @@ export default async function handler(
         const deliveryId = parseInt(id as string, 10);
         let noteText = "";
 
-        if (state === "delivered") {
-          if (pickup_store) {
-            const store = PICKUP_STORES.find((s) => s.value === pickup_store);
-            noteText = `Retiro en sucursal: ${store?.label ?? pickup_store}`;
-          } else if (carrier_id) {
-            const { data: carrier, error: carrierError } = await supabase
-              .from("carriers")
-              .select("name")
-              .eq("id", carrier_id)
-              .single();
+        switch (state) {
+          case "delivered":
+            if (pickup_store) {
+              const store = PICKUP_STORES.find((s) => s.value === pickup_store);
+              noteText = `Retiro en sucursal: ${store?.label ?? pickup_store}`;
+            } else if (carrier_id) {
+              const { data: carrier, error: carrierError } = await supabase
+                .from("carriers")
+                .select("name")
+                .eq("id", carrier_id)
+                .single();
 
-            if (carrierError)
-              throw new Error(
-                `Error fetching carrier: ${carrierError.message}`
-              );
-            noteText = `Entregado por ${carrier.name} con un costo de $${delivery_cost}`;
-          }
-        } else if (state === "pending") {
-          noteText = "Marcado como 'Pendiente'";
+              if (carrierError)
+                throw new Error(`Error fetching carrier: ${carrierError.message}`);
+              noteText = `Entregado por ${carrier.name} con un costo de $${delivery_cost}`;
+            }
+            break;
+          case "pending":
+            noteText = "Marcado como 'Pendiente'";
+            break;
+          case "cancelled":
+            noteText = "Entrega cancelada";
+            break;
         }
 
         const { error: noteError } = await supabase

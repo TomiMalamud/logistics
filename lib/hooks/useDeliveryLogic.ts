@@ -32,7 +32,7 @@ export const useDeliveryLogic = ({
   }) => {
     setIsUpdatingDeliveryDetails(true);
     try {
-      const response = await fetch(`/api/delivery/${delivery.id}`, {
+      const response = await fetch(`/api/deliveries/${delivery.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
@@ -62,7 +62,7 @@ export const useDeliveryLogic = ({
 
   const updateField = async (fieldData: Partial<Delivery>) => {
     try {
-      const response = await fetch(`/api/delivery/${delivery.id}`, {
+      const response = await fetch(`/api/deliveries/${delivery.id}`, {
         method: "PUT",
         body: JSON.stringify(fieldData),
         headers: { "Content-Type": "application/json" }
@@ -87,7 +87,15 @@ export const useDeliveryLogic = ({
     setIsConfirming(true);
   
     try {
-      const newState = state === "delivered" ? "pending" : "delivered";
+      // Determine the new state based on current state
+      let newState;
+      if (state === "cancelled") {
+        newState = "pending"; // Allow uncancelling
+      } else if (state === "delivered") {
+        newState = "pending";
+      } else if (state === "pending") {
+        newState = "delivered";
+      }
   
       // Prepare update data
       const updateData = {
@@ -96,12 +104,12 @@ export const useDeliveryLogic = ({
           ...(formData.delivery_type === "carrier" && {
             delivery_cost: formData.delivery_cost,
             carrier_id: formData.carrier_id,
-            pickup_store: null // Clear pickup store if carrier delivery
+            pickup_store: null
           }),
           ...(formData.delivery_type === "pickup" && {
             pickup_store: formData.pickup_store,
-            delivery_cost: null, // Clear delivery cost if pickup
-            carrier_id: null // Clear carrier if pickup
+            delivery_cost: null,
+            carrier_id: null
           })
         })
       };
@@ -118,6 +126,21 @@ export const useDeliveryLogic = ({
     }
   };
   
+  const handleCancelDelivery = async () => {
+    setIsConfirming(true);
+    try {
+      await updateField({ state: "cancelled" });
+      setState("cancelled");
+      setShowStateAlertDialog(false);
+      mutate(fetchURL);
+    } catch (error) {
+      console.error("Failed to cancel delivery:", error);
+      setError("Unable to cancel delivery.");
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
   const formatNoteDate = (dateString: string) => {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Invalid Date";
@@ -229,6 +252,7 @@ export const useDeliveryLogic = ({
     // Action handlers
     handleAddNote,
     handleConfirmScheduledDate,
+    handleCancelDelivery,
     handleDeleteScheduledDate,
     handleUpdateDeliveryDetails,      
   };

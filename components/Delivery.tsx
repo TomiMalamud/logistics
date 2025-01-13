@@ -13,7 +13,8 @@ import {
   MoreHorizontal,
   PiggyBank,
   StickyNote,
-  Store
+  Store,
+  X
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ import NotesDialog from "./NotesDialog";
 import { PICKUP_STORES } from "@/utils/constants";
 import { RemitoDownload } from "./RemitoDownload";
 import { formatLongDate } from "@/utils/format";
+import CancelDialog from "./CancelAlertDialog";
 
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({
@@ -57,6 +59,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   });
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
 
   const getStoreLabel = (storeValue: string) => {
     const store = PICKUP_STORES.find((store) => store.value === storeValue);
@@ -96,6 +99,11 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   };
 
   const displayIcon = getDisplayIcon();
+
+  const handleCancelClick = () => {
+    setDropdownOpen(false);
+    setIsCancelDialogOpen(true);
+  };
 
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
@@ -299,6 +307,18 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   customer={delivery.customers}
                 />
               </DropdownMenuItem>
+              {delivery.state !== "cancelled" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={handleCancelClick}
+                    className="text-red-600"
+                  >
+                    <X size={12} className="mr-2" />
+                    Cancelar
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -311,6 +331,12 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           isAddingNote={deliveryLogic.isAddingNote}
           onAddNote={deliveryLogic.handleAddNote}
           formatNoteDate={deliveryLogic.formatNoteDate}
+        />
+        <CancelDialog
+          open={isCancelDialogOpen}
+          onOpenChange={setIsCancelDialogOpen}
+          onConfirm={deliveryLogic.handleCancelDelivery}
+          isConfirming={deliveryLogic.isConfirming}
         />
       </div>
       {/* Product Alert */}
