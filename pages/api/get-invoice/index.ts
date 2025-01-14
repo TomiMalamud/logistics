@@ -1,7 +1,7 @@
 // pages/api/get-invoice/index.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
 import { getComprobanteById } from '@/lib/api';
 import { INVENTORY_LOCATIONS } from '@/utils/constants';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 interface InvoiceItem {
   Id: number;

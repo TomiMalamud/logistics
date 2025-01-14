@@ -1,6 +1,6 @@
 // hooks/useSalesData.ts
-import { useState, useEffect } from 'react';
-import { SearchComprobanteResponse, Comprobante } from '@/types/api';
+import { Comprobante, SearchComprobanteResponse } from '@/types/api';
+import { useEffect, useState } from 'react';
 
 export type PeriodOption = 'this-month' | 'last-month' | 'last-3-months';
 
@@ -79,7 +79,7 @@ const getDateRange = (period: PeriodOption) => {
   }
 };
 
-export const useSalesData = (period: PeriodOption) => {
+export const useSalesData = (period: PeriodOption, vendedor?: string) => {
   const [data, setData] = useState<ProcessedSalesData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +90,16 @@ export const useSalesData = (period: PeriodOption) => {
         setIsLoading(true);
         const { start, end } = getDateRange(period);
         
-        const response = await fetch(`/api/search-invoices?start=${start}&end=${end}`);
+        const queryParams = new URLSearchParams({
+          start,
+          end
+        });
+        
+        if (vendedor) {
+          queryParams.append('vendedor', vendedor);
+        }
+        
+        const response = await fetch(`/api/search-invoices?${queryParams}`);
         if (!response.ok) throw new Error('Failed to fetch sales data');
         
         const salesData: SearchComprobanteResponse = await response.json();
@@ -104,7 +113,7 @@ export const useSalesData = (period: PeriodOption) => {
     };
 
     fetchSales();
-  }, [period]);
+  }, [period, vendedor]);
 
   const processSalesData = (items: Comprobante[]): ProcessedSalesData => {
     const salesByDate = items.reduce<Record<string, number>>((acc, item) => {

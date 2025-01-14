@@ -1,7 +1,7 @@
 // Balance.tsx
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useDeliveryBalance } from '@/lib/hooks/useDeliveryBalance';
-import { Button } from './ui/button';
+import { Button } from '../ui/button';
 import { RefreshCw } from 'lucide-react';
 
 interface BalanceProps {

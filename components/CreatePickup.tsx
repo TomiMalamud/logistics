@@ -27,7 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
-import CostCarrierForm, { isDeliveryCostValid } from "@/components/CostCarrierForm";
+import CostCarrierForm, { isDeliveryCostValid } from "@/components/deliveries/CostCarrierForm";
 import { ProductList, type ProductItem } from "@/components/ProductList";
 
 interface Props {

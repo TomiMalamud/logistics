@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { start, end } = req.query;
+    const { start, end, vendedor } = req.query;
     
     // Only validate dates if they are provided
     if ((start && !isValidDate(start as string)) || 
@@ -18,11 +18,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Invalid date format' });
     }
 
+    // Get data from API without vendor filter
     const data: SearchComprobanteResponse = await searchComprobantes(
       undefined,
       start as string | undefined,
       end as string | undefined
     );
+    
+    // Filter by vendor ID after getting the response
+    if (vendedor && vendedor !== 'all') {
+      const vendedorId = Number(vendedor);
+      if (isNaN(vendedorId)) {
+        return res.status(400).json({ message: 'Invalid vendor ID format' });
+      }
+      data.Items = data.Items.filter(
+        (comprobante) => comprobante.IDVendedor === vendedorId
+      );
+    }
     
     res.status(200).json(data);
   } catch (error: any) {

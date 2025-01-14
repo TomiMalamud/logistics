@@ -2,8 +2,8 @@ import { useRouter } from "next/router";
 import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import Layout from "@/components/Layout";
-import DeliveryList from "@/components/DeliveryList";
-import TablePlaceholder from "@/components/TablePlaceholder";
+import DeliveryList from "@/components/deliveries/DeliveryList";
+import TablePlaceholder from "@/components/deliveries/TablePlaceholder";
 import { Input } from "@/components/ui/input";
 import {
   Calendar,

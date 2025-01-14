@@ -1,5 +1,5 @@
 // pages/deliveries/calendar.tsx
-import DeliveryCalendar from "@/components/DeliveryCalendar";
+import DeliveryCalendar from "@/components/deliveries/DeliveryCalendar";
 import Layout from "@/components/Layout";
 
 export default function CalendarPage() {

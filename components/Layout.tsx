@@ -1,10 +1,25 @@
-import React, { useCallback, useMemo } from "react";
-import Head from "next/head";
-import { Button } from "./ui/button";
-import { useRouter } from "next/router";
-import Link from "next/link";
-import { createClient } from "@/utils/supabase/component";
 import { useRole } from "@/lib/hooks/useRole";
+import { createClient } from "@/utils/supabase/component";
+import { User } from "lucide-react";
+import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import React, { useCallback, useMemo } from "react";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "./ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "./ui/navigation-menu";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,27 +45,39 @@ const Layout = ({
     () => [
       {
         path: "/",
-        label: "✔️ Entregas",
+        label: "Entregas",
         showOnMobile: true,
         roles: ["admin", "sales"]
       },
       {
         path: "/deliveries/calendar",
-        label: "🗓️ Calendario",
+        label: "Calendario",
         showOnMobile: false,
         roles: ["admin", "sales"]
       },
       {
         path: "/price-checker",
-        label: "🏷️ Precios",
+        label: "Precios",
         showOnMobile: true,
         roles: ["admin", "sales"]
       },
       {
         path: "/carriers",
-        label: "🚚 Transportes",
+        label: "Transportes",
         showOnMobile: true,
         roles: ["admin"]
+      },      
+      {
+        path: "/tv",
+        label: "Teles",
+        showOnMobile: false,
+        roles: ["admin", "sales"]
+      },
+      {
+        path: "/metrics",
+        label: "Métricas",
+        showOnMobile: false,
+        roles: ["admin", "sales"]
       },
       {
         path: "/update-prices",
@@ -58,12 +85,6 @@ const Layout = ({
         showOnMobile: false,
         roles: ["admin"]
       },
-      {
-        path: "/tv",
-        label: "📺 Teles",
-        showOnMobile: false,
-        roles: ["admin", "sales"]
-      }
     ],
     []
   );
@@ -83,30 +104,33 @@ const Layout = ({
 
   const getNavButtonClasses = useCallback(
     (path: string, showOnMobile: boolean): string => {
-      const baseClasses = "text-gray-600";
+      const baseClasses = router.pathname === path ? "text-gray-950" : "text-gray-600";
       const mobileClasses = showOnMobile ? "" : "hidden md:block";
-      const activeClasses = router.pathname === path ? "font-bold" : "";
 
-      return `${baseClasses} ${mobileClasses} ${activeClasses}`.trim();
+      return `${baseClasses} ${mobileClasses}`.trim();
     },
     [router.pathname]
   );
 
   const renderNavButtons = useCallback(
-    () =>
-      navItems
-        .filter(({ roles }) => role && roles.includes(role))
-        .map(({ path, label, showOnMobile }) => (
-          <Button
-            key={path}
-            variant="link"
-            className={getNavButtonClasses(path, showOnMobile)}
-            asChild
-          >
-            <Link href={path}>{label}</Link>
-          </Button>
-        )),
-    [navItems, getNavButtonClasses, role]
+    () => (
+      <NavigationMenu>
+        <NavigationMenuList className="flex gap-0">
+          {navItems
+            .filter(({ roles }) => role && roles.includes(role))
+            .map(({ path, label, showOnMobile }) => (
+              <NavigationMenuItem key={path}>
+                <Link href={path} legacyBehavior passHref>
+                  <NavigationMenuLink className={`${navigationMenuTriggerStyle()} ${getNavButtonClasses(path, showOnMobile)}`}>
+                    {label}
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+            ))}
+        </NavigationMenuList>
+      </NavigationMenu>
+    ),
+    [navItems, role, getNavButtonClasses]
   );
 
   return (
@@ -116,15 +140,32 @@ const Layout = ({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <header className="bg-white justify-between p-3 flex border-b  border-grid">
-        <nav className="flex overflow-scroll sm:overflow-hidden">{renderNavButtons()}</nav>
-        <Button
-          variant="link"
-          className="text-gray-600 md:block hidden"
-          onClick={handleSignOut}
-        >
-          Cerrar Sesión
-        </Button>
+      <header className="bg-white justify-between p-3 flex border-b border-grid">
+        <div className="flex items-center">
+          <Image 
+            src="/logo.jpg"
+            alt="Logo"
+            width={50}
+            height={50}
+            className="mx-4"
+            unoptimized                       
+          />
+          <nav className="flex items-center">
+            {renderNavButtons()}
+          </nav>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="text-gray-600 md:block hidden mr-4">
+              <User className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleSignOut}>
+              Cerrar Sesión
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
       <main className="p-4 md:p-8 mx-auto max-w-7xl min-h-screen">
         {children}

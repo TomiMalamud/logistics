@@ -8,8 +8,8 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction
-} from "./ui/alert-dialog";
-import { Input } from "./ui/input";
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 const ScheduledDateAlertDialog = ({
   scheduledDate,
@@ -19,7 +19,7 @@ const ScheduledDateAlertDialog = ({
 }) => {
   const handleScheduledDateChange = (e) => {
     const localDate = new Date(e.target.value);
-    setScheduledDate(localDate.toISOString().split("T")[0]); // Keep only the date part (YYYY-MM-DD)
+    setScheduledDate(localDate.toISOString().split("T")[0]);
   };
   return (
     <AlertDialog>
@@ -32,12 +32,12 @@ const ScheduledDateAlertDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Input
-          type="date" 
+          type="date"
           value={scheduledDate ? scheduledDate.slice(0, 10) : ""} // Adjust the value to slice only the date part (YYYY-MM-DD)
           onChange={handleScheduledDateChange}
           required
         />
-        <AlertDialogFooter>          
+        <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirmScheduledDate}

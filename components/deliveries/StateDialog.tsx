@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 import { PICKUP_STORES } from "@/utils/constants";
 import { DeliveryType, Store } from "@/types/types";

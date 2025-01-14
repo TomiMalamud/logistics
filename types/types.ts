@@ -24,6 +24,7 @@ export interface Customer {
     id: string;
     email: string;
     name: string | null;
+    user_id_erp?: string | null;
   }
   
   export type Product = {

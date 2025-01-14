@@ -1,7 +1,7 @@
 import React from "react";
 import { useDeliveryLogic } from "@/lib/hooks/useDeliveryLogic";
-import { Button } from "./ui/button";
-import { Alert, AlertDescription } from "./ui/alert";
+import { Button } from "../ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import StateDialog from "./StateDialog";
 import ScheduledDateDialog from "./ScheduledDateDialog";
 import { DeliveryProps, Profile } from "types/types";
@@ -29,7 +29,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from "./ui/tooltip";
+} from "@/components/ui/tooltip";
 import NotesDialog from "./NotesDialog";
 import { PICKUP_STORES } from "@/utils/constants";
 import { RemitoDownload } from "./RemitoDownload";

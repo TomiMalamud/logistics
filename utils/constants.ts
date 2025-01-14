@@ -11,3 +11,42 @@ export const PICKUP_STORES = [
   { value: "9dejulio", label: "9 de Julio" },
   { value: "carcano", label: "Cárcano" }
 ];
+
+export const ERP_PROFILES: Record<string, string> = {
+  "24194": "Noe",
+  "25996": "Amadeo",
+  "13048": "Ema",
+  "11995": "Flavia"
+}
+
+export const EMPLOYEE_TIER_TARGETS: Record<string, {
+  base: number;
+  despegue: number;
+  full: number;
+  xxl: number;
+}> = {
+  "24194": { // Noe
+    base: 20000000,
+    despegue: 22000000,
+    full: 25000000,
+    xxl: 28000000
+  },
+  "25996": { // Amadeo
+    base: 9000000,
+    despegue: 12000000,
+    full: 15000000,
+    xxl: 17000000
+  },
+  "13048": { // Ema
+    base: 20000000,
+    despegue: 22000000,
+    full: 25000000,
+    xxl: 28000000
+  },
+  "11995": { // Flavia
+    base: 20000000,
+    despegue: 22000000,
+    full: 25000000,
+    xxl: 28000000
+  }
+};
