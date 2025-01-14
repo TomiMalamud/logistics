@@ -42,7 +42,6 @@ export default function SalesDashboard({ profile }: SalesDashboardProps) {
   const periodOptions = [
     { value: "this-month", label: "Este mes" },
     { value: "last-month", label: "Mes pasado" },
-    { value: "last-3-months", label: "Últimos 3 meses" }
   ] as const;
 
   const [selectedPeriod, setSelectedPeriod] =

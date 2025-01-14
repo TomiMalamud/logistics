@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const SalesChart = ({ data, isLoading }) => {
   if (isLoading) {
-    return <Skeleton className="h-[300px] w-full" />;
+    return <Skeleton className="h-[600px] w-full" />;
   }
 
   return (
@@ -29,7 +29,7 @@ const SalesChart = ({ data, isLoading }) => {
         <CardDescription>Rendimiento del período</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={200}>
           <AreaChart
             data={data?.dailyData}
             margin={{

@@ -8,63 +8,82 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { EMPLOYEE_TIER_TARGETS } from "@/utils/constants";
 import React from "react";
+import { Progress } from "../ui/progress";
 
 const getTierTargets = (employeeId: string | undefined) => {
-  if (!employeeId || employeeId === 'all') {
+  if (!employeeId || employeeId === "all") {
     // Default targets when no specific employee is selected
     return {
-      base: { name: "Base", target: 20000000, color: "bg-purple-600/40" },
-      despegue: { name: "Despegue", target: 22000000, color: "bg-purple-600/80" },
-      full: { name: "Full", target: 25000000, color: "bg-purple-600" },
-      xxl: { name: "XXL", target: 28000000, color: "bg-yellow-500" }
+      base: { name: "Base", target: 50000000, color: "bg-purple-600/40" },
+      despegue: {
+        name: "Despegue",
+        target: 60000000,
+        color: "bg-purple-600/80"
+      },
+      full: { name: "Full", target: 70000000, color: "bg-purple-600" },
+      xxl: { name: "XXL", target: 80000000, color: "bg-yellow-500" }
     };
   }
 
   const employeeTargets = EMPLOYEE_TIER_TARGETS[employeeId];
   return {
-    base: { name: "Base", target: employeeTargets.base, color: "bg-purple-600/40" },
-    despegue: { name: "Despegue", target: employeeTargets.despegue, color: "bg-purple-600/80" },
-    full: { name: "Full", target: employeeTargets.full, color: "bg-purple-600" },
+    base: {
+      name: "Base",
+      target: employeeTargets.base,
+      color: "bg-purple-600/40"
+    },
+    despegue: {
+      name: "Despegue",
+      target: employeeTargets.despegue,
+      color: "bg-purple-600/80"
+    },
+    full: {
+      name: "Full",
+      target: employeeTargets.full,
+      color: "bg-purple-600"
+    },
     xxl: { name: "XXL", target: employeeTargets.xxl, color: "bg-purple-600" }
   };
 };
 
-const getCurrentTier = (sales: number, tiers: ReturnType<typeof getTierTargets>) => {
+const getCurrentTier = (
+  sales: number,
+  tiers: ReturnType<typeof getTierTargets>
+) => {
   if (sales >= tiers.xxl.target) return tiers.xxl;
   if (sales >= tiers.full.target) return tiers.full;
   if (sales >= tiers.despegue.target) return tiers.despegue;
-  return tiers.base;
+  if (sales >= tiers.base.target) return tiers.base;
+  return { ...tiers.base, name: "Objetivo base no alcanzado (todavía 😉)" };
 };
 
-const getCurrentTierBase = (sales: number, tiers: ReturnType<typeof getTierTargets>) => {
-  if (sales < tiers.base.target) return 0;
-  if (sales < tiers.despegue.target) return tiers.base.target;
-  if (sales < tiers.full.target) return tiers.despegue.target;
-  if (sales < tiers.xxl.target) return tiers.full.target;
-  return tiers.xxl.target;
+const getNextTierTarget = (
+  sales: number,
+  tiers: ReturnType<typeof getTierTargets>
+) => {
+  if (sales < tiers.base.target) return tiers.base;
+  if (sales < tiers.despegue.target) return tiers.despegue;
+  if (sales < tiers.full.target) return tiers.full;
+  if (sales < tiers.xxl.target) return tiers.xxl;
+  return tiers.xxl;
 };
 
-const getNextTierTarget = (sales: number, tiers: ReturnType<typeof getTierTargets>) => {
-  if (sales < tiers.base.target) return tiers.base.target;
-  if (sales < tiers.despegue.target) return tiers.despegue.target;
-  if (sales < tiers.full.target) return tiers.full.target;
-  if (sales < tiers.xxl.target) return tiers.xxl.target;
-  return tiers.xxl.target;
-};
-
-const getProgressBarColor = (sales: number, tiers: ReturnType<typeof getTierTargets>) => {
+const getProgressBarColor = (
+  sales: number,
+  tiers: ReturnType<typeof getTierTargets>
+) => {
   if (sales >= tiers.xxl.target) return tiers.xxl.color;
   if (sales >= tiers.full.target) return tiers.full.color;
   if (sales >= tiers.despegue.target) return tiers.despegue.color;
   return tiers.base.color;
 };
 
-const Checkpoint = ({ value, currentValue, tierName, color, tiers }) => {
+const Checkpoint = ({ value, tierName, color, tiers }) => {
   const position = `${(value / tiers.xxl.target) * 100}%`;
-  
+
   return (
-    <div 
-      className="absolute transform -translate-x-1/2" 
+    <div
+      className="absolute transform -translate-x-1/2"
       style={{ left: position }}
     >
       <div className="flex justify-center">
@@ -78,24 +97,17 @@ const Checkpoint = ({ value, currentValue, tierName, color, tiers }) => {
   );
 };
 
-const CustomProgress = ({ value, color }) => {
-  return (
-    <div className="relative h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-      <div 
-        className={`absolute h-full ${color} transition-all duration-300` } 
-        style={{ width: `${value}%` }}
-      />
-    </div>
-  );
-};
-
 interface TierProgressProps {
   totalSales: number;
   isLoading: boolean;
   employeeId?: string;
 }
 
-const TierProgress: React.FC<TierProgressProps> = ({ totalSales, isLoading, employeeId }) => {
+const TierProgress: React.FC<TierProgressProps> = ({
+  totalSales,
+  isLoading,
+  employeeId
+}) => {
   if (isLoading) {
     return (
       <Card>
@@ -106,7 +118,7 @@ const TierProgress: React.FC<TierProgressProps> = ({ totalSales, isLoading, empl
           </div>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-32 w-full" />
         </CardContent>
       </Card>
     );
@@ -115,11 +127,10 @@ const TierProgress: React.FC<TierProgressProps> = ({ totalSales, isLoading, empl
   const tiers = getTierTargets(employeeId);
   const currentTier = getCurrentTier(totalSales, tiers);
   const nextTierTarget = getNextTierTarget(totalSales, tiers);
-  const currentTierBase = getCurrentTierBase(totalSales, tiers);
   const progressBarColor = getProgressBarColor(totalSales, tiers);
 
   const progressToNextTier = Math.min(
-    ((totalSales) / (tiers.xxl.target)) * 100,
+    (totalSales / tiers.xxl.target) * 100,
     100
   );
 
@@ -135,27 +146,57 @@ const TierProgress: React.FC<TierProgressProps> = ({ totalSales, isLoading, empl
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Etapa</p>
+              <p className="text-sm font-medium text-gray-500">Etapa</p>
               <p className="text-2xl font-bold">{currentTier.name}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium">Próxima etapa</p>
+              <p className="text-sm font-medium text-gray-500">
+                Próxima etapa:{" "}
+                {totalSales >= tiers.xxl.target ? "" : nextTierTarget.name}
+              </p>
               <p className="text-2xl font-bold">
                 {totalSales >= tiers.xxl.target
                   ? "Alcanzaste el máximo, avisanos!"
-                  : `${((nextTierTarget - totalSales) / 1000000).toFixed(1)}M para avanzar`}
+                  : `${((nextTierTarget.target - totalSales) / 1000000).toFixed(
+                      1
+                    )}M para avanzar`}
               </p>
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="relative mb-12">
-              <CustomProgress value={progressToNextTier} color={progressBarColor} />
+              <Progress
+                value={progressToNextTier}
+                className="h-2 w-full"
+                indicatorClassName={progressBarColor}
+              />
+
               <div className="mt-4">
-                <Checkpoint value={tiers.base.target} currentValue={totalSales} tierName="Base" color={tiers.base.color} tiers={tiers} />
-                <Checkpoint value={tiers.despegue.target} currentValue={totalSales} tierName="Despegue" color={tiers.despegue.color} tiers={tiers} />
-                <Checkpoint value={tiers.full.target} currentValue={totalSales} tierName="Full" color={tiers.full.color} tiers={tiers} />
-                <Checkpoint value={tiers.xxl.target} currentValue={totalSales} tierName="XXL" color={tiers.xxl.color} tiers={tiers} />
+                <Checkpoint
+                  value={tiers.base.target}
+                  tierName="Base"
+                  color={tiers.base.color}
+                  tiers={tiers}
+                />
+                <Checkpoint
+                  value={tiers.despegue.target}
+                  tierName="Despegue"
+                  color={tiers.despegue.color}
+                  tiers={tiers}
+                />
+                <Checkpoint
+                  value={tiers.full.target}
+                  tierName="Full"
+                  color={tiers.full.color}
+                  tiers={tiers}
+                />
+                <Checkpoint
+                  value={tiers.xxl.target}
+                  tierName="XXL"
+                  color={tiers.xxl.color}
+                  tiers={tiers}
+                />
               </div>
             </div>
             <div className="flex justify-between text-xs text-muted-foreground">
