@@ -146,20 +146,24 @@ const fetchAllComprobantes = async (
  * Fetches comprobantes using the search endpoint with retry logic on unauthorized errors.
  * This function fetches all pages and sorts the items by FechaAlta descending.
  */
+// Update this function in your api.ts file
 export const searchComprobantes = async (
-  filtro?: string
+  filtro?: string,
+  fechaDesde?: string,
+  fechaHasta?: string
 ): Promise<SearchComprobanteResponse> => {
-  const fechaDesde = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+  // Use provided dates or defaults
+  const startDate = fechaDesde || new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
     .toISOString()
-    .split("T")[0];
-  const fechaHasta = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+    .split('T')[0];
+  const endDate = fechaHasta || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
     .toISOString()
-    .split("T")[0];
+    .split('T')[0];
 
   try {
     const allItems = await fetchAllComprobantes(
-      fechaDesde,
-      fechaHasta,
+      startDate,
+      endDate,
       filtro
     );
 
@@ -177,16 +181,15 @@ export const searchComprobantes = async (
     };
   } catch (error: any) {
     if (error.message.includes("401")) {
-      // Reset token cache
+      // Reset token cache and retry
       tokenCache = { access_token: null, expires_at: null };
       try {
         const allItems = await fetchAllComprobantes(
-          fechaDesde,
-          fechaHasta,
+          startDate,
+          endDate,
           filtro
         );
 
-        // Sort the accumulated items by FechaAlta descending (most recent first)
         const sortedItems = allItems.sort((a, b) => {
           const dateA = new Date(a.FechaAlta).getTime();
           const dateB = new Date(b.FechaAlta).getTime();
@@ -196,7 +199,7 @@ export const searchComprobantes = async (
         return {
           Items: sortedItems,
           TotalItems: sortedItems.length,
-          TotalPage: 1 
+          TotalPage: 1
         };
       } catch (retryError: any) {
         throw retryError;
@@ -205,7 +208,6 @@ export const searchComprobantes = async (
     throw error;
   }
 };
-
 /**
  * Fetches a client by ID using the ERP's API.
  */
