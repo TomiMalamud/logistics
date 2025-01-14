@@ -65,8 +65,10 @@ export default function StateDialog({
     const formData: FormData = {
       delivery_type: deliveryType,
       ...(deliveryType === "carrier" && {
-        delivery_cost: isDeliveryCostValid(deliveryCost) ? parseFloat(deliveryCost) : undefined,
-        carrier_id: selectedCarrierId
+        delivery_cost: isDeliveryCostValid(deliveryCost) 
+          ? parseFloat(deliveryCost) 
+          : initialDeliveryCost,
+        carrier_id: selectedCarrierId || initialCarrierId
       }),
       ...(deliveryType === "pickup" && {
         pickup_store: selectedStore
@@ -74,7 +76,8 @@ export default function StateDialog({
     };
 
     if (
-      (deliveryType === "carrier" && (!isDeliveryCostValid(deliveryCost) || !selectedCarrierId)) ||
+      (deliveryType === "carrier" && 
+       (!formData.delivery_cost || !formData.carrier_id)) ||
       (deliveryType === "pickup" && !selectedStore)
     ) {
       return;
@@ -96,8 +99,8 @@ export default function StateDialog({
   const isSubmitDisabled = 
     isConfirming || 
     (deliveryType === "carrier" && (
-      !selectedCarrierId || 
-      !isDeliveryCostValid(deliveryCost)
+      (!selectedCarrierId && !initialCarrierId) || 
+      (!isDeliveryCostValid(deliveryCost) && !initialDeliveryCost)
     )) ||
     (deliveryType === "pickup" && !selectedStore);
 

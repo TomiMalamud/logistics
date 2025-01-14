@@ -26,7 +26,7 @@ interface CostCarrierFormProps {
 export function isDeliveryCostValid(cost: string): boolean {
   if (!cost) return false;
   const numValue = parseFloat(cost);
-  return !isNaN(numValue) && numValue >= 0;
+  return !isNaN(numValue) && numValue >= 1000;
 }
 
 export default function CostCarrierForm({
@@ -73,8 +73,6 @@ export default function CostCarrierForm({
           value={deliveryCost}
           onChange={handleCostChange}
           required={required}
-          min="0"
-          step="1"
         />
       </div>
 

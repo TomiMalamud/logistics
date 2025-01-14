@@ -13,19 +13,19 @@ const getTierTargets = (employeeId: string | undefined) => {
   if (!employeeId || employeeId === 'all') {
     // Default targets when no specific employee is selected
     return {
-      base: { name: "Base", target: 20000000, color: "bg-purple-500/40" },
-      despegue: { name: "Despegue", target: 22000000, color: "bg-purple-500/60" },
-      full: { name: "Full", target: 25000000, color: "bg-purple-500/80" },
-      xxl: { name: "XXL", target: 28000000, color: "bg-yellow-500 animate-pulse" }
+      base: { name: "Base", target: 20000000, color: "bg-purple-600/40" },
+      despegue: { name: "Despegue", target: 22000000, color: "bg-purple-600/80" },
+      full: { name: "Full", target: 25000000, color: "bg-purple-600" },
+      xxl: { name: "XXL", target: 28000000, color: "bg-yellow-500" }
     };
   }
 
   const employeeTargets = EMPLOYEE_TIER_TARGETS[employeeId];
   return {
-    base: { name: "Base", target: employeeTargets.base, color: "bg-purple-500/40" },
-    despegue: { name: "Despegue", target: employeeTargets.despegue, color: "bg-purple-500/60" },
-    full: { name: "Full", target: employeeTargets.full, color: "bg-purple-500/80" },
-    xxl: { name: "XXL", target: employeeTargets.xxl, color: "bg-purple-500" }
+    base: { name: "Base", target: employeeTargets.base, color: "bg-purple-600/40" },
+    despegue: { name: "Despegue", target: employeeTargets.despegue, color: "bg-purple-600/80" },
+    full: { name: "Full", target: employeeTargets.full, color: "bg-purple-600" },
+    xxl: { name: "XXL", target: employeeTargets.xxl, color: "bg-purple-600" }
   };
 };
 
