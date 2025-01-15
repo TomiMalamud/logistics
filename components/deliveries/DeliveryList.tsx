@@ -1,5 +1,3 @@
-import { useRouter } from "next/router";
-import Delivery from "./Delivery";
 import {
   Pagination,
   PaginationContent,
@@ -9,6 +7,8 @@ import {
   PaginationNext,
   PaginationPrevious
 } from "@/components/ui/pagination";
+import { useRouter } from "next/router";
+import Delivery from "./Delivery";
 
 interface FeedResponse {
   feed: any[];
@@ -22,10 +22,7 @@ interface DeliveryListProps {
   searchUrl: string;
 }
 
-export default function DeliveryList({
-  data,
-  searchUrl,
-}: DeliveryListProps) {
+export default function DeliveryList({ data, searchUrl }: DeliveryListProps) {
   const router = useRouter();
   const currentPage = Number(router.query.page || 1);
 
@@ -39,13 +36,17 @@ export default function DeliveryList({
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= data.totalPages) {
-      router.push({
-        pathname: router.pathname,
-        query: {
-          ...router.query,
-          page: newPage.toString()
-        }
-      }, undefined, { shallow: true });
+      router.push(
+        {
+          pathname: router.pathname,
+          query: {
+            ...router.query,
+            page: newPage.toString()
+          }
+        },
+        undefined,
+        { shallow: true }
+      );
     }
   };
 
@@ -78,7 +79,7 @@ export default function DeliveryList({
 
       // Add ellipsis if needed
       if (start > 2) {
-        pages.push('ellipsis');
+        pages.push("ellipsis");
       }
 
       // Add visible page range
@@ -88,7 +89,7 @@ export default function DeliveryList({
 
       // Add ellipsis if needed
       if (end < totalPages - 1) {
-        pages.push('ellipsis');
+        pages.push("ellipsis");
       }
 
       // Always show last page
@@ -113,8 +114,8 @@ export default function DeliveryList({
               onClick={() => handlePageChange(currentPage - 1)}
             />
           </PaginationItem>
-          {getPageNumbers().map((pageNum, index) => (
-            pageNum === 'ellipsis' ? (
+          {getPageNumbers().map((pageNum, index) =>
+            pageNum === "ellipsis" ? (
               <PaginationItem key={`ellipsis-${index}`}>
                 <PaginationEllipsis />
               </PaginationItem>
@@ -129,11 +130,9 @@ export default function DeliveryList({
                 </PaginationLink>
               </PaginationItem>
             )
-          ))}
+          )}
           <PaginationItem>
-            <PaginationNext
-              onClick={() => handlePageChange(currentPage + 1)}
-            />
+            <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
@@ -141,4 +140,4 @@ export default function DeliveryList({
   );
 }
 
-DeliveryList.displayName = 'DeliveryList';
+DeliveryList.displayName = "DeliveryList";

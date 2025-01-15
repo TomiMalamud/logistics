@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Star, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const MAX_REVIEWS = 5;
 
@@ -16,7 +16,7 @@ const GoogleReviewsWidget = () => {
     const fetchReviews = async () => {
       try {
         // Check cache first
-        const cachedData = localStorage.getItem('googleReviews');
+        const cachedData = localStorage.getItem("googleReviews");
         if (cachedData) {
           const { reviews, timestamp } = JSON.parse(cachedData);
           if (Date.now() - timestamp < CACHE_DURATION) {
@@ -27,11 +27,11 @@ const GoogleReviewsWidget = () => {
         }
 
         // Fetch from our API route
-        const response = await fetch('/api/reviews');
+        const response = await fetch("/api/reviews");
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch reviews');
+          throw new Error(errorData.error || "Failed to fetch reviews");
         }
 
         const data = await response.json();
@@ -39,24 +39,27 @@ const GoogleReviewsWidget = () => {
         const limitedReviews = fetchedReviews.slice(0, MAX_REVIEWS);
 
         // Cache the results
-        localStorage.setItem('googleReviews', JSON.stringify({
-          reviews: limitedReviews,
-          timestamp: Date.now()
-        }));
+        localStorage.setItem(
+          "googleReviews",
+          JSON.stringify({
+            reviews: limitedReviews,
+            timestamp: Date.now()
+          })
+        );
 
         setReviews(limitedReviews);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching reviews:', err);
-        setError(err.message || 'Failed to load reviews');
+        console.error("Error fetching reviews:", err);
+        setError(err.message || "Failed to load reviews");
         setLoading(false);
 
         // Fallback to cached data if available
-        const cachedData = localStorage.getItem('googleReviews');
+        const cachedData = localStorage.getItem("googleReviews");
         if (cachedData) {
           const { reviews } = JSON.parse(cachedData);
           setReviews(reviews);
-          setError('Using cached data - Failed to fetch latest reviews');
+          setError("Using cached data - Failed to fetch latest reviews");
         }
       }
     };
@@ -69,7 +72,7 @@ const GoogleReviewsWidget = () => {
       <Star
         key={index}
         className={`w-4 h-4 ${
-          index < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+          index < rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
         }`}
       />
     ));

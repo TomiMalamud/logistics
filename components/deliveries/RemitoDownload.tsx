@@ -15,7 +15,7 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Validate required data before making the request
       if (!delivery.scheduled_date || !Array.isArray(delivery.products)) {
         throw new Error("Datos de entrega incompletos");
@@ -28,9 +28,9 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
       const response = await fetch("/api/generate-remito", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ delivery, customer }),
+        body: JSON.stringify({ delivery, customer })
       });
 
       if (!response.ok) {
@@ -42,7 +42,7 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
       const link = document.createElement("a");
       link.href = url;
       link.download = `remito-${customer.name}.pdf`;
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -58,7 +58,7 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
   return (
     <div className="flex items-center w-full" onClick={handleDownload}>
       <Download className="mr-2 h-4 w-4" />
-      {isLoading ? 'Generando PDF...' : 'Descargar Remito'}
+      {isLoading ? "Generando PDF..." : "Descargar Remito"}
       {error && <span className="ml-2 text-red-500 text-sm">{error}</span>}
     </div>
   );

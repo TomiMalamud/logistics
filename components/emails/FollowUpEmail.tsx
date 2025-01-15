@@ -55,7 +55,8 @@ Si tenés alguna duda sobre cómo cuidarlo o cualquier otra consulta, ¡no dudes
             </Text>
 
             <Text className="text-black text-[14px] leading-[24px]">
-              Es momento de hacer el seguimiento con {customerName}: Ya pasaron 2 días desde la entrega.
+              Es momento de hacer el seguimiento con {customerName}: Ya pasaron
+              2 días desde la entrega.
             </Text>
 
             <Section className="mt-6 text-center">
@@ -73,7 +74,8 @@ Si tenés alguna duda sobre cómo cuidarlo o cualquier otra consulta, ¡no dudes
 
             <Text>
               Si la experiencia fue buena, enviale también el link de la opinión
-              de Google (click derecho en cada link y copiar dirección de enlace):
+              de Google (click derecho en cada link y copiar dirección de
+              enlace):
               <ul>
                 <li>
                   <Link href="https://g.page/r/CcenOiXzcmv3EBM/review">

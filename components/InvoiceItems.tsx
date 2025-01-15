@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 
 interface InvoiceItem {
   Cantidad: number;
@@ -58,11 +58,12 @@ export default function InvoiceItems({
   editable = false,
   initialItems = [],
   invoice_id,
-  onSubmit,
+  onSubmit
 }: InvoiceItemsProps): JSX.Element {
   // State for tracking both edited and original items
   const [localItems, setLocalItems] = useState<InvoiceItem[]>(initialItems);
-  const [originalItems, setOriginalItems] = useState<InvoiceItem[]>(initialItems);
+  const [originalItems, setOriginalItems] =
+    useState<InvoiceItem[]>(initialItems);
   const [isLoading, setIsLoading] = useState(false);
 
   // Update both states when initialItems prop changes
@@ -75,17 +76,17 @@ export default function InvoiceItems({
   useEffect(() => {
     const fetchItems = async () => {
       if (!invoice_id) return;
-      
+
       setIsLoading(true);
       try {
         const res = await fetch(`/api/get-invoice?invoice_id=${invoice_id}`);
-        if (!res.ok) throw new Error('Failed to fetch items');
+        if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
         const items = data.Items || [];
         setLocalItems(items);
         setOriginalItems(items);
       } catch (error) {
-        console.error('Error fetching items:', error);
+        console.error("Error fetching items:", error);
         setLocalItems([]);
         setOriginalItems([]);
       } finally {
@@ -98,17 +99,17 @@ export default function InvoiceItems({
 
   const handleQuantityChange = (codigo: string, value: string): void => {
     const quantity = parseFloat(value) || 0;
-    
-    setLocalItems(prevItems => 
-      prevItems.map(item =>
+
+    setLocalItems((prevItems) =>
+      prevItems.map((item) =>
         item.Codigo === codigo ? { ...item, Cantidad: quantity } : item
       )
     );
   };
 
   const handleRemoveItem = (codigo: string): void => {
-    setLocalItems(prevItems => 
-      prevItems.filter(item => item.Codigo !== codigo)
+    setLocalItems((prevItems) =>
+      prevItems.filter((item) => item.Codigo !== codigo)
     );
   };
 
@@ -182,18 +183,10 @@ export default function InvoiceItems({
       </Table>
       {editable && (
         <div className="mt-2 space-x-2 flex items-center justify-end">
-          <Button
-            onClick={handleCancel}
-            type="button"
-            variant="outline"
-          >
+          <Button onClick={handleCancel} type="button" variant="outline">
             Cancelar
           </Button>
-          <Button
-            onClick={handleSave}
-            type="button"
-            variant="default"
-          >
+          <Button onClick={handleSave} type="button" variant="default">
             Guardar
           </Button>
         </div>

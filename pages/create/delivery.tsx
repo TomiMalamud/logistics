@@ -1,15 +1,13 @@
-import React from "react";
-import type { GetServerSidePropsContext } from "next";
-import { createClient } from "@/utils/supabase/server-props";
 import CreateDelivery from "@/components/CreateDelivery";
+import Layout from "@/components/Layout";
+import { createClient } from "@/utils/supabase/server-props";
+import type { GetServerSidePropsContext } from "next";
 
 export default function CreateDeliveryPage({ user }) {
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="mx-auto container px-0">
+    <Layout title="Crear Entrega">
       <CreateDelivery user={user} />
-      </div>
-    </div>
+    </Layout>
   );
 }
 

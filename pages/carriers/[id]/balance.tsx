@@ -14,7 +14,7 @@ export default function CarrierBalancePage() {
   }
 
   return (
-    <Layout>
+    <Layout title="Cuenta Corriente">
       <Link href="/carriers" className="flex items-center mb-4 space-x-2">
         <MoveLeft size={16} />
         <span className="text-sm">Volver</span>

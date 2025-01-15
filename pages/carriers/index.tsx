@@ -1,8 +1,10 @@
 // pages/carriers/index.tsx
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { Plus, Pencil, Trash2, DollarSign } from "lucide-react";
+import Layout from "@/components/Layout";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -10,12 +12,8 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -23,10 +21,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { validatePhoneNumber, sanitizePhoneNumber, formatDate } from "@/utils/format";
-import Layout from "@/components/Layout";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/lib/supabase";
+import { formatDate, sanitizePhoneNumber, validatePhoneNumber } from "@/utils/format";
+import { DollarSign, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type CarrierType = "local" | "national";
 
@@ -177,7 +177,7 @@ export default function CarriersPage() {
   };
 
   return (
-    <Layout>
+    <Layout title="Transportes">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Transportes</h1>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>

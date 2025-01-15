@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,8 +7,6 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -17,20 +14,23 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { useDeliveryBalance } from "@/lib/hooks/useDeliveryBalance";
+import { useRole } from "@/lib/hooks/useRole";
+import { PICKUP_STORES } from "@/utils/constants";
+import _ from "lodash";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import React, { useCallback, useEffect, useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import _ from "lodash";
-import Link from "next/link";
-import { useRole } from "@/lib/hooks/useRole";
 import { titleCase } from "title-case";
-import { useDeliveryBalance } from "@/lib/hooks/useDeliveryBalance";
-import { PICKUP_STORES } from "@/utils/constants";
 
 interface DropResult {
   date: string;
@@ -111,7 +111,8 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
                 <div className="space-y-1">
                   {delivery.products.map((product, index) => (
                     <div key={index}>
-                      {product.quantity}x {titleCase(product.name.toLowerCase())}                      
+                      {product.quantity}x{" "}
+                      {titleCase(product.name.toLowerCase())}
                     </div>
                   ))}
                 </div>

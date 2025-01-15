@@ -1,26 +1,26 @@
-import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
-import { PICKUP_STORES } from "@/utils/constants";
 import { DeliveryType, Store } from "@/types/types";
+import { PICKUP_STORES } from "@/utils/constants";
+import { useState } from "react";
+import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 
 interface FormData {
   delivery_cost?: number;
@@ -39,7 +39,7 @@ interface StateDialogProps {
   isConfirming: boolean;
 }
 
-export default function StateDialog({ 
+export default function StateDialog({
   state,
   setState,
   setShowStateAlertDialog,
@@ -50,8 +50,10 @@ export default function StateDialog({
 }: StateDialogProps) {
   const [open, setOpen] = useState(false);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("carrier");
-  const [deliveryCost, setDeliveryCost] = useState('');
-  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
+  const [deliveryCost, setDeliveryCost] = useState("");
+  const [selectedCarrierId, setSelectedCarrierId] = useState<
+    number | undefined
+  >();
   const [selectedStore, setSelectedStore] = useState<Store | undefined>();
 
   const handleDeliveryTypeChange = (value: string) => {
@@ -65,8 +67,8 @@ export default function StateDialog({
     const formData: FormData = {
       delivery_type: deliveryType,
       ...(deliveryType === "carrier" && {
-        delivery_cost: isDeliveryCostValid(deliveryCost) 
-          ? parseFloat(deliveryCost) 
+        delivery_cost: isDeliveryCostValid(deliveryCost)
+          ? parseFloat(deliveryCost)
           : initialDeliveryCost,
         carrier_id: selectedCarrierId || initialCarrierId
       }),
@@ -76,8 +78,8 @@ export default function StateDialog({
     };
 
     if (
-      (deliveryType === "carrier" && 
-       (!formData.delivery_cost || !formData.carrier_id)) ||
+      (deliveryType === "carrier" &&
+        (!formData.delivery_cost || !formData.carrier_id)) ||
       (deliveryType === "pickup" && !selectedStore)
     ) {
       return;
@@ -87,34 +89,30 @@ export default function StateDialog({
       await onConfirm(formData);
       setOpen(false);
     } catch (error) {
-      console.error('Failed to confirm state change:', error);
+      console.error("Failed to confirm state change:", error);
     }
   }
-  
+
   function handleDialogTriggerClick() {
     if (state === "delivered") return;
     setShowStateAlertDialog(true);
   }
 
-  const isSubmitDisabled = 
-    isConfirming || 
-    (deliveryType === "carrier" && (
-      (!selectedCarrierId && !initialCarrierId) || 
-      (!isDeliveryCostValid(deliveryCost) && !initialDeliveryCost)
-    )) ||
+  const isSubmitDisabled =
+    isConfirming ||
+    (deliveryType === "carrier" &&
+      ((!selectedCarrierId && !initialCarrierId) ||
+        (!isDeliveryCostValid(deliveryCost) && !initialDeliveryCost))) ||
     (deliveryType === "pickup" && !selectedStore);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          className="w-full" 
-          onClick={handleDialogTriggerClick}
-        >
+        <Button className="w-full" onClick={handleDialogTriggerClick}>
           {state === "delivered" ? "Pendiente" : "Entregado"}
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Marcar como Entregada</DialogTitle>
@@ -122,9 +120,9 @@ export default function StateDialog({
             Seleccione el tipo de entrega y complete los datos correspondientes.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex flex-col gap-4 mt-4">
-          <DeliveryTypeSelector 
+          <DeliveryTypeSelector
             value={deliveryType}
             onChange={handleDeliveryTypeChange}
           />
@@ -163,19 +161,15 @@ export default function StateDialog({
   );
 }
 
-function DeliveryTypeSelector({ 
-  value, 
-  onChange 
-}: { 
-  value: DeliveryType; 
+function DeliveryTypeSelector({
+  value,
+  onChange
+}: {
+  value: DeliveryType;
   onChange: (value: string) => void;
 }) {
   return (
-    <RadioGroup 
-      value={value}
-      onValueChange={onChange}
-      className="gap-4"
-    >
+    <RadioGroup value={value} onValueChange={onChange} className="gap-4">
       <div className="flex items-center space-x-2">
         <RadioGroupItem value="carrier" id="carrier" />
         <Label htmlFor="carrier">Envío por transporte</Label>
@@ -198,20 +192,13 @@ function PickupStoreSelector({
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">Sucursal</label>
-      <Select
-        value={selectedStore}
-        onValueChange={onStoreChange}
-        required
-      >
+      <Select value={selectedStore} onValueChange={onStoreChange} required>
         <SelectTrigger>
           <SelectValue placeholder="Seleccioná una sucursal" />
         </SelectTrigger>
         <SelectContent>
           {PICKUP_STORES.map((store) => (
-            <SelectItem 
-              key={store.value} 
-              value={store.value}
-            >
+            <SelectItem key={store.value} value={store.value}>
               {store.label}
             </SelectItem>
           ))}

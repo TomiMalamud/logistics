@@ -1,7 +1,6 @@
 // pages/reset-password.tsx
-import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/component";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,8 +9,9 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { createClient } from "@/utils/supabase/component";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();

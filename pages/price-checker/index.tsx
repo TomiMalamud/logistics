@@ -1,13 +1,13 @@
 // pages/price-checker/index.tsx
+import Layout from '@/components/Layout';
+import { ProductCard } from '@/components/price-checker/ProductCard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useProducts } from '@/lib/hooks/useProducts';
 import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import Layout from '@/components/Layout';
-import { useProducts } from '@/lib/hooks/useProducts';
-import { ProductCard } from '@/components/price-checker/ProductCard';
 
 export default function PriceChecker() {
   const [search, setSearch] = useState('');
@@ -27,7 +27,7 @@ export default function PriceChecker() {
   }, []);
 
   return (
-    <Layout>
+    <Layout title='Precios'>
       <div className="max-w-2xl mx-auto">
         <Input
           ref={inputRef}

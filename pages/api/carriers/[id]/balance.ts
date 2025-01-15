@@ -1,6 +1,6 @@
 // pages/api/carriers/[id]/balance.ts
-import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
+import { NextApiRequest, NextApiResponse } from "next";
 
 export type Transaction = {
   date: string;
@@ -8,9 +8,9 @@ export type Transaction = {
   debit: number;
   credit: number;
   balance: number;
-  type: 'delivery' | 'payment';
+  type: "delivery" | "payment";
   delivery_id?: number;
-}
+};
 
 export type BalanceResponse = {
   carrier: {
@@ -19,7 +19,7 @@ export type BalanceResponse = {
   };
   transactions: Transaction[];
   totalBalance: number;
-}
+};
 
 type DeliveryWithDetails = {
   id: number;
@@ -33,7 +33,7 @@ type DeliveryWithDetails = {
   suppliers: {
     name: string;
   } | null;
-}
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -54,7 +54,7 @@ export default async function handler(
     // Calculate date 30 days ago
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const filterDate = thirtyDaysAgo.toISOString().split('T')[0];
+    const filterDate = thirtyDaysAgo.toISOString().split("T")[0];
 
     // Fetch carrier details
     const { data: carrier, error: carrierError } = await supabase
@@ -68,7 +68,8 @@ export default async function handler(
     // Fetch deliveries with date filter
     const { data: deliveries, error: deliveriesError } = await supabase
       .from("deliveries")
-      .select(`
+      .select(
+        `
         id,
         delivery_date,
         invoice_number,
@@ -80,7 +81,8 @@ export default async function handler(
         suppliers (
           name
         )
-      `)
+      `
+      )
       .eq("carrier_id", id)
       .gte("delivery_date", filterDate)
       .order("delivery_date");
@@ -98,19 +100,24 @@ export default async function handler(
     if (paymentsError) throw paymentsError;
 
     // Process deliveries to transactions
-    const deliveryTransactions = (deliveries as unknown as DeliveryWithDetails[])
-      .filter(d => d.delivery_date !== null)
-      .map(d => ({
+    const deliveryTransactions = (
+      deliveries as unknown as DeliveryWithDetails[]
+    )
+      .filter((d) => d.delivery_date !== null)
+      .map((d) => ({
         date: d.delivery_date as string,
-        concept: d.type === 'supplier_pickup'
-          ? `Retiro en ${d.suppliers?.name || 'Proveedor sin nombre'}`
-          : d.invoice_number 
-            ? `${d.invoice_number} - ${d.customers?.name || 'Cliente sin nombre'}`
+        concept:
+          d.type === "supplier_pickup"
+            ? `Retiro en ${d.suppliers?.name || "Proveedor sin nombre"}`
+            : d.invoice_number
+            ? `${d.invoice_number} - ${
+                d.customers?.name || "Cliente sin nombre"
+              }`
             : "Sin factura",
         debit: d.delivery_cost,
         credit: 0,
-        type: 'delivery' as const,
-        delivery_id: d.id, 
+        type: "delivery" as const,
+        delivery_id: d.id,
         balance: 0
       }));
 
@@ -122,7 +129,7 @@ export default async function handler(
         concept: `Pago - ${p.payment_method}`,
         debit: 0,
         credit: p.amount,
-        type: 'payment' as const,
+        type: "payment" as const,
         balance: 0
       }))
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

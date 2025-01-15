@@ -1,6 +1,6 @@
-import type { NextPage } from 'next';
-import Head from 'next/head';
-import DisplayController from '@/components/DisplayController';
+import DisplayController from "@/components/DisplayController";
+import type { NextPage } from "next";
+import Head from "next/head";
 
 const DisplayPage: NextPage = () => {
   return (

@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -9,12 +8,12 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import type { BalanceResponse } from "@/pages/api/carriers/[id]/balance";
-import PaymentForm from "./PaymentForm";
-import Link from "next/link";
 import { formatDate } from "@/utils/format";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import React, { useCallback, useEffect, useState } from "react";
+import PaymentForm from "./PaymentForm";
 
 interface CarrierBalanceProps {
   carrierId: string;
@@ -148,7 +147,10 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
                   <TableCell>{formatDate(transaction.date)}</TableCell>
                   <TableCell>
                     <Link
-                      href={`/?search=${transaction.concept.split('-').pop()?.trim()}&state=delivered`}
+                      href={`/?search=${transaction.concept
+                        .split("-")
+                        .pop()
+                        ?.trim()}&state=delivered`}
                       className="underline-offset-4 hover:underline transition duration-200 underline decoration-white hover:decoration-slate-800"
                       target="_blank"
                     >

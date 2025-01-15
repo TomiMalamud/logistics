@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { useRouter } from "next/router";
+import CostCarrierForm, {
+  isDeliveryCostValid
+} from "@/components/deliveries/CostCarrierForm";
+import { ProductList, type ProductItem } from "@/components/ProductList";
 import { Button } from "@/components/ui/button";
-import type { User } from "@supabase/supabase-js";
 import {
   Card,
   CardContent,
@@ -9,11 +10,6 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -22,13 +18,19 @@ import {
   CommandItem,
   CommandList
 } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
-import CostCarrierForm, { isDeliveryCostValid } from "@/components/deliveries/CostCarrierForm";
-import { ProductList, type ProductItem } from "@/components/ProductList";
+import { cn } from "@/lib/utils";
+import type { User } from "@supabase/supabase-js";
+import { Check, ChevronsUpDown } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import React, { useState } from "react";
 
 interface Props {
   user: User;
@@ -68,7 +70,9 @@ export default function CreatePickup({ user }: Props) {
     scheduled_date: new Date().toISOString().split("T")[0]
   });
   const [open, setOpen] = useState(false);
-  const [suppliers, setSuppliers] = useState<Array<{ id: number; name: string }>>([]);
+  const [suppliers, setSuppliers] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +104,7 @@ export default function CreatePickup({ user }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.supplier_id) {
       setError("Please select a supplier.");
       return;
@@ -113,7 +117,7 @@ export default function CreatePickup({ user }: Props) {
 
     setLoading(true);
     try {
-      const productsFormatted = formData.products.map(product => ({
+      const productsFormatted = formData.products.map((product) => ({
         name: product.name,
         sku: product.sku,
         quantity: product.quantity
@@ -140,14 +144,16 @@ export default function CreatePickup({ user }: Props) {
       await router.push("/");
     } catch (error) {
       console.error("Submit error:", error);
-      setError(error instanceof Error ? error.message : "An unknown error occurred");
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleProductsChange = (products: ProductItem[]) => {
-    setFormData(prev => ({ ...prev, products }));
+    setFormData((prev) => ({ ...prev, products }));
   };
 
   const handleCostChange = (cost: string) => {
@@ -156,14 +162,14 @@ export default function CreatePickup({ user }: Props) {
       return;
     }
     setCostError(null);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       delivery_cost: cost ? parseInt(cost) : undefined
     }));
   };
 
   const handleCarrierChange = (carrierId: number | undefined) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       carrier_id: carrierId
     }));
@@ -189,7 +195,9 @@ export default function CreatePickup({ user }: Props) {
                     type="button"
                   >
                     {formData.supplier_id
-                      ? suppliers.find(supplier => supplier.id === formData.supplier_id)?.name
+                      ? suppliers.find(
+                          (supplier) => supplier.id === formData.supplier_id
+                        )?.name
                       : isLoadingSuppliers
                       ? "Cargando proveedores..."
                       : "Seleccioná un Proveedor"}
@@ -201,19 +209,23 @@ export default function CreatePickup({ user }: Props) {
                     <CommandInput placeholder="Buscar proveedor..." />
                     <CommandList>
                       {isLoadingSuppliers ? (
-                        <CommandItem disabled>Cargando proveedores...</CommandItem>
+                        <CommandItem disabled>
+                          Cargando proveedores...
+                        </CommandItem>
                       ) : error ? (
                         <CommandItem disabled>Error: {error}</CommandItem>
                       ) : (
                         <>
-                          <CommandEmpty>No se encontraron proveedores.</CommandEmpty>
+                          <CommandEmpty>
+                            No se encontraron proveedores.
+                          </CommandEmpty>
                           <CommandGroup>
-                            {suppliers.map(supplier => (
+                            {suppliers.map((supplier) => (
                               <CommandItem
                                 key={supplier.id}
                                 value={supplier.name}
                                 onSelect={() => {
-                                  setFormData(prev => ({
+                                  setFormData((prev) => ({
                                     ...prev,
                                     supplier_id: supplier.id
                                   }));
@@ -241,7 +253,7 @@ export default function CreatePickup({ user }: Props) {
             </FormField>
 
             <FormField>
-              <ProductList 
+              <ProductList
                 products={formData.products}
                 onChange={handleProductsChange}
               />
@@ -252,14 +264,14 @@ export default function CreatePickup({ user }: Props) {
                 type="date"
                 value={formData.scheduled_date}
                 onChange={(e) =>
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
                     scheduled_date: e.target.value
                   }))
                 }
               />
             </FormField>
-            
+
             <FormField error={costError}>
               <CostCarrierForm
                 initialDeliveryCost={formData.delivery_cost}
@@ -276,8 +288,8 @@ export default function CreatePickup({ user }: Props) {
           <Button type="button" variant="link" asChild>
             <Link href="/">Cancelar</Link>
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={loading || !!costError || formData.products.length === 0}
           >
             {loading ? "Guardando..." : "Guardar"}

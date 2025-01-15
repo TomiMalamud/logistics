@@ -1,15 +1,13 @@
-import React from "react";
-import type { GetServerSidePropsContext } from "next";
-import { createClient } from "@/utils/supabase/server-props";
 import CreatePickup from "@/components/CreatePickup";
+import Layout from "@/components/Layout";
+import { createClient } from "@/utils/supabase/server-props";
+import type { GetServerSidePropsContext } from "next";
 
 export default function CreatePickupPage({ user }) {
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="w-[540px] container px-0">
+    <Layout title="Crear Retiro">
       <CreatePickup user={user} />
-      </div>
-    </div>
+    </Layout>
   );
 }
 

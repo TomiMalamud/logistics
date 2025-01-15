@@ -1,14 +1,14 @@
 import React, { useState } from "react";
+import { Button } from "../ui/button";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter
+  DialogTrigger
 } from "../ui/dialog";
-import { Button } from "../ui/button";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 
 interface CostCarrierDialogProps {
@@ -29,8 +29,10 @@ export default function CostCarrierDialog({
   isUpdating,
   trigger
 }: CostCarrierDialogProps) {
-  const [deliveryCost, setDeliveryCost] = useState('');
-  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
+  const [deliveryCost, setDeliveryCost] = useState("");
+  const [selectedCarrierId, setSelectedCarrierId] = useState<
+    number | undefined
+  >();
   const [open, setOpen] = useState(false);
 
   const handleConfirm = async () => {
@@ -48,9 +50,7 @@ export default function CostCarrierDialog({
   };
 
   const isSubmitDisabled =
-    !selectedCarrierId ||
-    !isDeliveryCostValid(deliveryCost) ||
-    isUpdating;
+    !selectedCarrierId || !isDeliveryCostValid(deliveryCost) || isUpdating;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

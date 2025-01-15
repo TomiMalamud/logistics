@@ -1,11 +1,7 @@
-import React, { useState } from "react";
-import Router from "next/router";
-import { Button } from "@/components/ui/button";
-import { Comprobante } from "@/types/api";
-import type { User } from "@supabase/supabase-js";
-import InvoiceSelection from "@/components/InvoiceSelection";
 import InvoiceItems from "@/components/InvoiceItems";
+import InvoiceSelection from "@/components/InvoiceSelection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,12 +9,16 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { Comprobante } from "@/types/api";
+import { InvoiceItem } from "@/types/types";
 import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/format";
+import type { User } from "@supabase/supabase-js";
+import Link from "next/link";
+import Router from "next/router";
+import React, { useState } from "react";
+import CustomerInfo from "./CustomerInfo";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import Link from "next/link";
-import { InvoiceItem } from "@/types/types";
-import CustomerInfo from "./CustomerInfo";
 
 interface CreateProps {
   user: User;

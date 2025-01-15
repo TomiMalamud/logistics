@@ -1,26 +1,26 @@
 // components/ProductList.tsx
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Check, ChevronsUpDown, Loader, X } from "lucide-react";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
+  CommandList
 } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
+import { useProducts } from "@/lib/hooks/useProducts";
 import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, Loader, X } from "lucide-react";
+import { useState } from "react";
 import { titleCase } from "title-case";
 import { useDebouncedCallback } from "use-debounce";
-import { useProducts } from "@/lib/hooks/useProducts";
 
 export interface ProductItem {
   id: string;
@@ -52,13 +52,14 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const { data: productsData, isLoading: isLoadingProducts } = useProducts(searchQuery);
-  
+  const { data: productsData, isLoading: isLoadingProducts } =
+    useProducts(searchQuery);
+
   const [currentProduct, setCurrentProduct] = useState<ProductItem>({
     id: "",
     sku: "",
     name: "",
-    quantity: 1,
+    quantity: 1
   });
 
   const debouncedSearch = useDebouncedCallback(
@@ -76,7 +77,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
       ...prev,
       id: product.Id,
       sku: product.Codigo,
-      name: titleCase(product.Nombre.toLowerCase()),
+      name: titleCase(product.Nombre.toLowerCase())
     }));
     setOpen(false);
   };
@@ -170,7 +171,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
               onChange={(e) =>
                 setCurrentProduct((prev) => ({
                   ...prev,
-                  quantity: parseInt(e.target.value) || 1,
+                  quantity: parseInt(e.target.value) || 1
                 }))
               }
               required

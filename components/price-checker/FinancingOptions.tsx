@@ -1,15 +1,14 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { DialogDescription } from '@radix-ui/react-dialog';
+import { DialogDescription } from "@radix-ui/react-dialog";
+import { Plus } from "lucide-react";
 
 const calculateInstallment = (price: number, months: number, discount = 0) => {
   const discountedPrice = price * (1 - discount / 100);
@@ -24,17 +23,14 @@ const FinancingOptions = ({ price }: FinancingOptionsProps) => {
   const options = [
     { months: 6, discount: 0, label: "6 cuotas" },
     { months: 3, discount: 5, label: "3 cuotas o Plan Z" },
-    { months: 1, discount: 15, label: "1 cuota" },
+    { months: 1, discount: 15, label: "1 cuota" }
   ];
   const calculateMonthlyPrice = (price: number) => Math.floor(price / 6);
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          className="p-0 hover:text-green-600 text-md"
-        >
+        <Button variant="ghost" className="p-0 hover:text-green-600 text-md">
           <Plus className="h-4 w-4 text-gray-500 text-xs" />
           6x $ {calculateMonthlyPrice(price).toLocaleString("es-AR")}
         </Button>
@@ -42,7 +38,9 @@ const FinancingOptions = ({ price }: FinancingOptionsProps) => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Opciones de financiación</DialogTitle>
-          <DialogDescription className='text-gray-500'>Descuentos para Naranja y todas las tarjetas bancarias</DialogDescription>
+          <DialogDescription className="text-gray-500">
+            Descuentos para Naranja y todas las tarjetas bancarias
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {options.map((option) => (
@@ -58,12 +56,22 @@ const FinancingOptions = ({ price }: FinancingOptionsProps) => {
                 </div>
                 <div className="text-right">
                   <div className="font-bold">
-                    $ {calculateInstallment(price, option.months, option.discount)
-                        .toLocaleString("es-AR")}
+                    ${" "}
+                    {calculateInstallment(
+                      price,
+                      option.months,
+                      option.discount
+                    ).toLocaleString("es-AR")}
                   </div>
                   <div className="text-sm text-gray-500">
-                    $ {(calculateInstallment(price, option.months, option.discount) * option.months)
-                      .toLocaleString("es-AR")}
+                    ${" "}
+                    {(
+                      calculateInstallment(
+                        price,
+                        option.months,
+                        option.discount
+                      ) * option.months
+                    ).toLocaleString("es-AR")}
                   </div>
                 </div>
               </CardContent>

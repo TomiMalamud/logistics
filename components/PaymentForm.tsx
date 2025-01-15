@@ -1,12 +1,22 @@
-import React from 'react';
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import React, { useState } from "react";
 
 interface PaymentFormProps {
   carrierId: string;
@@ -14,14 +24,18 @@ interface PaymentFormProps {
   trigger?: React.ReactNode;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ carrierId, onSuccess, trigger }) => {
+const PaymentForm: React.FC<PaymentFormProps> = ({
+  carrierId,
+  onSuccess,
+  trigger
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
-    amount: '',
-    payment_method: '',
-    notes: '',
-    payment_date: new Date().toISOString().split('T')[0]
+    amount: "",
+    payment_method: "",
+    notes: "",
+    payment_date: new Date().toISOString().split("T")[0]
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,20 +43,18 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ carrierId, onSuccess, trigger
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('carrier_payments')
-        .insert({
-          ...formData,
-          carrier_id: carrierId,
-          amount: parseInt(formData.amount)
-        });
+      const { error } = await supabase.from("carrier_payments").insert({
+        ...formData,
+        carrier_id: carrierId,
+        amount: parseInt(formData.amount)
+      });
 
       if (error) throw error;
-      
+
       setOpen(false);
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error saving payment:', error);
+      console.error("Error saving payment:", error);
       // Add error handling here, perhaps with a toast notification
     } finally {
       setIsLoading(false);
@@ -51,7 +63,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ carrierId, onSuccess, trigger
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -90,11 +102,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ carrierId, onSuccess, trigger
 
           <div className="space-y-2">
             <Label htmlFor="payment_method">Método de Pago</Label>
-            <Select 
+            <Select
               name="payment_method"
               value={formData.payment_method}
-              onValueChange={(value) => 
-                setFormData(prev => ({ ...prev, payment_method: value }))
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, payment_method: value }))
               }
             >
               <SelectTrigger>
@@ -115,7 +127,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ carrierId, onSuccess, trigger
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              placeholder='Si pagó el cliente, indicá cuál'
+              placeholder="Si pagó el cliente, indicá cuál"
             />
           </div>
 
@@ -128,7 +140,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ carrierId, onSuccess, trigger
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Guardando...' : 'Guardar'}
+              {isLoading ? "Guardando..." : "Guardar"}
             </Button>
           </div>
         </form>

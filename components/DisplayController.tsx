@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { Button } from './ui/button';
+import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
 
 const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-const STORE_URL = 'https://rohisommiers.com';
-const VIDEO_URL = 'https://wqtuxffimzzyjnnkxcla.supabase.co/storage/v1/object/public/video/video.mp4'
+const STORE_URL = "https://rohisommiers.com";
+const VIDEO_URL =
+  "https://wqtuxffimzzyjnnkxcla.supabase.co/storage/v1/object/public/video/video.mp4";
 
 const DisplayController = () => {
   const [showingVideo, setShowingVideo] = useState(true);
@@ -30,7 +31,7 @@ const DisplayController = () => {
       {/* Controls */}
       <div className="absolute right-5 top-5 z-10 flex items-center gap-2.5">
         {showingVideo && (
-          <Button 
+          <Button
             variant="ghost"
             onClick={() => setShowingVideo(false)}
             className="h-8 w-8 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20"

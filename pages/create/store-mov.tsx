@@ -1,15 +1,13 @@
-import React from "react";
-import type { GetServerSidePropsContext } from "next";
-import { createClient } from "@/utils/supabase/server-props";
 import CreateStoreMov from "@/components/CreateStoreMov";
+import Layout from "@/components/Layout";
+import { createClient } from "@/utils/supabase/server-props";
+import type { GetServerSidePropsContext } from "next";
 
 export default function CreateStoreMovPage({ user }) {
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="w-[540px] container px-0">
+    <Layout title="Crear movimiento entre locales">
       <CreateStoreMov user={user} />
-      </div>
-    </div>
+    </Layout>
   );
 }
 

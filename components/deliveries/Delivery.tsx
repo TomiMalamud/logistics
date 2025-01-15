@@ -1,11 +1,20 @@
-import React from "react";
-import { useDeliveryLogic } from "@/lib/hooks/useDeliveryLogic";
-import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import StateDialog from "./StateDialog";
-import ScheduledDateDialog from "./ScheduledDateDialog";
-import { DeliveryProps, Profile } from "types/types";
-import Balance from "./Balance";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { useDeliveryLogic } from "@/lib/hooks/useDeliveryLogic";
+import { PICKUP_STORES } from "@/utils/constants";
+import { formatLongDate } from "@/utils/format";
 import {
   Calendar,
   Factory,
@@ -16,25 +25,16 @@ import {
   Store,
   X
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import CostCarrierDialog from "./CostCarrierDialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
-import NotesDialog from "./NotesDialog";
-import { PICKUP_STORES } from "@/utils/constants";
-import { RemitoDownload } from "./RemitoDownload";
-import { formatLongDate } from "@/utils/format";
+import React from "react";
+import { DeliveryProps, Profile } from "types/types";
+import { Button } from "../ui/button";
+import Balance from "./Balance";
 import CancelDialog from "./CancelAlertDialog";
+import CostCarrierDialog from "./CostCarrierDialog";
+import NotesDialog from "./NotesDialog";
+import { RemitoDownload } from "./RemitoDownload";
+import ScheduledDateDialog from "./ScheduledDateDialog";
+import StateDialog from "./StateDialog";
 
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const deliveryLogic = useDeliveryLogic({

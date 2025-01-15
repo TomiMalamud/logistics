@@ -1,21 +1,20 @@
-import React from 'react';
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip
-} from "recharts";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
-  CardTitle,
-  CardDescription
+  CardTitle
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts";
 
 const SalesChart = ({ data, isLoading }) => {
   if (isLoading) {
@@ -34,7 +33,7 @@ const SalesChart = ({ data, isLoading }) => {
             data={data?.dailyData}
             margin={{
               left: 12,
-              right: 12,
+              right: 12
             }}
           >
             <CartesianGrid vertical={false} />
@@ -50,7 +49,7 @@ const SalesChart = ({ data, isLoading }) => {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              domain={[0, 'auto']}
+              domain={[0, "auto"]}
               allowDataOverflow={true}
             />
             <Tooltip

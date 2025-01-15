@@ -1,6 +1,13 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -9,21 +16,13 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { useSalesData } from "@/lib/hooks/useSalesData";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { useState } from "react";
-import { PeriodOption } from "@/lib/hooks/useSalesData";
-import TierProgress from "./TierProgress";
-import { ERP_PROFILES } from "@/utils/constants";
-import SalesChart from "./SalesChart";
+import { PeriodOption, useSalesData } from "@/lib/hooks/useSalesData";
 import type { Profile } from "@/types/types";
+import { ERP_PROFILES } from "@/utils/constants";
 import { Rocket } from "lucide-react";
+import { useState } from "react";
+import SalesChart from "./SalesChart";
+import TierProgress from "./TierProgress";
 
 // Loading skeleton for the sales table
 const TableSkeleton = () => (
@@ -41,14 +40,18 @@ interface SalesDashboardProps {
 export default function SalesDashboard({ profile }: SalesDashboardProps) {
   const periodOptions = [
     { value: "this-month", label: "Este mes" },
-    { value: "last-month", label: "Mes pasado" },
+    { value: "last-month", label: "Mes pasado" }
   ] as const;
 
   const [selectedPeriod, setSelectedPeriod] =
     useState<PeriodOption>("this-month");
   const [selectedVendedor, setSelectedVendedor] = useState<string>(() => {
     // If profile is not Tomi or Cari and has user_id_erp, use that as initial value
-    if (profile?.name !== "Tomi" && profile?.name !== "Cari" && profile?.user_id_erp) {
+    if (
+      profile?.name !== "Tomi" &&
+      profile?.name !== "Cari" &&
+      profile?.user_id_erp
+    ) {
       return profile.user_id_erp;
     }
     return "all";
@@ -67,18 +70,22 @@ export default function SalesDashboard({ profile }: SalesDashboardProps) {
     );
   }
 
-  const showVendedorFilter = profile?.name === "Tomi" || profile?.name === "Cari";
+  const showVendedorFilter =
+    profile?.name === "Tomi" || profile?.name === "Cari";
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight flex items-center gap-x-4">
-          Mis objetivos 
-          <Rocket color="#51302d"  />
-          </h2>
+          Mis objetivos
+          <Rocket color="#51302d" />
+        </h2>
         <div className="flex items-center gap-4">
           {showVendedorFilter && (
-            <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
+            <Select
+              value={selectedVendedor}
+              onValueChange={setSelectedVendedor}
+            >
               <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="Seleccionar Vendedor" />
               </SelectTrigger>
@@ -110,7 +117,11 @@ export default function SalesDashboard({ profile }: SalesDashboardProps) {
         </div>
       </div>
 
-      <TierProgress totalSales={data?.totalSales} isLoading={isLoading} employeeId={selectedVendedor} />
+      <TierProgress
+        totalSales={data?.totalSales}
+        isLoading={isLoading}
+        employeeId={selectedVendedor}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">

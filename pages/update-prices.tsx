@@ -26,7 +26,7 @@ interface EcommerceRow {
   [key: string]: string;
 }
 
-export default function UpdatePrices({ user }: { user: User }) {
+export default function UpdatePrices() {
   const [erpData, setErpData] = useState<ERPRow[]>([]);
   const [ecommerceData, setEcommerceData] = useState<EcommerceRow[]>([]);
   const [result, setResult] = useState<string>("");

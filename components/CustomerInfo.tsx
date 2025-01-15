@@ -1,9 +1,6 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Phone, Mail, AlertCircle, Edit2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { titleCase } from "title-case";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -11,11 +8,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertCircle, Edit2, Mail, MapPin, Phone } from "lucide-react";
+import React from "react";
+import { titleCase } from "title-case";
 
 interface CustomerInfoProps {
   address: string;
@@ -87,11 +87,18 @@ export const CustomerInfo = ({
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-start gap-2 flex-1">
               <MapPin className="w-4 h-4 mt-0.5 text-gray-500 shrink-0" />
-              <span className={`text-gray-700 ${addressError && 'text-red-500'}`}>
-                {address ? titleCase(address.toLowerCase()) : 'Dirección requerida'}
+              <span
+                className={`text-gray-700 ${addressError && "text-red-500"}`}
+              >
+                {address
+                  ? titleCase(address.toLowerCase())
+                  : "Dirección requerida"}
               </span>
             </div>
-            <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
+            <Dialog
+              open={isAddressDialogOpen}
+              onOpenChange={setIsAddressDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-6">
                   <Edit2 className="h-4 w-4" />
@@ -101,7 +108,8 @@ export const CustomerInfo = ({
                 <DialogHeader>
                   <DialogTitle>Editar domicilio de entrega</DialogTitle>
                   <DialogDescription>
-                    Sólo si el domicilio de facturación es distinto al de entrega.
+                    Sólo si el domicilio de facturación es distinto al de
+                    entrega.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-2">
@@ -123,23 +131,26 @@ export const CustomerInfo = ({
               </DialogContent>
             </Dialog>
           </div>
-          
+
           <div className="flex items-start gap-2">
             <Phone className="w-4 h-4 mt-0.5 text-gray-500 shrink-0" />
-            <span className={`text-gray-700 ${phoneError && 'text-red-500'}`}>
-              {phone || 'Teléfono requerido'}
+            <span className={`text-gray-700 ${phoneError && "text-red-500"}`}>
+              {phone || "Teléfono requerido"}
             </span>
           </div>
-          
+
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-start gap-2 flex-1">
               <Mail className="w-4 h-4 mt-0.5 text-gray-500 shrink-0" />
-              <span className={`text-gray-700 ${emailError && 'text-red-500'}`}>
-                {email || emailBypassReason || 'Email requerido'}
+              <span className={`text-gray-700 ${emailError && "text-red-500"}`}>
+                {email || emailBypassReason || "Email requerido"}
               </span>
             </div>
             {!email && !emailBypassReason && (
-              <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+              <Dialog
+                open={isEmailDialogOpen}
+                onOpenChange={setIsEmailDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
                     Sin email

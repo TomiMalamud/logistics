@@ -1,27 +1,27 @@
 // components/CreateStoreMov.tsx
-import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { ProductList, ProductItem } from "./ProductList";
-import { useState } from "react";
-import { useRouter } from "next/router";
 import { PICKUP_STORES } from "@/utils/constants";
+import { User } from "@supabase/supabase-js";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { ProductItem, ProductList } from "./ProductList";
 
 interface FormFieldProps {
   label?: string;
@@ -50,19 +50,19 @@ export default function CreateStoreMov({ user }: { user: User }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<FormData>({
     origin_store: "cd",
     dest_store: "" as StoreId,
     products: [],
-    scheduled_date: "",
+    scheduled_date: ""
   });
 
   const handleStoreChange =
     (type: "origin_store" | "dest_store") => (value: StoreId) => {
       setFormData((prev) => ({
         ...prev,
-        [type]: value,
+        [type]: value
       }));
     };
 
@@ -76,37 +76,37 @@ export default function CreateStoreMov({ user }: { user: User }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     const validationError = validateForm(formData);
     if (validationError) {
       setError(validationError);
       return;
     }
-  
+
     setLoading(true);
     try {
       const body = {
         ...formData,
         type: "store_movement",
         created_by: user.id,
-        products: formData.products.map(p => ({
+        products: formData.products.map((p) => ({
           name: p.name,
           sku: p.sku,
           quantity: p.quantity
         }))
       };
-  
+
       const response = await fetch("/api/create-store-mov", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(body)
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Error.");
       }
-  
+
       await router.push("/");
     } catch (error) {
       console.error("Submit error:", error);
@@ -117,7 +117,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
       setLoading(false);
     }
   };
-  
+
   return (
     <Card className="w-full">
       <form onSubmit={handleSubmit}>
@@ -130,7 +130,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  scheduled_date: e.target.value,
+                  scheduled_date: e.target.value
                 }))
               }
               required

@@ -18,7 +18,7 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  navigationMenuTriggerStyle,
+  navigationMenuTriggerStyle
 } from "./ui/navigation-menu";
 
 interface LayoutProps {
@@ -38,7 +38,7 @@ const Layout = ({
   title = "Entregas | ROHI Sommiers"
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = useMemo(() => createClient(), []);
   const { role, loading } = useRole();
 
   const navItems: NavItem[] = useMemo(
@@ -66,7 +66,7 @@ const Layout = ({
         label: "Transportes",
         showOnMobile: true,
         roles: ["admin"]
-      },      
+      },
       {
         path: "/tv",
         label: "Teles",
@@ -84,7 +84,7 @@ const Layout = ({
         label: "Actualizar Precios",
         showOnMobile: false,
         roles: ["admin"]
-      },
+      }
     ],
     []
   );
@@ -104,7 +104,8 @@ const Layout = ({
 
   const getNavButtonClasses = useCallback(
     (path: string, showOnMobile: boolean): string => {
-      const baseClasses = router.pathname === path ? "text-gray-950" : "text-gray-600";
+      const baseClasses =
+        router.pathname === path ? "text-gray-950" : "text-gray-600";
       const mobileClasses = showOnMobile ? "" : "hidden md:block";
 
       return `${baseClasses} ${mobileClasses}`.trim();
@@ -121,7 +122,12 @@ const Layout = ({
             .map(({ path, label, showOnMobile }) => (
               <NavigationMenuItem key={path}>
                 <Link href={path} legacyBehavior passHref>
-                  <NavigationMenuLink className={`${navigationMenuTriggerStyle()} ${getNavButtonClasses(path, showOnMobile)}`}>
+                  <NavigationMenuLink
+                    className={`${navigationMenuTriggerStyle()} ${getNavButtonClasses(
+                      path,
+                      showOnMobile
+                    )}`}
+                  >
                     {label}
                   </NavigationMenuLink>
                 </Link>
@@ -142,21 +148,22 @@ const Layout = ({
 
       <header className="bg-white justify-between p-3 flex border-b border-grid">
         <div className="flex items-center">
-          <Image 
+          <Image
             src="/logo.jpg"
             alt="Logo"
             width={50}
             height={50}
             className="mx-4"
-            unoptimized                       
+            unoptimized
           />
-          <nav className="flex items-center">
-            {renderNavButtons()}
-          </nav>
+          <nav className="flex items-center">{renderNavButtons()}</nav>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="text-gray-600 md:block hidden mr-4">
+            <Button
+              variant="ghost"
+              className="text-gray-600 md:block hidden mr-4"
+            >
               <User className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

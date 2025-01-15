@@ -1,6 +1,5 @@
 // components/InvoiceSelection.tsx
 
-import React, { useEffect, useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -8,35 +7,39 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SearchComprobanteResponse, Comprobante } from '@/types/api';
+  SelectValue
+} from "@/components/ui/select";
+import { Comprobante, SearchComprobanteResponse } from "@/types/api";
+import { useEffect, useState } from "react";
 
 interface ComprobantesSelectProps {
   onSelect?: (invoice_number: Comprobante) => void;
   placeholder?: string;
 }
 
-export default function InvoiceSelection({ onSelect, placeholder = 'Select a invoice_number' }) {
+export default function InvoiceSelection({
+  onSelect,
+  placeholder = "Select a invoice_number"
+}) {
   const [invoices, setInvoices] = useState<Comprobante[]>([]);
-  const [selected, setSelected] = useState<string>('');
+  const [selected, setSelected] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const response = await fetch('/api/search-invoices');
+        const response = await fetch("/api/search-invoices");
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to fetch invoices');
+          throw new Error(errorData.message || "Failed to fetch invoices");
         }
         const data: SearchComprobanteResponse = await response.json();
         setInvoices(data.Items);
         setLoading(false);
       } catch (err: any) {
-        console.error('Error fetching invoices:', err);
-        setError(err.message || 'Unknown error');
+        console.error("Error fetching invoices:", err);
+        setError(err.message || "Unknown error");
         setLoading(false);
       }
     };
@@ -68,8 +71,12 @@ export default function InvoiceSelection({ onSelect, placeholder = 'Select a inv
             <SelectItem value="loading">Cargando...</SelectItem>
           ) : (
             invoices.map((invoice_number) => (
-              <SelectItem key={invoice_number.Id} value={String(invoice_number.Id)}>
-                {invoice_number.TipoFc} {invoice_number.Numero} | {invoice_number.RazonSocial}
+              <SelectItem
+                key={invoice_number.Id}
+                value={String(invoice_number.Id)}
+              >
+                {invoice_number.TipoFc} {invoice_number.Numero} |{" "}
+                {invoice_number.RazonSocial}
               </SelectItem>
             ))
           )}
@@ -77,4 +84,4 @@ export default function InvoiceSelection({ onSelect, placeholder = 'Select a inv
       </SelectContent>
     </Select>
   );
-};
+}

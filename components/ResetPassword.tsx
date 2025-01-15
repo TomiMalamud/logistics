@@ -1,47 +1,53 @@
-import React, { useState } from 'react'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { createClient } from '@/utils/supabase/component'
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { createClient } from "@/utils/supabase/component";
+import { useState } from "react";
 
 const ResetPassword = ({ onBack }) => {
-  const [email, setEmail] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState({ type: '', text: '' })
-  const supabase = createClient()
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const supabase = createClient();
 
   const handleResetPassword = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setMessage({ type: '', text: '' })
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage({ type: "", text: "" });
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
+        redirectTo: `${window.location.origin}/reset-password`
+      });
 
       if (error) {
-        setMessage({ 
-          type: 'error', 
-          text: 'Ha ocurrido un error. Por favor, intente nuevamente.'
-        })
-        return
+        setMessage({
+          type: "error",
+          text: "Ha ocurrido un error. Por favor, intente nuevamente."
+        });
+        return;
       }
 
-      setMessage({ 
-        type: 'success', 
-        text: 'Te enviamos un email con las instrucciones para restablecer tu contraseña.'
-      })
+      setMessage({
+        type: "success",
+        text: "Te enviamos un email con las instrucciones para restablecer tu contraseña."
+      });
     } catch (err) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Ha ocurrido un error. Por favor, intente nuevamente.'
-      })
+      setMessage({
+        type: "error",
+        text: "Ha ocurrido un error. Por favor, intente nuevamente."
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -53,7 +59,9 @@ const ResetPassword = ({ onBack }) => {
       <CardContent>
         <form onSubmit={handleResetPassword} className="space-y-4">
           {message.text && (
-            <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
+            <Alert
+              variant={message.type === "error" ? "destructive" : "default"}
+            >
               <AlertDescription>{message.text}</AlertDescription>
             </Alert>
           )}
@@ -74,23 +82,23 @@ const ResetPassword = ({ onBack }) => {
         </form>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={onBack}
           className="w-full sm:w-auto mr-2"
         >
           Volver
         </Button>
-        <Button 
-          onClick={handleResetPassword} 
+        <Button
+          onClick={handleResetPassword}
           disabled={isLoading}
           className="w-full sm:w-auto"
         >
-          {isLoading ? 'Enviando...' : 'Enviar Email'}
+          {isLoading ? "Enviando..." : "Enviar Email"}
         </Button>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
 
-export default ResetPassword
+export default ResetPassword;

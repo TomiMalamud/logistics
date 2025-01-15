@@ -1,15 +1,17 @@
 // Balance.tsx
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useDeliveryBalance } from '@/lib/hooks/useDeliveryBalance';
-import { Button } from '../ui/button';
-import { RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useDeliveryBalance } from "@/lib/hooks/useDeliveryBalance";
+import { RefreshCw } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface BalanceProps {
   invoice_id: number;
 }
 
 export default function Balance({ invoice_id }: BalanceProps) {
-  const { balance, error, isRefreshing, refetch } = useDeliveryBalance({ invoice_id });
+  const { balance, error, isRefreshing, refetch } = useDeliveryBalance({
+    invoice_id
+  });
 
   if (error) {
     return (
@@ -21,7 +23,9 @@ export default function Balance({ invoice_id }: BalanceProps) {
           onClick={refetch}
           disabled={isRefreshing}
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+          />
         </Button>
       </div>
     );
@@ -31,10 +35,14 @@ export default function Balance({ invoice_id }: BalanceProps) {
     <>
       {balance && balance !== "0,00" && (
         <div className="relative group">
-          <Alert variant="destructive" className={`mt-3 ${isRefreshing ? 'text-red-200' : ''}`}>
+          <Alert
+            variant="destructive"
+            className={`mt-3 ${isRefreshing ? "text-red-200" : ""}`}
+          >
             <AlertTitle>Factura adeudada</AlertTitle>
             <AlertDescription>
-              Saldo: $ {balance}. Recordá registrar la cobranza en Contabilium si cobramos en contraentrega.
+              Saldo: $ {balance}. Recordá registrar la cobranza en Contabilium
+              si cobramos en contraentrega.
             </AlertDescription>
           </Alert>
           <Button
@@ -44,7 +52,9 @@ export default function Balance({ invoice_id }: BalanceProps) {
             disabled={isRefreshing}
             className="hidden absolute group-hover:block top-4 right-2"
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
       )}
