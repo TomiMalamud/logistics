@@ -110,3 +110,5 @@ export interface PerfitResponse {
     [key: string]: any;
   };
 }
+
+export type Role = 'admin' | 'sales'

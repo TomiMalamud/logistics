@@ -38,7 +38,7 @@ const Layout = ({
   title = "Entregas | ROHI Sommiers"
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), [])
   const { role, loading } = useRole();
 
   const navItems: NavItem[] = useMemo(

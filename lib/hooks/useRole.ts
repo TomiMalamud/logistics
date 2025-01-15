@@ -1,40 +1,46 @@
-// lib/useRole.ts
-import { useEffect, useState } from 'react'
+// lib/hooks/useRole.ts
+import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/component'
+import type { Role } from 'types/types'
 
-export type Role = 'admin' | 'sales'
+const supabase = createClient()
 
-export function useRole() {
-  const [role, setRole] = useState<Role | null>(null)
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+async function fetchUserRole() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  useEffect(() => {
-    async function fetchRole() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-          
-          setRole(profile?.role as Role)
-        }
-      } catch (error) {
-        console.error('Error fetching role:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
 
-    fetchRole()
-  }, [supabase])
+  if (error) {
+    throw error
+  }
 
-  return { role, loading, isAdmin: role === 'admin' }
+  return profile?.role as Role
 }
 
-// Utility functions for role checks
+export function useRole() {
+  const { data: role, isLoading } = useQuery({
+    queryKey: ['user-role'],
+    queryFn: fetchUserRole,
+    staleTime: Infinity, // Role never goes stale during session
+    gcTime: Infinity, // Keep in cache forever during session
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
+
+  return {
+    role,
+    loading: isLoading,
+    isAdmin: role === 'admin'
+  }
+}
+
+// Utility functions
 export const canAccessAdminRoutes = (role: Role | null) => role === 'admin'
-export const canAccessSalesRoutes = (role: Role | null) => ['admin', 'sales'].includes(role as Role)
+export const canAccessSalesRoutes = (role: Role | null) => 
+  ['admin', 'sales'].includes(role as Role)
