@@ -42,7 +42,7 @@ const getTierTargets = (employeeId: string | undefined) => {
       target: employeeTargets.full,
       color: "bg-purple-600"
     },
-    xxl: { name: "XXL", target: employeeTargets.xxl, color: "bg-purple-600" }
+    xxl: { name: "XXL", target: employeeTargets.xxl, color: "bg-yellow-500" }
   };
 };
 

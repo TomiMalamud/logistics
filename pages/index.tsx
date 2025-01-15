@@ -1,10 +1,26 @@
-import { useRouter } from "next/router";
-import React, { useCallback, useMemo, useState } from "react";
-import useSWR from "swr";
 import Layout from "@/components/Layout";
 import DeliveryList from "@/components/deliveries/DeliveryList";
 import TablePlaceholder from "@/components/deliveries/TablePlaceholder";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createClient } from "@/utils/supabase/server-props";
+import { SelectGroup } from "@radix-ui/react-select";
+import type { User } from "@supabase/supabase-js";
 import {
   Calendar,
   CalendarOff,
@@ -14,30 +30,12 @@ import {
   Search,
   Store
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { SelectGroup } from "@radix-ui/react-select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import type { User } from "@supabase/supabase-js";
-import type { Profile } from "types/types";
-import { createClient } from "@/utils/supabase/server-props";
 import { GetServerSidePropsContext } from "next";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import React, { useCallback, useMemo, useState } from "react";
+import useSWR from "swr";
+import type { Profile } from "types/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -62,7 +60,7 @@ const DEFAULT_FILTERS = {
   type: "all"
 };
 
-export default function Index({ user, profile }: IndexProps) {
+export default function Index({ profile }: IndexProps) {
   const router = useRouter();
 
   // Get current filters from URL or use defaults
@@ -284,7 +282,7 @@ export default function Index({ user, profile }: IndexProps) {
               </div>
 
               {/* Delivery Type Filter */}
-              <div className="flex w-auto">
+              <div className="w-auto hidden sm:flex">
                 <Select
                   value={currentFilters.type}
                   onValueChange={handleDeliveryTypeChange}
@@ -329,7 +327,7 @@ export default function Index({ user, profile }: IndexProps) {
               </div>
 
               {/* Existing scheduled date filter */}
-              <div className="flex w-auto">
+              <div className="hidden sm:flex w-auto">
                 <Select
                   value={currentFilters.scheduledDate}
                   onValueChange={handleScheduledDateChange}

@@ -1,5 +1,5 @@
 import Layout from "@/components/Layout";
-import SalesDashboard from "@/components/metrics/Metrics";
+import SalesDashboard from "@/components/metrics/SalesDashboard";
 import { createClient } from "@/utils/supabase/server-props";
 import type { GetServerSidePropsContext } from "next";
 import type { Profile } from "@/types/types";
@@ -10,7 +10,7 @@ interface MetricsPageProps {
 
 export default function MetricsPage({ profile }: MetricsPageProps) {
   return (
-    <Layout>
+    <Layout title="Objetivos">
       <SalesDashboard profile={profile} />
     </Layout>
   );
