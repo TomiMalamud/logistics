@@ -74,8 +74,8 @@ const Layout = ({
         roles: ["admin", "sales"]
       },
       {
-        path: "/metrics",
-        label: "Métricas",
+        path: "/targets",
+        label: "Objetivos",
         showOnMobile: false,
         roles: ["admin", "sales"]
       },
