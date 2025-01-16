@@ -50,3 +50,17 @@ export const EMPLOYEE_TIER_TARGETS: Record<string, {
     xxl: 28000000
   }
 };
+
+export interface FinancingOption {
+  months: number;
+  discount: number;
+  label: string;
+}
+
+export const CASH_DISCOUNT = 20; // 20% discount for cash payments
+
+export const FINANCING_OPTIONS: FinancingOption[] = [
+  { months: 6, discount: 0, label: "6 cuotas" },
+  { months: 3, discount: 5, label: "3 cuotas o Plan Z" },
+  { months: 1, discount: 15, label: "1 cuota" }
+];

@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
+import { FINANCING_OPTIONS } from "@/utils/constants";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { Plus } from "lucide-react";
 
@@ -20,11 +21,7 @@ interface FinancingOptionsProps {
 }
 
 const FinancingOptions = ({ price }: FinancingOptionsProps) => {
-  const options = [
-    { months: 6, discount: 0, label: "6 cuotas" },
-    { months: 3, discount: 5, label: "3 cuotas o Plan Z" },
-    { months: 1, discount: 15, label: "1 cuota" }
-  ];
+  
   const calculateMonthlyPrice = (price: number) => Math.floor(price / 6);
 
   return (
@@ -43,7 +40,7 @@ const FinancingOptions = ({ price }: FinancingOptionsProps) => {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {options.map((option) => (
+          {FINANCING_OPTIONS.map((option) => (
             <Card key={option.months} className="bg-gray-50">
               <CardContent className="flex justify-between items-center p-4">
                 <div className="flex flex-col">

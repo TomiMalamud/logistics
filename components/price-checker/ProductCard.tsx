@@ -8,6 +8,7 @@ import {
   CardTitle
 } from "../ui/card";
 import FinancingOptions from "./FinancingOptions";
+import { CASH_DISCOUNT } from "@/utils/constants";
 
 interface ProductCardProps {
   product: Product;
@@ -15,8 +16,7 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const calculateDiscountPrice = (price: number) =>
-    Math.floor(price * (1 - discount / 100));
-  const discount = 20;
+    Math.floor(price * (1 - CASH_DISCOUNT / 100));  
 
   return (
     <Card className="transition mb-2">
@@ -37,7 +37,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       </CardContent>
       <CardFooter className="justify-between flex items-center text-gray-500 pt-2 -mb-4">
-        <div>Contado {discount}% OFF</div>
+        <div>Contado {CASH_DISCOUNT}% OFF</div>
         <div className="font-bold">
           ${" "}
           {calculateDiscountPrice(product.PrecioFinal).toLocaleString("es-AR")}
