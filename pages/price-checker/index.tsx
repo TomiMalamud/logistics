@@ -1,18 +1,21 @@
 // pages/price-checker/index.tsx
-import Layout from '@/components/Layout';
-import { ProductCard } from '@/components/price-checker/ProductCard';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useProducts } from '@/lib/hooks/useProducts';
-import { useEffect, useRef, useState } from 'react';
-import { useDebounce } from 'use-debounce';
+import Layout from "@/components/Layout";
+import { ProductCard } from "@/components/price-checker/ProductCard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useProducts } from "@/lib/hooks/useProducts";
+import { Calculator } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useDebounce } from "use-debounce";
 
 export default function PriceChecker() {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 1000);
-  const { 
+  const {
     data: productsData,
     isLoading,
     isError,
@@ -27,24 +30,33 @@ export default function PriceChecker() {
   }, []);
 
   return (
-    <Layout title='Precios'>
+    <Layout title="Precios">
       <div className="max-w-2xl mx-auto">
-        <Input
-          ref={inputRef}
-          type="search"
-          placeholder="Buscá por SKU o nombre. Mínimo 4 caracteres"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="mb-6 w-full bg-white"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck="false"
-        />
-        
+        <div className="flex items-center gap-x-2 mb-6">
+          <Input
+            ref={inputRef}
+            type="search"
+            placeholder="Buscá por SKU o nombre. Mínimo 4 caracteres"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="sw-full bg-white"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+          />
+          <Button variant="outline" asChild>
+            <Link href="/price-checker/calculator">
+              <Calculator />
+            </Link>
+          </Button>
+        </div>
+
         {isError && (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>
-              {error instanceof Error ? error.message : 'Error fetching products'}
+              {error instanceof Error
+                ? error.message
+                : "Error fetching products"}
             </AlertDescription>
           </Alert>
         )}
@@ -65,17 +77,20 @@ export default function PriceChecker() {
           </div>
         )}
 
-        {!isLoading && productsData?.Items.length === 0 && debouncedSearch.length >= 4 && (
-          <Alert className="mb-4">
-            <AlertDescription>
-              No se encontraron productos para: {debouncedSearch}
-            </AlertDescription>
-          </Alert>
-        )}
+        {!isLoading &&
+          productsData?.Items.length === 0 &&
+          debouncedSearch.length >= 4 && (
+            <Alert className="mb-4">
+              <AlertDescription>
+                No se encontraron productos para: {debouncedSearch}
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {!isLoading && productsData?.Items.map(product => (
-          <ProductCard key={product.Id} product={product} />
-        ))}
+        {!isLoading &&
+          productsData?.Items.map((product) => (
+            <ProductCard key={product.Id} product={product} />
+          ))}
       </div>
     </Layout>
   );

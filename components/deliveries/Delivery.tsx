@@ -301,12 +301,10 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 <StickyNote size={12} className="text-gray-600" />
                 Notas
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <RemitoDownload
-                  delivery={delivery}
-                  customer={delivery.customers}
-                />
-              </DropdownMenuItem>
+              <RemitoDownload
+                delivery={delivery}
+                customer={delivery.customers}
+              />
               {delivery.state !== "cancelled" && (
                 <>
                   <DropdownMenuSeparator />

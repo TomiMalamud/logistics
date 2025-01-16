@@ -1,6 +1,7 @@
 import { Customer, Delivery } from "@/types/types";
 import { Download } from "lucide-react";
 import { useState } from "react";
+import { DropdownMenuItem } from "../ui/dropdown-menu";
 
 interface Props {
   delivery: Delivery;
@@ -11,13 +12,24 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleSelect = (e: Event) => {
+    if (!delivery.scheduled_date) {
+      e.preventDefault();
+      setError(
+        "No se puede descargar el remito hasta asignar una fecha de entrega"
+      );
+      return;
+    }
+
+    handleDownload();
+  };
+
   const handleDownload = async () => {
     try {
-      setIsLoading(true);
       setError(null);
+      setIsLoading(true);
 
-      // Validate required data before making the request
-      if (!delivery.scheduled_date || !Array.isArray(delivery.products)) {
+      if (!Array.isArray(delivery.products)) {
         throw new Error("Datos de entrega incompletos");
       }
 
@@ -56,10 +68,14 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
   };
 
   return (
-    <div className="flex items-center w-full" onClick={handleDownload}>
-      <Download className="mr-2 h-4 w-4" />
-      {isLoading ? "Generando PDF..." : "Descargar Remito"}
-      {error && <span className="ml-2 text-red-500 text-sm">{error}</span>}
-    </div>
+    <DropdownMenuItem onSelect={handleSelect} disabled={isLoading}>
+      <div className="flex flex-col w-full">
+        <div className="flex items-center">
+          <Download className="mr-2 h-4 w-4" />
+          {isLoading ? "Generando PDF..." : "Descargar Remito"}
+        </div>
+        {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+      </div>
+    </DropdownMenuItem>
   );
 };
