@@ -49,7 +49,8 @@ export default function CostCarrierForm({
   const {
     carriers,
     isLoading: isLoadingCarriers,
-    error: carriersError
+    error: carriersError,
+    fetchCarriers
   } = useCarriers();
 
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +87,11 @@ export default function CostCarrierForm({
             onValueChange={handleCarrierChange}
             required={required}
             disabled={isLoadingCarriers}
+            onOpenChange={(open) => {
+              if (open) {
+                fetchCarriers();
+              }
+            }}
           >
             <SelectTrigger>
               <SelectValue

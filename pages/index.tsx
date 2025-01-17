@@ -179,6 +179,7 @@ export default function Index({ profile }: IndexProps) {
     });
     return `/api/deliveries?${params.toString()}`;
   }, [currentFilters]);
+  
   const {
     carriers,
     isLoading: isLoadingCarriers,

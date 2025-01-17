@@ -48,18 +48,17 @@ export interface Delivery {
   notes?: Note[] | null;
   invoice_number: string | null;
   invoice_id: number | null;
-  delivery_cost: number | null;
-  delivery_date: string | null;
+  delivery_cost: number | null; // legacy
+  delivery_date: string | null; // legacy
   type: string;
   supplier_id: string | null;
   suppliers: Supplier | null;
-  origin_store: Store | null;
-  dest_store: Store | null;
-  carrier_id: number | null;
+  origin_store: Store | null; 
+  dest_store: Store | null; 
+  carrier_id: number | null; // legacy
   products: Product[] | null; // legacy
   delivery_items?: DeliveryItem[];
   operations?: DeliveryOperation[];
-
 }
 
 export interface Supplier {

@@ -26,7 +26,7 @@ import {
   X
 } from "lucide-react";
 import React from "react";
-import { DeliveryProps, Profile } from "types/types";
+import { DeliveryOperation, DeliveryProps, Profile } from "types/types";
 import { Button } from "../ui/button";
 import Balance from "./Balance";
 import CancelDialog from "./CancelAlertDialog";
@@ -65,6 +65,16 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     const store = PICKUP_STORES.find((store) => store.value === storeValue);
     return store ? store.label : storeValue;
   };
+
+  const getLatestOperation = (operations?: DeliveryOperation[]) => {
+    if (!operations?.length) return null;
+    return operations.sort(
+      (a, b) =>
+        new Date(b.operation_date).getTime() -
+        new Date(a.operation_date).getTime()
+    )[0];
+  };
+  const latestOperation = getLatestOperation(delivery.operations);
 
   const getDisplayName = () => {
     switch (delivery.type) {
@@ -197,13 +207,18 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </div>
         ) : delivery.state === "delivered" ? (
           <div>
-            <h1 className="font-medium text-black">
-              {delivery.type === "supplier_pickup" ? "Retirado" : "Entregado"}
-            </h1>
-            <p className="text-sm mt-1 text-slate-500">
-              {delivery.delivery_date &&
-                `El ${formatLongDate(delivery.delivery_date)}`}
-            </p>
+            {latestOperation && (
+              <div>
+                <h1 className="font-medium text-black">
+                  {delivery.type === "supplier_pickup"
+                    ? "Retirado"
+                    : "Entregado"}
+                </h1>
+                <p className="text-sm mt-1 text-slate-500">
+                  {`El ${formatLongDate(latestOperation.operation_date)}`}
+                </p>
+              </div>
+            )}
           </div>
         ) : delivery.scheduled_date ? (
           <div>
@@ -282,6 +297,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               initialCarrierId={delivery.carrier_id}
               onConfirm={deliveryLogic.handleConfirmStateChange}
               isConfirming={deliveryLogic.isConfirming}
+              deliveryItems={delivery.delivery_items}
             />
           </div>
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
