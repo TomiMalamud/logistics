@@ -19,11 +19,6 @@ interface CarrierBalanceProps {
   carrierId: string;
 }
 
-interface DeliveryUpdateData {
-  delivery_cost: number;
-  carrier_id: number;
-}
-
 // Helper function to format currency
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("es-AR");
@@ -65,31 +60,6 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
       setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, [carrierId]);
-
-  const handleUpdateDeliveryDetails = useCallback(
-    async (deliveryId: string, data: DeliveryUpdateData) => {
-      try {
-        setState((prev) => ({ ...prev, isUpdating: true }));
-
-        const response = await fetch(`/api/deliveries/${deliveryId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to update delivery details");
-        }
-
-        await fetchData();
-      } catch (error) {
-        console.error("Error updating delivery details:", error);
-      } finally {
-        setState((prev) => ({ ...prev, isUpdating: false }));
-      }
-    },
-    [fetchData]
-  );
 
   useEffect(() => {
     fetchData();
@@ -146,16 +116,23 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
                 <TableRow key={`${transaction.date}-${index}`}>
                   <TableCell>{formatDate(transaction.date)}</TableCell>
                   <TableCell>
-                    <Link
-                      href={`/?search=${transaction.concept
-                        .split("-")
-                        .pop()
-                        ?.trim()}&state=delivered`}
-                      className="underline-offset-4 hover:underline transition duration-200 underline decoration-white hover:decoration-slate-800"
-                      target="_blank"
-                    >
-                      {transaction.concept}
-                    </Link>
+                    {transaction.type === "delivery" ? (
+                      <Link
+                        href={`/?search=${
+                          transaction.concept.startsWith("Retiro en ")
+                            ? transaction.concept.replace("Retiro en ", "")
+                            : transaction.concept === "Movimiento de Mercadería"
+                            ? "Movimiento"
+                            : transaction.concept.split("-").pop()?.trim()
+                        }&state=delivered`}
+                        className="underline-offset-4 hover:underline transition duration-200 underline decoration-white hover:decoration-slate-800"
+                        target="_blank"
+                      >
+                        {transaction.concept}
+                      </Link>
+                    ) : (
+                      transaction.concept
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     {transaction.debit > 0 && formatCurrency(transaction.debit)}

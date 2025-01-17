@@ -106,13 +106,13 @@ export default async function handler(
       .filter((d) => d.delivery_date !== null)
       .map((d) => ({
         date: d.delivery_date as string,
-        concept:
-          d.type === "supplier_pickup"
+        concept: 
+          d.type === "store_movement"
+            ? "Movimiento de Mercadería"
+            : d.type === "supplier_pickup"
             ? `Retiro en ${d.suppliers?.name || "Proveedor sin nombre"}`
             : d.invoice_number
-            ? `${d.invoice_number} - ${
-                d.customers?.name || "Cliente sin nombre"
-              }`
+            ? `${d.invoice_number} - ${d.customers?.name || "Cliente sin nombre"}`
             : "Sin factura",
         debit: d.delivery_cost,
         credit: 0,
@@ -120,13 +120,13 @@ export default async function handler(
         delivery_id: d.id,
         balance: 0
       }));
-
+      
     // Combine all transactions
     const transactions: Transaction[] = [
       ...deliveryTransactions,
       ...payments.map((p) => ({
         date: p.payment_date,
-        concept: `Pago - ${p.payment_method}`,
+        concept: `Pago - ${p.payment_method} - ${p.notes}`,
         debit: 0,
         credit: p.amount,
         type: "payment" as const,

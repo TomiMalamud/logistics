@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CASH_DISCOUNT, FINANCING_OPTIONS } from "@/utils/constants";
-import { Plus, SeparatorHorizontal, Trash2 } from "lucide-react";
+import { DollarSign, Plus, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 interface PaymentSplit {
@@ -142,8 +142,10 @@ export default function PriceCalculator() {
     <Card className="w-full">
       <CardContent className="pt-6 space-y-4">
         {/* Price Input */}
-        <div className="space-y-2 flex items-center pb-6 border-b mb-10">
-          <Label htmlFor="price" className="w-72">Precio de Contabilium</Label>
+        <div className="flex items-center pb-6 border-b mb-10">
+          <Label htmlFor="price" className="w-96 flex items-center gap-x-2">
+            <DollarSign size={16} className="hidden sm:block"/>
+            Precio de Contabilium</Label>
           <Input
             id="price"
             value={numberFormatter.format(price)}
@@ -151,7 +153,7 @@ export default function PriceCalculator() {
               const newValue = e.target.value.replace(/\D/g, "");
               setPrice(Number(newValue) || 0);
             }}
-            className="w-full text-right"
+            className="w-full ml-2 text-right"
           />
         </div>
         

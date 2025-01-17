@@ -12,11 +12,6 @@ import {
 import { Comprobante, SearchComprobanteResponse } from "@/types/api";
 import { useEffect, useState } from "react";
 
-interface ComprobantesSelectProps {
-  onSelect?: (invoice_number: Comprobante) => void;
-  placeholder?: string;
-}
-
 export default function InvoiceSelection({
   onSelect,
   placeholder = "Select a invoice_number"
