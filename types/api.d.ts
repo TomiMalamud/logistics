@@ -1,10 +1,11 @@
+// types/api.d.ts Types from my ERP API
+
 export interface TokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
 }
 
-// Define the Client interface based on ERP API response
 export interface Customer {
   Id: number;
   RazonSocial: string;

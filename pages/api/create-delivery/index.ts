@@ -6,7 +6,11 @@ import { titleCase } from "title-case";
 
 interface DeliveryRequest {
   order_date: string;
-  products: string;
+  products: Array<{
+    name: string;
+    sku: string;
+    quantity: number;
+  }>;
   invoice_number: string;
   invoice_id: string;
   name: string;
@@ -70,10 +74,13 @@ export default async function handler(
     // Sync with Perfit if email is provided
     if (email) {
       try {
-        const perfitContact = formatPerfitContact(email, titleCase(name.toLowerCase()));
+        const perfitContact = formatPerfitContact(
+          email,
+          titleCase(name.toLowerCase())
+        );
         await createOrUpdateContact(perfitContact);
       } catch (error) {
-        console.error('Failed to sync contact with Perfit:', error);
+        console.error("Failed to sync contact with Perfit:", error);
         // Continue with delivery creation even if Perfit sync fails
       }
     }
@@ -124,7 +131,7 @@ export default async function handler(
       .insert([
         {
           order_date,
-          products,
+          products: JSON.stringify(products),
           customer_id,
           state: "pending",
           scheduled_date: scheduled_date || null,
@@ -144,6 +151,23 @@ export default async function handler(
     if (!deliveryData?.id) {
       throw new Error("Delivery creation failed");
     }
+
+    const deliveryItems = products.map(product => ({
+      delivery_id: deliveryData.id,
+      product_sku: product.sku,
+      quantity: product.quantity,
+      pending_quantity: product.quantity // Initially same as quantity
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("delivery_items")
+      .insert(deliveryItems);
+
+    if (itemsError) {
+      throw new Error(`Error creating delivery items: ${itemsError.message}`);
+    }
+
+
 
     // Handle notes if provided
     if (notes?.trim()) {

@@ -105,6 +105,26 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     setIsCancelDialogOpen(true);
   };
 
+  const renderProducts = () => {
+    const items = delivery.delivery_items || [];
+    return items.map((item, index) => (
+      <div key={index} className="flex items-center text-sm">
+        <span className="font-medium">{item.quantity}x</span>
+        <span className="ml-2 capitalize">
+          {item.products?.name?.toLowerCase() || "Unknown Product"}
+        </span>
+        {item.product_sku && (
+          <span className="ml-2 text-slate-500">{item.product_sku}</span>
+        )}
+        {item.pending_quantity > 0 && (
+          <span className="ml-2 text-yellow-600">
+            (Pendiente: {item.pending_quantity})
+          </span>
+        )}
+      </div>
+    ));
+  };
+
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
       {/* Error Alert */}
@@ -340,20 +360,8 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       {/* Product Alert */}
       <Alert className="bg-slate-50">
         <AlertDescription>
-          {delivery.products && delivery.products.length > 0 && (
-            <div className="space-y-1">
-              {delivery.products.map((product, index) => (
-                <div key={index} className="flex items-center text-sm">
-                  <span className="font-medium">{product.quantity}x</span>
-                  <span className="ml-2 capitalize">
-                    {product.name.toLowerCase()}
-                  </span>
-                  {product.sku && (
-                    <span className="ml-2 text-slate-500">{product.sku}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+          {delivery.delivery_items && delivery.delivery_items.length > 0 && (
+            <div className="space-y-1">{renderProducts()}</div>
           )}
         </AlertDescription>
       </Alert>

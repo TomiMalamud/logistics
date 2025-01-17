@@ -85,7 +85,13 @@ async function buildDeliveryQuery(
       notes ( id, text, created_at ),
       created_by:profiles ( email, name ),
       suppliers ( name ),
-      carriers ( name, phone )
+      carriers ( name, phone ),
+            delivery_items (
+        product_sku,
+        quantity,
+        pending_quantity,
+        products ( name )
+      )
     `, { count: 'exact' })
     .eq('state', state)
 

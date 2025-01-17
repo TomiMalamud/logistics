@@ -23,26 +23,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
+import { Carrier } from "@/types/types";
 import { formatDate, sanitizePhoneNumber, validatePhoneNumber } from "@/utils/format";
 import { DollarSign, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type CarrierType = "local" | "national";
-
-type Carrier = {
-  id: number;
-  name: string;
-  phone: string;
-  service_area: string;
-  location: string;
-  service_hours: string;
-  notes: string;
-  type: CarrierType;
-  is_reliable: boolean;
-  avg_cost: number;
-  last_delivery: string | null;
-};
 
 export default function CarriersPage() {
   const [carriers, setCarriers] = useState<Carrier[]>([]);
@@ -119,7 +105,7 @@ export default function CarriersPage() {
       location: formData.get("location") as string,
       service_hours: formData.get("service_hours") as string,
       notes: formData.get("notes") as string,
-      type: formData.get("type") as CarrierType,
+      type: formData.get("type") as string,
       avg_cost: Number(formData.get("avg_cost")) || 0,
       is_reliable: formData.get("is_reliable") === "true"
     };
@@ -172,7 +158,7 @@ export default function CarriersPage() {
     setIsOpen(true);
   }
 
-  const getTypeBadgeVariant = (type: CarrierType) => {
+  const getTypeBadgeVariant = (type: string) => {
     return type === "local" ? "outline" : "secondary";
   };
 

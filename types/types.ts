@@ -29,7 +29,7 @@ export interface Profile {
 
 export type Product = {
   name: string;
-  quantity: number;
+  quantity?: number;
   sku?: string;
 };
 
@@ -56,7 +56,10 @@ export interface Delivery {
   origin_store: Store | null;
   dest_store: Store | null;
   carrier_id: number | null;
-  products: Product[] | null;
+  products: Product[] | null; // legacy
+  delivery_items?: DeliveryItem[];
+  operations?: DeliveryOperation[];
+
 }
 
 export interface Supplier {
@@ -118,3 +121,58 @@ export interface PerfitResponse {
 }
 
 export type Role = "admin" | "sales";
+
+export interface DeliveryOperation {
+  id: number;
+  delivery_id: number;
+  carrier_id: number | null;
+  cost: number;
+  operation_date: string;
+  created_at: string;
+  created_by: string | null;
+  operation_items?: OperationItem[];
+}
+
+export interface OperationItem {
+  operation_id: number;
+  product_sku: string;
+  quantity: number;
+}
+
+export interface DeliveryItem {
+  delivery_id: number;
+  product_sku: string;
+  quantity: number;
+  pending_quantity: number;
+  products?: {
+    name: string;
+  };
+}
+
+export interface Carrier {
+  id: number;
+  name: string;
+  phone: string;
+  service_area?: string;
+  location?: string;
+  service_hours?: string;
+  notes?: string;
+  last_delivery: string;
+  type: 'local' | 'national';
+  is_reliable: boolean;
+  avg_cost?: number;
+}
+
+export type OperationResult<T> = Promise<Result<T>>;
+
+// Helper type for operation creation
+export interface CreateOperationInput {
+  delivery_id: number;
+  carrier_id?: number;
+  cost: number;
+  operation_date: string;
+  items: {
+    product_sku: string;
+    quantity: number;
+  }[];
+}
