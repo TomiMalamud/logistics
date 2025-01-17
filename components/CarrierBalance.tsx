@@ -9,7 +9,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import type { BalanceResponse } from "@/pages/api/carriers/[id]/balance";
-import { formatDate } from "@/utils/format";
+import { formatCurrency, formatDate } from "@/utils/format";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
@@ -18,11 +18,6 @@ import PaymentForm from "./PaymentForm";
 interface CarrierBalanceProps {
   carrierId: string;
 }
-
-// Helper function to format currency
-const formatCurrency = (amount: number): string => {
-  return amount.toLocaleString("es-AR");
-};
 
 const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
   const [state, setState] = useState<{

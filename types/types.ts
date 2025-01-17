@@ -34,6 +34,7 @@ export type Product = {
 };
 
 export type DeliveryState = "pending" | "delivered" | "cancelled";
+export type DeliveryItemState = "pending" | "delivered"; 
 
 // Delivery Interface
 export interface Delivery {
@@ -120,16 +121,27 @@ export interface PerfitResponse {
 }
 
 export type Role = "admin" | "sales";
+export type OperationType = 'delivery' | 'cancellation';
 
 export interface DeliveryOperation {
   id: number;
   delivery_id: number;
-  carrier_id: number | null;
+  carriers?: {  
+    id: number;
+    name: string;
+  };
   cost: number;
   operation_date: string;
   created_at: string;
   created_by: string | null;
-  operation_items?: OperationItem[];
+  pickup_store: Store | null;
+  operation_type: OperationType;
+  operation_items?: OperationItemWithProduct[];
+}
+export interface OperationItemWithProduct extends OperationItem {
+  products?: {
+    name: string;
+  };
 }
 
 export interface OperationItem {
@@ -160,18 +172,4 @@ export interface Carrier {
   type: 'local' | 'national';
   is_reliable: boolean;
   avg_cost?: number;
-}
-
-export type OperationResult<T> = Promise<Result<T>>;
-
-// Helper type for operation creation
-export interface CreateOperationInput {
-  delivery_id: number;
-  carrier_id?: number;
-  cost: number;
-  operation_date: string;
-  items: {
-    product_sku: string;
-    quantity: number;
-  }[];
 }

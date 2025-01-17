@@ -20,7 +20,7 @@ import {
   Factory,
   Home,
   MoreHorizontal,
-  PiggyBank,
+  Package,
   StickyNote,
   Store,
   X
@@ -30,7 +30,7 @@ import { DeliveryOperation, DeliveryProps, Profile } from "types/types";
 import { Button } from "../ui/button";
 import Balance from "./Balance";
 import CancelDialog from "./CancelAlertDialog";
-import CostCarrierDialog from "./CostCarrierDialog";
+import { DeliveryOperationsDialog } from "./DeliveryOperationsDialog";
 import NotesDialog from "./NotesDialog";
 import { RemitoDownload } from "./RemitoDownload";
 import ScheduledDateDialog from "./ScheduledDateDialog";
@@ -126,11 +126,13 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         {item.product_sku && (
           <span className="ml-2 text-slate-500">{item.product_sku}</span>
         )}
-        {item.pending_quantity > 0 && (
-          <span className="ml-2 text-yellow-600">
-            (Pendiente: {item.pending_quantity})
-          </span>
-        )}
+        <span
+          className={`ml-2 ${
+            item.pending_quantity > 0 ? "text-yellow-600" : "text-green-600"
+          } `}
+        >
+          Pendiente: {item.pending_quantity}
+        </span>
       </div>
     ));
   };
@@ -288,18 +290,20 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         )}
 
         <div className="space-x-2 flex">
-          <div className="w-24">
-            <StateDialog
-              state={deliveryLogic.state}
-              setState={deliveryLogic.setState}
-              setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
-              initialDeliveryCost={delivery.delivery_cost}
-              initialCarrierId={delivery.carrier_id}
-              onConfirm={deliveryLogic.handleConfirmStateChange}
-              isConfirming={deliveryLogic.isConfirming}
-              deliveryItems={delivery.delivery_items}
-            />
-          </div>
+          {delivery.state !== "cancelled" && (
+            <div className="w-24">
+              <StateDialog
+                state={deliveryLogic.state}
+                setState={deliveryLogic.setState}
+                setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
+                initialDeliveryCost={delivery.delivery_cost}
+                initialCarrierId={delivery.carrier_id}
+                onConfirm={deliveryLogic.handleConfirmStateChange}
+                isConfirming={deliveryLogic.isConfirming}
+                deliveryItems={delivery.delivery_items}
+              />
+            </div>
+          )}
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -319,15 +323,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   isConfirming={deliveryLogic.isUpdating}
                 />
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <PiggyBank size={12} className="text-gray-600" />
-                <CostCarrierDialog
-                  initialDeliveryCost={delivery.delivery_cost}
-                  initialCarrierId={delivery.carrier_id}
-                  onConfirm={deliveryLogic.handleUpdateDeliveryDetails}
-                  isUpdating={deliveryLogic.isUpdatingDeliveryDetails}
-                />
-              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false);
@@ -341,6 +336,14 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 delivery={delivery}
                 customer={delivery.customers}
               />
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Package size={12} className="text-gray-600" />
+                <DeliveryOperationsDialog
+                  operations={delivery.operations}
+                  trigger={<span>Historial de Entregas</span>}
+                />
+              </DropdownMenuItem>
+
               {delivery.state !== "cancelled" && (
                 <>
                   <DropdownMenuSeparator />
@@ -376,8 +379,22 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       {/* Product Alert */}
       <Alert className="bg-slate-50">
         <AlertDescription>
-          {delivery.delivery_items && delivery.delivery_items.length > 0 && (
+          {delivery.delivery_items && delivery.delivery_items.length > 0 ? (
             <div className="space-y-1">{renderProducts()}</div>
+          ) : (
+            <div className="space-y-1">
+              {delivery.products.map((product, index) => (
+                <div key={index} className="flex items-center text-sm">
+                  <span className="font-medium">{product.quantity}x</span>
+                  <span className="ml-2 capitalize">
+                    {product.name.toLowerCase()}
+                  </span>
+                  {product.sku && (
+                    <span className="ml-2 text-slate-500">{product.sku}</span>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </AlertDescription>
       </Alert>

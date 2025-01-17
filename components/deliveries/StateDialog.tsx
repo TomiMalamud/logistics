@@ -61,6 +61,7 @@ export default function StateDialog({
   isConfirming,
   deliveryItems
 }: StateDialogProps) {
+  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [deliveryType, setDeliveryType] = useState<DeliveredType>();
   const [deliveryCost, setDeliveryCost] = useState("");
@@ -71,49 +72,106 @@ export default function StateDialog({
   const [selectedItems, setSelectedItems] = useState<{
     [sku: string]: number;
   }>({});
+  function getDeliveryStatusText() {
+    const pendingItems = Object.values(selectedItems).filter(
+      (qty) => qty > 0
+    ).length;
+    const totalItems = deliveryItems.filter(
+      (item) => item.pending_quantity > 0
+    ).length;
+
+    if (pendingItems === totalItems) {
+      return "Confirmar entrega total";
+    }
+    return "Confirmar entrega parcial";
+  }
+
+  const validateForm = () => {
+    const items = Object.entries(selectedItems)
+      .filter(([_, qty]) => qty > 0)
+      .map(([sku, quantity]) => ({
+        product_sku: sku,
+        quantity
+      }));
+
+    if (items.length === 0) {
+      return "Debe seleccionar al menos un producto";
+    }
+
+    // Validate carrier/pickup store selection
+    if (deliveryType === "carrier" && !selectedCarrierId && !initialCarrierId) {
+      return "Debe seleccionar un transportista";
+    }
+    if (
+      deliveryType === "carrier" &&
+      !isDeliveryCostValid(deliveryCost) &&
+      !initialDeliveryCost
+    ) {
+      return "Debe ingresar un costo válido";
+    }
+    if (deliveryType === "pickup" && !selectedStore) {
+      return "Debe seleccionar una sucursal";
+    }
+
+    return null;
+  };
+
+  const getButtonText = () => {
+    if (isConfirming) return "Procesando...";
+
+    const pendingItems = deliveryItems.filter(
+      (item) => item.pending_quantity > 0
+    );
+    if (pendingItems.length > 0) {
+      return "Confirmar entrega parcial";
+    }
+    return "Confirmar entrega total";
+  };
+
+  // In StateDialog.tsx, update ItemSelection:
   function ItemSelection() {
     if (!deliveryItems?.length) return null;
+
+    const pendingItems = deliveryItems.filter(
+      (item) => item.pending_quantity > 0
+    );
+    if (pendingItems.length === 0) return null;
 
     return (
       <Alert>
         <AlertTitle className="mb-4 font-regular text-gray-500 tracking-wide">
-          PRODUCTOS A ENTREGAR
+          PRODUCTOS PENDIENTES DE ENTREGA
         </AlertTitle>
         <AlertDescription className="space-y-4">
-          {deliveryItems.map((item) => {
-            const pendingQty = item.pending_quantity;
-            if (pendingQty <= 0) return null;
-
-            return (
-              <div key={item.product_sku} className="flex items-center gap-4">
-                <div className="flex-1">
-                  <p className="text-sm font-medium capitalize">
-                    {item.products?.name.toLowerCase() || item.product_sku}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Pendiente: {pendingQty}
-                  </p>
-                </div>
-                <Input
-                  type="number"
-                  min="0"
-                  max={pendingQty}
-                  value={selectedItems[item.product_sku] || 0}
-                  onChange={(e) => {
-                    const qty = Math.min(
-                      Math.max(0, parseInt(e.target.value) || 0),
-                      pendingQty
-                    );
-                    setSelectedItems((prev) => ({
-                      ...prev,
-                      [item.product_sku]: qty
-                    }));
-                  }}
-                  className="w-20"
-                />
+          {pendingItems.map((item) => (
+            <div key={item.product_sku} className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium capitalize">
+                  {item.products?.name.toLowerCase() || item.product_sku}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Pendiente: {item.pending_quantity} de {item.quantity}
+                </p>
               </div>
-            );
-          })}
+              <Input
+                type="number"
+                min="0"
+                max={item.pending_quantity}
+                value={selectedItems[item.product_sku] || 0}
+                onChange={(e) => {
+                  const qty = Math.min(
+                    Math.max(0, parseInt(e.target.value) || 0),
+                    item.pending_quantity
+                  );
+                  setSelectedItems((prev) => ({
+                    ...prev,
+                    [item.product_sku]: qty
+                  }));
+                }}
+                className="w-20"
+              />
+            </div>
+          ))}
         </AlertDescription>
       </Alert>
     );
@@ -127,21 +185,21 @@ export default function StateDialog({
   };
 
   async function handleFormSubmit() {
-    const items = Object.entries(selectedItems)
-      .filter(([_, qty]) => qty > 0)
-      .map(([sku, quantity]) => ({
-        product_sku: sku,
-        quantity
-      }));
-
-    if (items.length === 0) {
-      // Show error - must select at least one item
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
+    setError(null);
 
     const formData: FormData = {
       delivery_type: deliveryType,
-      items,
+      items: Object.entries(selectedItems)
+        .filter(([_, qty]) => qty > 0)
+        .map(([sku, quantity]) => ({
+          product_sku: sku,
+          quantity
+        })),
       ...(deliveryType === "carrier" && {
         delivery_cost: isDeliveryCostValid(deliveryCost)
           ? parseFloat(deliveryCost)
@@ -157,7 +215,9 @@ export default function StateDialog({
       await onConfirm(formData);
       setOpen(false);
     } catch (error) {
-      console.error("Failed to confirm state change:", error);
+      setError(
+        error instanceof Error ? error.message : "Error al procesar la entrega"
+      );
     }
   }
 
@@ -189,6 +249,13 @@ export default function StateDialog({
             Seleccioná el tipo de entrega y productos entregados o retirados
           </DialogDescription>
         </DialogHeader>
+
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column */}
           <ItemSelection />
@@ -220,10 +287,10 @@ export default function StateDialog({
             <DialogFooter className="mt-auto">
               <Button
                 onClick={handleFormSubmit}
-                disabled={isSubmitDisabled}
+                disabled={isConfirming}
                 className="w-full"
               >
-                {isConfirming ? "Procesando..." : "Confirmar"}
+                {isConfirming ? "Procesando..." : getDeliveryStatusText()}
               </Button>
             </DialogFooter>
           </div>

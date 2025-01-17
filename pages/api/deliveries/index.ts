@@ -95,12 +95,17 @@ async function buildDeliveryQuery(
     operations:delivery_operations (
       id,
       carrier_id,
+      carriers (name),
       cost,
       operation_date,
       created_at,
+      created_by,
+      pickup_store,
+      operation_type,
       operation_items (
         product_sku,
-        quantity
+        quantity,
+        products (name)
       )
     )
   `,

@@ -5,6 +5,18 @@ import { mutate } from "swr";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { Note, Delivery, UseDeliveryLogicParams, Store, DeliveredType } from "types/types";
 
+interface UpdateDeliveryParams {
+  delivery_cost?: number;
+  carrier_id?: number;
+  pickup_store?: Store;
+  delivery_type: DeliveredType;
+  items: {
+    product_sku: string;
+    quantity: number;
+  }[];
+}
+
+
 export const useDeliveryLogic = ({
   delivery: delivery,
   fetchURL
@@ -78,12 +90,7 @@ export const useDeliveryLogic = ({
     }
   };
 
-  const handleConfirmStateChange = async (formData: {
-    delivery_cost?: number;
-    carrier_id?: number;
-    pickup_store?: Store;
-    delivery_type: DeliveredType;
-  }) => {
+  const handleConfirmStateChange = async (formData: UpdateDeliveryParams) => {
     setIsConfirming(true);
   
     try {
@@ -100,6 +107,7 @@ export const useDeliveryLogic = ({
       // Prepare update data
       const updateData = {
         state: newState,
+        items: formData.items,
         ...(newState === "delivered" && {
           ...(formData.delivery_type === "carrier" && {
             delivery_cost: formData.delivery_cost,
@@ -113,7 +121,7 @@ export const useDeliveryLogic = ({
           })
         })
       };
-  
+    
       await updateField(updateData);
       setState(newState);
       setShowStateAlertDialog(false);

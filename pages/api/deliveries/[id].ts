@@ -1,12 +1,11 @@
 // pages/api/deliveries/[id].ts
 
 import { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/lib/supabase";
-import { PICKUP_STORES } from "@/utils/constants";
 import { Product, Store } from "@/types/types";
+import createClient from "@/utils/supabase/api";
 
 interface UpdateDeliveryBody {
-  state?: 'delivered' | 'pending' | 'cancelled';
+  state?: "delivered" | "pending" | "cancelled";
   scheduled_date?: string;
   delivery_cost?: number;
   carrier_id?: number;
@@ -17,247 +16,247 @@ interface UpdateDeliveryBody {
   }[];
 }
 
+async function validateDeliveryItems(
+  supabase: any,
+  deliveryId: number,
+  items: { product_sku: string; quantity: number }[]
+) {
+  const { data, error } = await supabase
+    .from("delivery_items")
+    .select("product_sku, pending_quantity")
+    .eq("delivery_id", deliveryId);
 
-const hasGaniProduct = (products: Product[] | string | null): boolean => {
-  if (!products) return false;
+  if (error) throw new Error("Failed to validate delivery items");
+  if (!data) throw new Error("No delivery items found");
 
-  try {
-    // Handle both string and array cases
-    const productsArray: Product[] =
-      typeof products === "string" ? JSON.parse(products) : products;
-
-    return productsArray.some((product) =>
-      product.name.toLowerCase().includes("colchon gani")
-    );
-  } catch (error) {
-    console.error("Error parsing products:", error);
-    return false;
+  for (const item of items) {
+    const existingItem = data.find((d) => d.product_sku === item.product_sku);
+    if (!existingItem) {
+      throw new Error(`Product ${item.product_sku} not found in delivery`);
+    }
+    if (existingItem.pending_quantity < item.quantity) {
+      throw new Error(
+        `Invalid quantity for product ${item.product_sku}. ` +
+        `Requested: ${item.quantity}, Available: ${existingItem.pending_quantity}`
+      );
+    }
   }
-};
+}
+
+async function processItems(
+  supabase: any,
+  operation_id: number,
+  delivery_id: number,
+  items: { product_sku: string; quantity: number }[]
+) {
+  // Create operation items
+  const { error: opItemsError } = await supabase
+    .from("operation_items")
+    .insert(
+      items.map((item) => ({
+        operation_id,
+        ...item
+      }))
+    );
+
+  if (opItemsError) {
+    throw new Error(`Error creating operation items: ${opItemsError.message}`);
+  }
+
+  // Update pending quantities
+  for (const item of items) {
+    const { error: updateError } = await supabase.rpc(
+      "update_pending_quantity",
+      {
+        p_delivery_id: delivery_id,
+        p_product_sku: item.product_sku,
+        p_quantity: item.quantity
+      }
+    );
+
+    if (updateError) {
+      throw new Error(`Error updating pending quantity: ${updateError.message}`);
+    }
+  }
+
+  // Check if all items are delivered
+  const { data: remainingItems, error: checkError } = await supabase
+    .from("delivery_items")
+    .select("pending_quantity")
+    .eq("delivery_id", delivery_id)
+    .gt("pending_quantity", 0);
+
+  if (checkError) {
+    throw new Error(`Error checking remaining items: ${checkError.message}`);
+  }
+
+  return !remainingItems?.length;
+}
+
+async function recordOperation(
+  supabase: any,
+  delivery_id: number,
+  userId: string,
+  operationType: 'delivery' | 'cancellation',
+  carrier_id?: number,
+  delivery_cost?: number,
+  pickup_store?: Store,
+  items?: { product_sku: string; quantity: number }[]
+) {
+  // Create operation record
+  const { data: operation, error: operationError } = await supabase
+    .from("delivery_operations")
+    .insert({
+      delivery_id,
+      carrier_id: carrier_id || null,
+      cost: delivery_cost || 0,
+      operation_date: new Date().toISOString().split("T")[0],
+      created_by: userId,
+      pickup_store,
+      operation_type: operationType
+    })
+    .select()
+    .single();
+
+  if (operationError) {
+    throw new Error(`Error creating operation: ${operationError.message}`);
+  }
+
+  // Process items only for deliveries
+  if (operationType === 'delivery' && items?.length) {
+    const isFullyDelivered = await processItems(supabase, operation.id, delivery_id, items);
+    return isFullyDelivered;
+  }
+
+  return false;
+}
+
+async function handleEmailNotifications(delivery: any) {
+  if (delivery.created_by?.email && delivery.customers) {
+    const { scheduleFollowUpEmail } = await import("@/utils/resend");
+    await scheduleFollowUpEmail({
+      salesPersonEmail: delivery.created_by.email,
+      salesPersonName: delivery.created_by.name,
+      customerName: delivery.customers.name || "Cliente",
+      customerPhone: delivery.customers.phone || ""
+    });
+  }
+
+  if (delivery.customers?.email) {
+    const { triggerEmail } = await import("@/utils/email");
+    const hasGani = (delivery.products as Product[])?.some(
+      p => p.name.toLowerCase().includes("colchon gani")
+    );
+    
+    if (hasGani) {
+      await triggerEmail(delivery.customers.email, "gani_warranty");
+    }
+    await triggerEmail(delivery.customers.email, "review_request");
+  }
+}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method === "PUT") {
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      return res.status(401).json({ error: 'Unauthorized' })
-    }
-
-    const { id } = req.query;
-    const { 
-      state, 
-      scheduled_date, 
-      delivery_cost, 
-      carrier_id, 
-      pickup_store,
-      items 
-    } = req.body as UpdateDeliveryBody;
-
-    if (!id) {
-      return res.status(400).json({ error: "Missing delivery ID" });
-    }
-
-    try {
-      // Fetch existing delivery with customer data
-      const { data: existingDelivery, error: fetchError } = await supabase
-        .from("deliveries")
-        .select(
-          `
-        *,
-        customers (
-          name,
-          email,
-          address,
-          phone
-        ),
-        suppliers (
-          name
-        ),
-        created_by (
-          email,
-          name
-        )
-      `
-        )
-        .eq("id", id)
-        .single();
-
-      if (fetchError)
-        throw new Error(`Error fetching delivery: ${fetchError.message}`);
-      if (!existingDelivery)
-        return res.status(404).json({ error: "Delivery not found" });
-
-      // Update delivery
-      const updates = {
-        ...(state && {
-          state,
-          ...(state === "delivered" && {
-            delivery_date: new Date().toLocaleString("en-US", {
-              timeZone: "America/Argentina/Buenos_Aires"
-            })
-          }),
-          ...(state === "cancelled" && {
-            delivery_date: null,
-            delivery_cost: null,
-            carrier_id: null,
-            pickup_store: null,
-            scheduled_date: null
-          })
-        }),
-        ...(scheduled_date && { scheduled_date }),
-        ...(delivery_cost && { delivery_cost }),
-        ...(carrier_id && { carrier_id }),
-        ...(pickup_store && { pickup_store })
-      };
-
-      const { data, error: updateError } = await supabase
-        .from("deliveries")
-        .update(updates)
-        .eq("id", id)
-        .select();
-
-      if (updateError)
-        throw new Error(`Error updating delivery: ${updateError.message}`);
-
-      // Handle email notifications for delivered state
-      if (state === "delivered" && state !== existingDelivery.state) {
-        const shouldScheduleEmail =
-          existingDelivery.created_by?.email && 
-          existingDelivery.created_by?.name && 
-          existingDelivery.customers;
-
-        if (shouldScheduleEmail) {
-          const { scheduleFollowUpEmail } = await import("@/utils/resend");
-          await scheduleFollowUpEmail({
-            salesPersonEmail: existingDelivery.created_by.email,
-            salesPersonName: existingDelivery.created_by.name,
-            customerName: existingDelivery.customers.name || "Cliente",
-            customerPhone: existingDelivery.customers.phone || ""
-          });
-        }
-
-        if (state === "delivered") {
-          if (!items?.length) {
-            return res.status(400).json({ error: "No items specified for delivery" });
-          }
-  
-          // Create delivery operation
-          const { data: operation, error: operationError } = await supabase
-            .from('delivery_operations')
-            .insert({
-              delivery_id: parseInt(id as string),
-              carrier_id: carrier_id || null,
-              cost: delivery_cost || 0,
-              operation_date: new Date().toISOString().split('T')[0],
-              created_by: user.id
-            })
-            .select()
-            .single();
-        
-          if (operationError) throw new Error(`Error creating operation: ${operationError.message}`);
-        
-          // Create operation items
-          const { error: opItemsError } = await supabase
-            .from('operation_items')
-            .insert(items.map(item => ({
-              operation_id: operation.id,
-              ...item
-            })));
-        
-          if (opItemsError) throw new Error(`Error creating operation items: ${opItemsError.message}`);
-        
-          // Update pending quantities in delivery_items
-          for (const item of items) {
-            const { error: updateError } = await supabase.rpc('update_pending_quantity', {
-              p_delivery_id: parseInt(id as string),
-              p_product_sku: item.product_sku,
-              p_quantity: item.quantity
-            });
-        
-            if (updateError) throw new Error(`Error updating pending quantity: ${updateError.message}`);
-          }
-        
-          // Check if all items are delivered
-          const { data: remainingItems, error: checkError } = await supabase
-            .from('delivery_items')
-            .select('pending_quantity')
-            .eq('delivery_id', id)
-            .gt('pending_quantity', 0);
-        
-          if (checkError) throw new Error(`Error checking remaining items: ${checkError.message}`);
-        
-          // Only set state to delivered if all items are delivered
-          if (!remainingItems?.length) {
-            const { error: updateError } = await supabase
-              .from('deliveries')
-              .update({ state: 'delivered' })
-              .eq('id', id);
-        
-            if (updateError) throw new Error(`Error updating delivery state: ${updateError.message}`);
-          }
-        }                      
-
-        // Handle product-specific emails
-        if (existingDelivery.customers?.email) {
-          const { triggerEmail } = await import("@/utils/email");
-          
-          // Send warranty email for Gani products
-          if (hasGaniProduct(existingDelivery.products)) {
-            await triggerEmail(existingDelivery.customers.email, "gani_warranty");
-          }
-          
-          // Send review request email
-          await triggerEmail(existingDelivery.customers.email, "review_request");
-        }
-      }
-
-      // Add state change note
-      if (state && state !== existingDelivery.state) {
-        const deliveryId = parseInt(id as string, 10);
-        let noteText = "";
-
-        switch (state) {
-          case "delivered":
-            if (pickup_store) {
-              const store = PICKUP_STORES.find((s) => s.value === pickup_store);
-              noteText = `Retiro en sucursal: ${store?.label ?? pickup_store}`;
-            } else if (carrier_id) {
-              const { data: carrier, error: carrierError } = await supabase
-                .from("carriers")
-                .select("name")
-                .eq("id", carrier_id)
-                .single();
-
-              if (carrierError)
-                throw new Error(`Error fetching carrier: ${carrierError.message}`);
-              noteText = `Entregado por ${carrier.name} con un costo de $${delivery_cost}`;
-            }
-            break;
-          case "pending":
-            noteText = "Marcado como 'Pendiente'";
-            break;
-          case "cancelled":
-            noteText = "Entrega cancelada";
-            break;
-        }
-
-        const { error: noteError } = await supabase
-          .from("notes")
-          .insert([{ text: noteText, delivery_id: deliveryId }]);
-
-        if (noteError)
-          throw new Error(`Error adding note: ${noteError.message}`);
-      }
-
-      res.status(200).json({ message: "Delivery updated successfully" });
-    } catch (error: any) {
-      console.error("Unexpected error: ", error);
-      res.status(400).json({ error: error.message });
-    }
-  } else {
+  if (req.method !== "PUT") {
     res.setHeader("Allow", ["PUT"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+
+  const supabase = createClient(req, res);
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const { id } = req.query;
+  const { state, scheduled_date, delivery_cost, carrier_id, pickup_store, items } = req.body as UpdateDeliveryBody;
+
+  if (!id) {
+    return res.status(400).json({ error: "Missing delivery ID" });
+  }
+
+  try {
+    // Fetch existing delivery
+    const { data: delivery, error: fetchError } = await supabase
+      .from("deliveries")
+      .select(`
+        *,
+        customers (name, email, address, phone),
+        suppliers (name),
+        created_by (email, name)
+      `)
+      .eq("id", id)
+      .single();
+
+    if (fetchError) throw new Error(`Error fetching delivery: ${fetchError.message}`);
+    if (!delivery) return res.status(404).json({ error: "Delivery not found" });
+
+    // Validate items if present
+    if (items?.length) {
+      await validateDeliveryItems(supabase, parseInt(id as string), items);
+    }
+
+    // Record operation if state is changing
+    let finalState = state;
+    if (state && state !== delivery.state) {
+      const isFullyDelivered = await recordOperation(
+        supabase,
+        parseInt(id as string),
+        user.id,
+        state === 'cancelled' ? 'cancellation' : 'delivery',
+        carrier_id,
+        delivery_cost,
+        pickup_store,
+        items
+      );
+
+      // Only allow delivered state if all items are delivered
+      if (state === 'delivered' && !isFullyDelivered) {
+        finalState = 'pending';
+      }
+    }
+
+    // Update delivery
+    const updates = {
+      ...(finalState && {
+        state: finalState,
+        ...(finalState === "delivered" && {
+          delivery_date: new Date().toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" })
+        }),
+        ...(finalState === "cancelled" && {
+          delivery_date: null,
+          delivery_cost: null,
+          carrier_id: null,
+          pickup_store: null,
+          scheduled_date: null
+        })
+      }),
+      ...(scheduled_date && { scheduled_date }),
+      ...(delivery_cost && { delivery_cost }),
+      ...(carrier_id && { carrier_id }),
+      ...(pickup_store && { pickup_store })
+    };
+
+    const { error: updateError } = await supabase
+      .from("deliveries")
+      .update(updates)
+      .eq("id", id);
+
+    if (updateError) {
+      throw new Error(`Error updating delivery: ${updateError.message}`);
+    }
+
+    // Handle notifications for completed deliveries
+    if (finalState === "delivered" && finalState !== delivery.state) {
+      await handleEmailNotifications(delivery);
+    }
+
+    return res.status(200).json({ message: "Delivery updated successfully" });
+  } catch (error: any) {
+    console.error("Unexpected error: ", error);
+    return res.status(400).json({ error: error.message });
   }
 }
