@@ -1,5 +1,6 @@
 // pages/api/carriers/[id]/balance.ts
 import { supabase } from "@/lib/supabase";
+import { DeliveryType } from "@/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export type Transaction = {
@@ -10,6 +11,7 @@ export type Transaction = {
   balance: number;
   type: "delivery" | "payment";
   delivery_id?: number;
+  delivery_type?: DeliveryType;
 };
 
 export type BalanceResponse = {
@@ -106,27 +108,30 @@ export default async function handler(
       .filter((d) => d.delivery_date !== null)
       .map((d) => ({
         date: d.delivery_date as string,
-        concept: 
+        concept:
           d.type === "store_movement"
             ? "Movimiento de Mercadería"
             : d.type === "supplier_pickup"
             ? `Retiro en ${d.suppliers?.name || "Proveedor sin nombre"}`
             : d.invoice_number
-            ? `${d.invoice_number} - ${d.customers?.name || "Cliente sin nombre"}`
+            ? `${d.invoice_number} - ${
+                d.customers?.name || "Cliente sin nombre"
+              }`
             : "Sin factura",
         debit: d.delivery_cost,
         credit: 0,
         type: "delivery" as const,
         delivery_id: d.id,
+        delivery_type: d.type as DeliveryType, 
         balance: 0
       }));
-      
+
     // Combine all transactions
     const transactions: Transaction[] = [
       ...deliveryTransactions,
       ...payments.map((p) => ({
         date: p.payment_date,
-        concept: `Pago - ${p.payment_method} - ${p.notes}`,
+        concept: `Pago - ${p.payment_method}${p.notes ? ` - ${p.notes}` : ''}`,
         debit: 0,
         credit: p.amount,
         type: "payment" as const,

@@ -118,13 +118,15 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
                   <TableCell>
                     {transaction.type === "delivery" ? (
                       <Link
-                        href={`/?search=${
-                          transaction.concept.startsWith("Retiro en ")
-                            ? transaction.concept.replace("Retiro en ", "")
-                            : transaction.concept === "Movimiento de Mercadería"
-                            ? "Movimiento"
-                            : transaction.concept.split("-").pop()?.trim()
-                        }&state=delivered`}
+                        href={`/?${new URLSearchParams({
+                          type: transaction.delivery_type || "home_delivery",
+                          state: "delivered",
+                          carrier: carrierId,
+                          ...(transaction.delivery_type === "home_delivery" && {
+                            search:
+                              transaction.concept.split("-").pop()?.trim() || ""
+                          })
+                        }).toString()}`}
                         className="underline-offset-4 hover:underline transition duration-200 underline decoration-white hover:decoration-slate-800"
                         target="_blank"
                       >

@@ -33,12 +33,14 @@ export type Product = {
   sku?: string;
 };
 
+export type DeliveryState = "pending" | "delivered" | "cancelled";
+
 // Delivery Interface
 export interface Delivery {
   id: number;
   order_date: string;
   customer_id: number;
-  state: string;
+  state: DeliveryState;
   scheduled_date: string | null;
   created_at: string;
   created_by: Profile | null;
@@ -63,8 +65,12 @@ export interface Supplier {
 }
 
 export type Store = "cd" | "9dejulio" | "carcano";
-
-export type DeliveryType = "carrier" | "pickup";
+export type DeliveredType = "carrier" | "pickup";
+export type DeliveryType =
+  | "home_delivery"
+  | "supplier_pickup"
+  | "store_movement"
+  | "all";
 
 // Props for Delivery Component
 export interface DeliveryProps {

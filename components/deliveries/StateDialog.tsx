@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { DeliveryType, Store } from "@/types/types";
+import { DeliveredType, DeliveryState, Store } from "@/types/types";
 import { PICKUP_STORES } from "@/utils/constants";
 import { useState } from "react";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
@@ -26,12 +26,12 @@ interface FormData {
   delivery_cost?: number;
   carrier_id?: number;
   pickup_store?: Store;
-  delivery_type: DeliveryType;
+  delivery_type: DeliveredType;
 }
 
 interface StateDialogProps {
   state: string;
-  setState: (newState: string) => void;
+  setState: (newState: DeliveryState) => void;
   setShowStateAlertDialog: (show: boolean) => void;
   initialDeliveryCost?: number;
   initialCarrierId?: number;
@@ -49,7 +49,7 @@ export default function StateDialog({
   isConfirming
 }: StateDialogProps) {
   const [open, setOpen] = useState(false);
-  const [deliveryType, setDeliveryType] = useState<DeliveryType>("carrier");
+  const [deliveryType, setDeliveryType] = useState<DeliveredType>("carrier");
   const [deliveryCost, setDeliveryCost] = useState("");
   const [selectedCarrierId, setSelectedCarrierId] = useState<
     number | undefined
@@ -57,7 +57,7 @@ export default function StateDialog({
   const [selectedStore, setSelectedStore] = useState<Store | undefined>();
 
   const handleDeliveryTypeChange = (value: string) => {
-    setDeliveryType(value as DeliveryType);
+    setDeliveryType(value as DeliveredType);
     setDeliveryCost("");
     setSelectedCarrierId(undefined);
     setSelectedStore(undefined);
@@ -165,7 +165,7 @@ function DeliveryTypeSelector({
   value,
   onChange
 }: {
-  value: DeliveryType;
+  value: DeliveredType;
   onChange: (value: string) => void;
 }) {
   return (

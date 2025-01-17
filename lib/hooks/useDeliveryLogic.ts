@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { mutate } from "swr";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-import { Note, Delivery, UseDeliveryLogicParams, Store, DeliveryType } from "types/types";
+import { Note, Delivery, UseDeliveryLogicParams, Store, DeliveredType } from "types/types";
 
 export const useDeliveryLogic = ({
   delivery: delivery,
@@ -82,7 +82,7 @@ export const useDeliveryLogic = ({
     delivery_cost?: number;
     carrier_id?: number;
     pickup_store?: Store;
-    delivery_type: DeliveryType;
+    delivery_type: DeliveredType;
   }) => {
     setIsConfirming(true);
   
