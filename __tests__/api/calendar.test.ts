@@ -1,4 +1,4 @@
-import handler from '@/pages/api/calendar'
+import handler from '@/pages/api/deliveries/calendar'
 import { mockRequestResponse } from '../utils'
 
 jest.mock('@/lib/supabase', () => ({

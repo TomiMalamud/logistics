@@ -37,7 +37,7 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
         throw new Error("Datos del cliente incompletos");
       }
 
-      const response = await fetch("/api/generate-remito", {
+      const response = await fetch("/api/deliveries/generate-remito", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

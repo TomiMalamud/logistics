@@ -1,4 +1,4 @@
-// pages/api/notes.ts
+// pages/api/deliveries/notes.ts
 
 import { NextApiRequest, NextApiResponse } from "next";
 import createClient from "@/utils/supabase/api";

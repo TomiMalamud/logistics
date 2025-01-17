@@ -1,4 +1,4 @@
-// pages/api/generate-remito.ts
+// pages/api/deliveries/generate-remito.ts
 import { formatDate } from "@/utils/format";
 import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";

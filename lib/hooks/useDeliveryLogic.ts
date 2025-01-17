@@ -159,7 +159,7 @@ export const useDeliveryLogic = ({
     setError(null);
 
     try {
-      const response = await fetch("/api/notes", {
+      const response = await fetch("/api/deliveries/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -50,7 +50,7 @@ const Layout = ({
         roles: ["admin", "sales"]
       },
       {
-        path: "/deliveries/calendar",
+        path: "/calendar",
         label: "Calendario",
         showOnMobile: false,
         roles: ["admin", "sales"]
