@@ -1,40 +1,130 @@
 // pages/api/deliveries/calendar.ts
-
 import { supabase } from "@/lib/supabase";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { Product } from "@/types/types";
 
 type FeedResponse = {
-  feed: any[];
+  feed: CalendarItem[];
   totalItems: number;
+  unscheduledCount: number;
 };
 
 type ErrorResponse = {
   error: string;
 };
 
-const getDeliverySelect = () => `
-  *,
+// Interface for pending deliveries from DB
+interface PendingDelivery {
+  id: number;
+  scheduled_date: string;
+  delivery_cost: number | null;
+  invoice_id: number | null;  
+  customers: {
+    name: string;
+    address: string;
+    phone: string | null;
+  };
+  created_by: {
+    name: string | null;
+  } | null;
+  delivery_items: {
+    quantity: number;
+    products: {
+      name: string;
+    };
+  }[] | null;
+  products: string | null; // JSON string of legacy products
+}
+
+// Interface for delivery operations from DB
+interface DeliveryOperation {
+  id: number;
+  operation_date: string;
+  cost: number | null;
+  pickup_store: string | null;
+  carriers: {
+    name: string;
+  } | null;
+  delivery: {
+    customers: {
+      name: string;
+      address: string;
+      phone: string | null;
+    };
+  };
+  operation_items: {
+    quantity: number;
+    products: {
+      name: string;
+    };
+  }[] | null;
+}
+
+// Common interface for calendar items
+interface CalendarItem {
+  id: number;
+  type: "pending" | "delivered";
+  display_date: string;
+  invoice_id?: number | null;  
+  customer: {
+    name: string;
+    address: string;
+    phone: string | null;
+  };
+  items: Array<{
+    quantity: number;
+    name: string;
+  }>;
+  created_by?: {
+    name: string | null;
+  } | null;
+  delivery_cost?: number | null;
+  cost?: number | null;
+  carrier?: string | null;
+  pickup_store?: string | null;
+}
+
+const getPendingDeliveriesQuery = () => `
+  id,
+  state,
+  scheduled_date,
+  delivery_cost,
+  invoice_id,
   customers!inner (
     name,
     address,
     phone
   ),
-  carriers (
-    name
-  ),
-  notes (
-    id,
-    text,
-    created_at
-  ),
   created_by:profiles (
-    email,
     name
   ),
   delivery_items (
-    product_sku,
     quantity,
-    pending_quantity,
+    products (
+      name
+    )
+  ),
+  products
+`;
+
+const getDeliveryOperationsQuery = () => `
+  id,
+  delivery:deliveries!inner (
+    id,
+    customers!inner (
+      name,
+      address,
+      phone
+    )
+  ),
+  operation_date,
+  cost,
+  pickup_store,
+  carriers (
+    name
+  ),
+  operation_items (
+    quantity,
     products (
       name
     )
@@ -56,68 +146,86 @@ export default async function handler(
   }
 
   try {
-    // Query pending deliveries with scheduled dates in range
+    // Get pending deliveries with scheduled dates
     const { data: scheduledPending, error: scheduledError } = await supabase
       .from("deliveries")
-      .select(getDeliverySelect())
+      .select(getPendingDeliveriesQuery())
       .eq("state", "pending")
       .not("scheduled_date", "is", null)
       .gte("scheduled_date", startDate)
-      .lte("scheduled_date", endDate)
-      .order("scheduled_date", { ascending: true });
+      .lte("scheduled_date", endDate) as { data: PendingDelivery[] | null, error: any };
 
-    // Query pending deliveries without scheduled dates
-    const { data: unscheduledPending, error: unscheduledError } = await supabase
+    // Get pending deliveries without scheduled dates (for count only)
+    const { count: unscheduledCount, error: unscheduledError } = await supabase
       .from("deliveries")
-      .select(getDeliverySelect())
+      .select("id", { count: "exact" })
       .eq("state", "pending")
-      .is("scheduled_date", null)
-      .order("order_date", { ascending: true });
+      .is("scheduled_date", null);
 
-    // Query delivered items with delivery dates in range
-    const { data: deliveredItems, error: deliveredError } = await supabase
-      .from("deliveries")
-      .select(getDeliverySelect())
-      .eq("state", "delivered")
-      .not("delivery_date", "is", null)
-      .gte("delivery_date", startDate)
-      .lte("delivery_date", endDate)
-      .order("delivery_date", { ascending: true });
+    // Get delivery operations
+    const { data: operations, error: operationsError } = await supabase
+      .from("delivery_operations")
+      .select(getDeliveryOperationsQuery())
+      .eq("operation_type", "delivery")
+      .gte("operation_date", startDate)
+      .lte("operation_date", endDate) as { data: DeliveryOperation[] | null, error: any };
 
-    if (scheduledError || unscheduledError || deliveredError) {
-      console.error(
-        "Error fetching deliveries:",
-        scheduledError || unscheduledError || deliveredError
+    if (scheduledError || unscheduledError || operationsError) {
+      console.error("Error fetching data:", 
+        scheduledError || unscheduledError || operationsError
       );
-      return res.status(500).json({ error: "Failed to fetch deliveries." });
+      return res.status(500).json({ error: "Failed to fetch data" });
     }
 
-    // Process deliveries to ensure backward compatibility
-    const processDelivery = (delivery: any) => {
-      // If we have products as a string (jsonb), parse it
-      if (typeof delivery.products === 'string') {
-        try {
-          delivery.products = JSON.parse(delivery.products);
-        } catch (e) {
-          delivery.products = [];
-        }
-      }
-      return delivery;
-    };
-    
-    
-    const allDeliveries = [
-      ...(scheduledPending || []).map((d) => ({ ...processDelivery(d), type: "pending" })),
-      ...(unscheduledPending || []).map((d) => ({ ...processDelivery(d), type: "pending" })),
-      ...(deliveredItems || []).map((d) => ({ ...processDelivery(d), type: "delivered" }))
-    ];
+    // Process pending deliveries
+    const processedPending: CalendarItem[] = (scheduledPending || []).map(delivery => ({
+      id: delivery.id,
+      type: "pending",
+      display_date: delivery.scheduled_date,
+      invoice_id: delivery.invoice_id,
+      customer: {
+        name: delivery.customers.name,
+        address: delivery.customers.address,
+        phone: delivery.customers.phone
+      },
+      created_by: delivery.created_by,
+      items: delivery.delivery_items?.map(item => ({
+        quantity: item.quantity,
+        name: item.products.name
+      })) || (delivery.products ? JSON.parse(delivery.products).map((p: Product) => ({
+        quantity: p.quantity || 1,
+        name: p.name
+      })) : []),
+      delivery_cost: delivery.delivery_cost
+    }));
+
+    // Process operations
+    const processedOperations: CalendarItem[] = (operations || []).map(operation => ({
+      id: operation.id,
+      type: "delivered",
+      display_date: operation.operation_date,
+      customer: {
+        name: operation.delivery.customers.name,
+        address: operation.delivery.customers.address,
+        phone: operation.delivery.customers.phone
+      },
+      items: operation.operation_items?.map(item => ({
+        quantity: item.quantity,
+        name: item.products.name
+      })) || [],
+      cost: operation.cost,
+      carrier: operation.carriers?.name || null,
+      pickup_store: operation.pickup_store
+    }));
 
     return res.status(200).json({
-      feed: allDeliveries,
-      totalItems: allDeliveries.length
+      feed: [...processedPending, ...processedOperations],
+      totalItems: (scheduledPending?.length || 0) + (operations?.length || 0),
+      unscheduledCount: unscheduledCount || 0
     });
+
   } catch (err) {
     console.error("Unexpected error:", err);
-    return res.status(500).json({ error: "An unexpected error occurred." });
+    return res.status(500).json({ error: "An unexpected error occurred" });
   }
 }

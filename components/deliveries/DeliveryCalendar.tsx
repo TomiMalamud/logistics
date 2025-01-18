@@ -40,13 +40,48 @@ interface DroppableCellProps {
   date: string;
   children: React.ReactNode;
 }
+interface CalendarDelivery {
+  id: number;
+  type: "pending" | "delivered";
+  display_date: string;
+  customer: {
+    name: string;
+    address: string;
+    phone: string | null;
+  };
+  items: Array<{
+    quantity: number;
+    name: string;
+  }>;
+  created_by?: {
+    name: string | null;
+  } | null;
+  delivery_cost?: number | null;
+  cost?: number | null;
+  carrier?: string | null;
+  pickup_store?: string | null;
+  invoice_id?: number | null;  
+}
 
+interface CalendarResponse {
+  feed: CalendarDelivery[];
+  totalItems: number;
+  unscheduledCount: number;
+}
 const getStoreLabel = (storeValue: string) => {
   const store = PICKUP_STORES.find((store) => store.value === storeValue);
   return store ? store.label : storeValue;
 };
 
-export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
+export const DraggableDeliveryItem = ({ 
+  delivery, 
+  onDragEnd, 
+  showCosts 
+}: { 
+  delivery: CalendarDelivery; 
+  onDragEnd: (id: number, date: string) => void;
+  showCosts: boolean;
+}) => {
   const { balance, isRefreshing } = useDeliveryBalance({
     invoice_id: delivery.invoice_id || null
   });
@@ -67,12 +102,9 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
   }));
 
   const today = new Date().toISOString().split("T")[0];
-  const scheduledDate = delivery.scheduled_date
-    ? delivery.scheduled_date.split("T")[0]
-    : null;
   const isPastDue =
-    scheduledDate && scheduledDate < today && delivery.state !== "delivered";
-  const isToday = scheduledDate && scheduledDate === today;
+    delivery.display_date < today && delivery.type !== "delivered";
+  const isToday = delivery.display_date === today;
 
   return (
     <TooltipProvider>
@@ -84,7 +116,7 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
               text-xs p-1 rounded cursor-move
               ${isDragging ? "opacity-50" : "opacity-100"}
               ${
-                delivery.state === "delivered"
+                delivery.type === "delivered"
                   ? "bg-gray-50 cursor-auto text-gray-500"
                   : isPastDue && !isToday
                   ? "bg-red-200 hover:bg-red-300"
@@ -93,12 +125,10 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
             `}
           >
             <div className="truncate capitalize">
-              {delivery.customers?.name.toLowerCase()}
+              {delivery.customer.name.toLowerCase()}
             </div>
-            {hasBalance && delivery.state === "pending" && (
-              <div
-                className={`text-red-600 ${isRefreshing ? "opacity-50" : ""}`}
-              >
+            {hasBalance && delivery.type === "pending" && (
+              <div className={`text-red-600 ${isRefreshing ? "opacity-50" : ""}`}>
                 Saldo $ {balance}
               </div>
             )}
@@ -106,39 +136,30 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
         </TooltipTrigger>
         <TooltipContent>
           <div className="space-y-1 capitalize">
-            {delivery.delivery_items && delivery.delivery_items.length > 0 ? (
+            {delivery.items.length > 0 && (
               <div className="space-y-1">
-                {delivery.delivery_items.map((item, index) => (
+                {delivery.items.map((item, index) => (
                   <div key={index}>
-                    {item.quantity}x{" "}
-                    {titleCase((item.products?.name || "").toLowerCase())}
+                    {item.quantity}x {titleCase(item.name.toLowerCase())}
                   </div>
                 ))}
               </div>
-            ) : delivery.products && delivery.products.length > 0 ? (
-              <div className="space-y-1">
-                {delivery.products.map((product, index) => (
-                  <div key={index}>
-                    {product.quantity}x {titleCase(product.name.toLowerCase())}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-            <p>📍 {delivery.customers?.address.toLowerCase()}</p>
-            <p>📱 {delivery.customers?.phone}</p>
-            {showCosts && delivery.delivery_cost && (
+            )}
+            <p>📍 {delivery.customer.address.toLowerCase()}</p>
+            <p>📱 {delivery.customer.phone}</p>
+            {showCosts && (delivery.cost || delivery.delivery_cost) && (
               <>
                 <p>
                   💲{" "}
-                  {delivery.delivery_cost.toLocaleString("es-AR", {
+                  {(delivery.cost || delivery.delivery_cost || 0).toLocaleString("es-AR", {
                     maximumFractionDigits: 0
                   })}{" "}
                 </p>
-                <p>🚚 {delivery.carriers?.name}</p>
+                {delivery.carrier && <p>🚚 {delivery.carrier}</p>}
               </>
             )}
-            <p>✏️ {delivery.created_by?.name}</p>
-            {delivery.state === "delivered" && <p>✅ Entregado</p>}
+            {delivery.created_by?.name && <p>✏️ {delivery.created_by.name}</p>}
+            {delivery.type === "delivered" && <p>✅ Entregado</p>}
             {delivery.pickup_store && (
               <p>Retiró en {getStoreLabel(delivery.pickup_store)}</p>
             )}
@@ -177,13 +198,13 @@ const DroppableCell = ({ date, children }: DroppableCellProps) => {
 
 const DeliveryCalendar = ({ searchUrl }) => {
   const [date, setDate] = useState(new Date());
-  const [deliveries, setDeliveries] = useState({});
   const [unscheduledCount, setUnscheduledCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const { role } = useRole();
   const showCosts = role === "admin";
+  const [deliveries, setDeliveries] = useState<Record<string, CalendarDelivery[]>>({});
 
   // Calculate monthly total from deliveries
   const calculateMonthlyTotal = useCallback((deliveriesData) => {
@@ -229,43 +250,37 @@ const DeliveryCalendar = ({ searchUrl }) => {
       try {
         const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
         const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-
+  
         const response = await fetch(
           `${searchUrl}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
         );
-
+  
         if (!response.ok) throw new Error("Failed to fetch deliveries");
-
-        const data = await response.json();
-
-        // Count unscheduled deliveries BEFORE applying any filters
-        const unscheduled = data.feed.filter(
-          (delivery) => !delivery.scheduled_date && delivery.state === "pending"
-        ).length;
-        setUnscheduledCount(unscheduled);
-
+  
+        const data: CalendarResponse = await response.json();
+  
+        setUnscheduledCount(data.unscheduledCount);
+  
         // Filter deliveries based on selected type
         const filteredDeliveries = data.feed.filter((delivery) => {
           if (filter === "all") return true;
           return delivery.type === filter;
         });
-
+  
         // Group filtered deliveries by date
         const grouped = filteredDeliveries.reduce((acc, delivery) => {
-          const dateToUse =
-            delivery.type === "delivered"
-              ? delivery.delivery_date
-              : delivery.scheduled_date;
-
-          if (dateToUse) {
-            const normalizedDate = getNormalizedDate(dateToUse);
-            acc[normalizedDate] = acc[normalizedDate] || [];
-            acc[normalizedDate].push(delivery);
-          }
+          const normalizedDate = delivery.display_date.split("T")[0];
+          acc[normalizedDate] = acc[normalizedDate] || [];
+          acc[normalizedDate].push(delivery);
           return acc;
-        }, {});
-
-        const total = calculateMonthlyTotal(grouped);
+        }, {} as Record<string, CalendarDelivery[]>);
+  
+        const total = _(grouped)
+          .values()
+          .flatten()
+          .map((delivery) => delivery.cost || delivery.delivery_cost || 0)
+          .sum();
+  
         setMonthlyTotal(total);
         setDeliveries(grouped);
       } catch (error) {
@@ -274,7 +289,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
         setLoading(false);
       }
     },
-    [searchUrl, filter, calculateMonthlyTotal]
+    [searchUrl, filter]
   );
 
   useEffect(() => {
