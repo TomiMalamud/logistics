@@ -15,13 +15,17 @@ import { useDebounce } from "use-debounce";
 export default function PriceChecker() {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 1000);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
   const {
-    data: productsData,
+    data,
     isLoading,
     isError,
     error
-  } = useProducts(debouncedSearch);
-  const inputRef = useRef<HTMLInputElement>(null);
+  } = useProducts({
+    query: debouncedSearch,
+    includeERP: true // Always search in ERP for price checker
+  });
 
   useEffect(() => {
     if (inputRef.current) {
@@ -78,7 +82,7 @@ export default function PriceChecker() {
         )}
 
         {!isLoading &&
-          productsData?.Items.length === 0 &&
+          data?.erp.length === 0 &&
           debouncedSearch.length >= 4 && (
             <Alert className="mb-4">
               <AlertDescription>
@@ -88,8 +92,8 @@ export default function PriceChecker() {
           )}
 
         {!isLoading &&
-          productsData?.Items.map((product) => (
-            <ProductCard key={product.Id} product={product} />
+          data?.erp.map((product) => (
+            <ProductCard key={product.Codigo} product={product} />
           ))}
       </div>
     </Layout>

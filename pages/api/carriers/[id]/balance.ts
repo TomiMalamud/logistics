@@ -23,17 +23,21 @@ export type BalanceResponse = {
   totalBalance: number;
 };
 
-type DeliveryWithDetails = {
+type OperationWithDetails = {
   id: number;
-  delivery_date: string | null;
-  invoice_number: string | null;
-  delivery_cost: number;
-  type: string;
-  customers: {
-    name: string;
-  } | null;
-  suppliers: {
-    name: string;
+  operation_date: string;
+  cost: number;
+  operation_type: string;
+  deliveries: {
+    id: number;
+    invoice_number: string | null;
+    type: string;
+    customers: {
+      name: string;
+    } | null;
+    suppliers: {
+      name: string;
+    } | null;
   } | null;
 };
 
@@ -67,29 +71,31 @@ export default async function handler(
 
     if (carrierError) throw carrierError;
 
-    // Fetch deliveries with date filter
-    const { data: deliveries, error: deliveriesError } = await supabase
-      .from("deliveries")
-      .select(
-        `
+    // Fetch operations with date filter
+    const { data: operations, error: operationsError } = await supabase
+      .from("delivery_operations")
+      .select(`
         id,
-        delivery_date,
-        invoice_number,
-        delivery_cost,
-        type,
-        customers (
-          name
-        ),
-        suppliers (
-          name
+        operation_date,
+        cost,
+        operation_type,
+        deliveries (
+          id,
+          invoice_number,
+          type,
+          customers (
+            name
+          ),
+          suppliers (
+            name
+          )
         )
-      `
-      )
+      `)
       .eq("carrier_id", id)
-      .gte("delivery_date", filterDate)
-      .order("delivery_date");
+      .gte("operation_date", filterDate)
+      .order("operation_date");
 
-    if (deliveriesError) throw deliveriesError;
+    if (operationsError) throw operationsError;
 
     // Fetch payments with date filter
     const { data: payments, error: paymentsError } = await supabase
@@ -101,34 +107,33 @@ export default async function handler(
 
     if (paymentsError) throw paymentsError;
 
-    // Process deliveries to transactions
-    const deliveryTransactions = (
-      deliveries as unknown as DeliveryWithDetails[]
-    )
-      .filter((d) => d.delivery_date !== null)
-      .map((d) => ({
-        date: d.delivery_date as string,
-        concept:
-          d.type === "store_movement"
+    // Process operations to transactions
+    const operationTransactions = (operations as unknown as OperationWithDetails[])
+      .filter(op => op.operation_type === 'delivery') // Only include delivery operations, not cancellations
+      .map((op) => ({
+        date: op.operation_date,
+        concept: op.deliveries
+          ? op.deliveries.type === "store_movement"
             ? "Movimiento de Mercadería"
-            : d.type === "supplier_pickup"
-            ? `Retiro en ${d.suppliers?.name || "Proveedor sin nombre"}`
-            : d.invoice_number
-            ? `${d.invoice_number} - ${
-                d.customers?.name || "Cliente sin nombre"
+            : op.deliveries.type === "supplier_pickup"
+            ? `Retiro en ${op.deliveries.suppliers?.name || "Proveedor sin nombre"}`
+            : op.deliveries.invoice_number
+            ? `${op.deliveries.invoice_number} - ${
+                op.deliveries.customers?.name || "Cliente sin nombre"
               }`
-            : "Sin factura",
-        debit: d.delivery_cost,
+            : "Sin factura"
+          : "Operación sin entrega",
+        debit: op.cost,
         credit: 0,
         type: "delivery" as const,
-        delivery_id: d.id,
-        delivery_type: d.type as DeliveryType, 
+        delivery_id: op.deliveries?.id,
+        delivery_type: op.deliveries?.type as DeliveryType,
         balance: 0
       }));
 
     // Combine all transactions
     const transactions: Transaction[] = [
-      ...deliveryTransactions,
+      ...operationTransactions,
       ...payments.map((p) => ({
         date: p.payment_date,
         concept: `Pago - ${p.payment_method}${p.notes ? ` - ${p.notes}` : ''}`,

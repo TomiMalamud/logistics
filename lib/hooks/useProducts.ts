@@ -5,7 +5,7 @@ import { Concepto } from '@/types/api';
 
 const supabase = createClient();
 
-interface UseHybridProductsProps {
+interface UseProductsProps {
   query: string;
   includeERP?: boolean;
 }
@@ -45,7 +45,7 @@ async function saveProductToLocal(product: Concepto): Promise<void> {
   if (error) throw error;
 }
 
-export function useProducts({ query, includeERP = false }: UseHybridProductsProps) {
+export function useProducts({ query, includeERP = false }: UseProductsProps) {
   return useQuery({
     queryKey: ['products', query, includeERP],
     queryFn: async () => {
