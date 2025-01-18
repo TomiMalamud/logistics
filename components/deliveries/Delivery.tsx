@@ -209,7 +209,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </div>
         ) : delivery.state === "delivered" ? (
           <div>
-            {latestOperation && (
+            {latestOperation ? (
               <div>
                 <h1 className="font-medium text-black">
                   {delivery.type === "supplier_pickup"
@@ -220,7 +220,19 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   {`El ${formatLongDate(latestOperation.operation_date)}`}
                 </p>
               </div>
-            )}
+            ) : (
+              <div>
+              <h1 className="font-medium text-black">
+                {delivery.type === "supplier_pickup" ? "Retirado" : "Entregado"}
+              </h1>
+              <p className="text-sm mt-1 text-slate-500">
+                {delivery.delivery_date &&
+                  `El ${formatLongDate(delivery.delivery_date)}`}
+              </p>
+            </div>
+  
+            )
+          }
           </div>
         ) : delivery.scheduled_date ? (
           <div>
