@@ -43,6 +43,7 @@ interface CalendarDelivery {
   };
   items: Array<{
     quantity: number;
+    pending_quantity: number;
     name: string;
   }>;
   created_by?: {
@@ -138,6 +139,13 @@ export const DraggableDeliveryItem = ({
                 {delivery.items.map((item, index) => (
                   <div key={index}>
                     {item.quantity}x {titleCase(item.name.toLowerCase())}
+                    {delivery.type === "pending" &&
+                      item.pending_quantity > 0 && (
+                        <span className="text-amber-600">
+                          {" "}
+                          (Pendiente: {item.pending_quantity})
+                        </span>
+                      )}
                   </div>
                 ))}
               </div>
@@ -161,7 +169,7 @@ export const DraggableDeliveryItem = ({
               <p>Retiró en {getStoreLabel(delivery.pickup_store)}</p>
             )}
           </div>
-        </TooltipContent>
+        </TooltipContent>{" "}
       </Tooltip>
     </TooltipProvider>
   );

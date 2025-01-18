@@ -3,12 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
 import { FINANCING_OPTIONS } from "@/utils/constants";
-import { DialogDescription } from "@radix-ui/react-dialog";
 import { Plus } from "lucide-react";
 
 const calculateInstallment = (price: number, months: number, discount = 0) => {

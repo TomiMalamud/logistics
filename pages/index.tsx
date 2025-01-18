@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectLabel,
   SelectTrigger,
@@ -19,7 +20,6 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCarriers } from "@/lib/hooks/useCarriers";
 import { createClient } from "@/utils/supabase/server-props";
-import { SelectGroup } from "@radix-ui/react-select";
 import type { User } from "@supabase/supabase-js";
 import {
   Calendar,
@@ -58,7 +58,6 @@ const DEFAULT_FILTERS = {
   search: "",
   scheduledDate: "all",
   type: "all",
-  carrier: "all"
 };
 
 export default function Index({ profile }: IndexProps) {
@@ -73,7 +72,6 @@ export default function Index({ profile }: IndexProps) {
       scheduledDate:
         (router.query.scheduledDate as string) ?? DEFAULT_FILTERS.scheduledDate,
       type: (router.query.type as string) ?? DEFAULT_FILTERS.type,
-      carrier: (router.query.carrier as string) ?? DEFAULT_FILTERS.carrier
     }),
     [router.query]
   );
@@ -104,13 +102,6 @@ export default function Index({ profile }: IndexProps) {
       );
     },
     [router]
-  );
-
-  const handleCarrierChange = useCallback(
-    (value: string) => {
-      updateFilters({ carrier: value });
-    },
-    [updateFilters]
   );
 
   // Handlers for filter changes
@@ -179,7 +170,7 @@ export default function Index({ profile }: IndexProps) {
     });
     return `/api/deliveries?${params.toString()}`;
   }, [currentFilters]);
-  
+
   const {
     carriers,
     isLoading: isLoadingCarriers,
@@ -296,46 +287,6 @@ export default function Index({ profile }: IndexProps) {
                 />
               </div>
 
-              {/* Carrier Filter */}
-              <div className="w-auto hidden sm:flex">
-                <Select
-                  value={currentFilters.carrier}
-                  onValueChange={handleCarrierChange}
-                  onOpenChange={(open) => {
-                    if (open) {
-                      fetchCarriers();
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    aria-label="Filter Carrier"
-                    className="bg-white text-black"
-                  >
-                    <SelectValue placeholder="Filtrar por transporte" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Transporte</SelectLabel>
-                      <SelectItem value="all">Transporte</SelectItem>
-                      {isLoadingCarriers ? (
-                        <SelectItem value="loading" disabled>
-                          Cargando...
-                        </SelectItem>
-                      ) : (
-                        carriers.map((carrier) => (
-                          <SelectItem
-                            key={carrier.id}
-                            value={carrier.id.toString()}
-                          >
-                            {carrier.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Delivery Type Filter */}
               <div className="w-auto hidden sm:flex">
                 <Select
@@ -425,10 +376,6 @@ export default function Index({ profile }: IndexProps) {
       searchInput,
       currentFilters,
       data,
-      carriers,
-      isLoadingCarriers,
-      fetchCarriers,
-      handleCarrierChange,
       handleTabChange,
       handleScheduledDateChange,
       handleDeliveryTypeChange,

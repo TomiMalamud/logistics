@@ -31,6 +31,7 @@ interface PendingDelivery {
   } | null;
   delivery_items: {
     quantity: number;
+    pending_quantity: number;
     products: {
       name: string;
     };
@@ -101,6 +102,7 @@ const getPendingDeliveriesQuery = () => `
   ),
   delivery_items (
     quantity,
+    pending_quantity,
     products (
       name
     )
@@ -192,6 +194,7 @@ export default async function handler(
       created_by: delivery.created_by,
       items: delivery.delivery_items?.map(item => ({
         quantity: item.quantity,
+        pending_quantity: item.pending_quantity,
         name: item.products.name
       })) || (delivery.products ? JSON.parse(delivery.products).map((p: Product) => ({
         quantity: p.quantity || 1,

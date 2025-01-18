@@ -241,7 +241,7 @@ export default function StateDialog({
         <DialogHeader className="mb-2">
           <DialogTitle>Marcar como Entregada</DialogTitle>
           <DialogDescription>
-            Seleccioná el tipo de entrega y productos entregados o retirados
+            Seleccioná el tipo de entrega y productos entregados o retirados. Para el remito, ingresá la cantidad de productos a entregar y tocá Descargar Remito
           </DialogDescription>
         </DialogHeader>
 

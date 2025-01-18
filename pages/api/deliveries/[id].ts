@@ -177,11 +177,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== "PUT") {
-    res.setHeader("Allow", ["PUT"]);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
-
   const supabase = createClient(req, res);
   const {
     data: { user },
@@ -193,113 +188,177 @@ export default async function handler(
   }
 
   const { id } = req.query;
-  const {
-    state,
-    scheduled_date,
-    delivery_cost,
-    carrier_id,
-    pickup_store,
-    items
-  } = req.body as UpdateDeliveryBody;
 
-  if (!id) {
-    return res.status(400).json({ error: "Missing delivery ID" });
-  }
+  if (req.method === "GET") {
+    const {
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser();
 
-  try {
-    // Fetch existing delivery
-    const { data: delivery, error: fetchError } = await supabase
-      .from("deliveries")
-      .select(
+    if (authError || !user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { data: delivery, error } = await supabase
+        .from("deliveries")
+        .select(
+          `
+          *,
+          customers ( name, address, phone ),
+          notes ( id, text, created_at ),
+          created_by:profiles ( email, name ),
+          suppliers ( name ),
+          delivery_items (
+            product_sku,
+            quantity,
+            pending_quantity,
+            products ( name )
+          ),
+          operations:delivery_operations (
+            id,
+            carrier_id,
+            carriers (name),
+            cost,
+            operation_date,
+            created_at,
+            created_by,
+            pickup_store,
+            operation_type,
+            operation_items (
+              product_sku,
+              quantity,
+              products (name)
+            )
+          )
         `
-        *,
-        customers (name, email, address, phone),
-        suppliers (name),
-        created_by (email, name)
-      `
-      )
-      .eq("id", id)
-      .single();
+        )
+        .eq("id", id)
+        .single();
 
-    if (fetchError)
-      throw new Error(`Error fetching delivery: ${fetchError.message}`);
-    if (!delivery) return res.status(404).json({ error: "Delivery not found" });
+      if (error) throw error;
+      if (!delivery)
+        return res.status(404).json({ error: "Delivery not found" });
 
-    // Validate items if present
-    if (items?.length) {
-      await validateDeliveryItems(supabase, parseInt(id as string), items);
+      return res.status(200).json(delivery);
+    } catch (error: any) {
+      console.error("Error fetching delivery:", error);
+      return res.status(500).json({ error: "Failed to fetch delivery" });
+    }
+  }
+  if (req.method == "PUT") {
+    const {
+      state,
+      scheduled_date,
+      delivery_cost,
+      carrier_id,
+      pickup_store,
+      items
+    } = req.body as UpdateDeliveryBody;
+
+    if (!id) {
+      return res.status(400).json({ error: "Missing delivery ID" });
     }
 
-    // Record operation if state is changing
-    let finalState = state;
-    // In the PUT handler of [id].ts
-    if (state && state !== delivery.state) {
-      try {
-        const isFullyDelivered = await recordOperation(
-          supabase,
-          parseInt(id as string),
-          user.id,
-          state === "cancelled" ? "cancellation" : "delivery",
-          carrier_id || undefined,
-          delivery_cost || undefined,
-          pickup_store || undefined,
-          items
-        );
+    try {
+      // Fetch existing delivery
+      const { data: delivery, error: fetchError } = await supabase
+        .from("deliveries")
+        .select(
+          `
+          *,
+          customers (name, email, address, phone),
+          suppliers (name),
+          created_by (email, name)
+        `
+        )
+        .eq("id", id)
+        .single();
 
-        // Only allow delivered state if all items are delivered
-        if (state === "delivered" && !isFullyDelivered) {
-          finalState = "pending";
-        }
-      } catch (error: any) {
-        if (error.message.includes("delivery operations")) {
-          return res.status(400).json({
-            error:
-              "Invalid delivery operation: Either provide a pickup store or both carrier and cost"
-          });
-        }
-        throw error;
+      if (fetchError)
+        throw new Error(`Error fetching delivery: ${fetchError.message}`);
+      if (!delivery)
+        return res.status(404).json({ error: "Delivery not found" });
+
+      // Validate items if present
+      if (items?.length) {
+        await validateDeliveryItems(supabase, parseInt(id as string), items);
       }
-    }
-    // Update delivery
-    const updates = {
-      ...(finalState && {
-        state: finalState,
-        ...(finalState === "delivered" && {
-          delivery_date: new Date().toLocaleString("en-US", {
-            timeZone: "America/Argentina/Buenos_Aires"
+
+      // Record operation if state is changing
+      let finalState = state;
+      // In the PUT handler of [id].ts
+      if (state && state !== delivery.state) {
+        try {
+          const isFullyDelivered = await recordOperation(
+            supabase,
+            parseInt(id as string),
+            user.id,
+            state === "cancelled" ? "cancellation" : "delivery",
+            carrier_id || undefined,
+            delivery_cost || undefined,
+            pickup_store || undefined,
+            items
+          );
+
+          // Only allow delivered state if all items are delivered
+          if (state === "delivered" && !isFullyDelivered) {
+            finalState = "pending";
+          }
+        } catch (error: any) {
+          if (error.message.includes("delivery operations")) {
+            return res.status(400).json({
+              error:
+                "Invalid delivery operation: Either provide a pickup store or both carrier and cost"
+            });
+          }
+          throw error;
+        }
+      }
+      // Update delivery
+      const updates = {
+        ...(finalState && {
+          state: finalState,
+          ...(finalState === "delivered" && {
+            delivery_date: new Date().toLocaleString("en-US", {
+              timeZone: "America/Argentina/Buenos_Aires"
+            })
+          }),
+          ...(finalState === "cancelled" && {
+            delivery_date: null,
+            delivery_cost: null,
+            carrier_id: null,
+            pickup_store: null,
+            scheduled_date: null
           })
         }),
-        ...(finalState === "cancelled" && {
-          delivery_date: null,
-          delivery_cost: null,
-          carrier_id: null,
-          pickup_store: null,
-          scheduled_date: null
-        })
-      }),
-      ...(scheduled_date && { scheduled_date }),
-      ...(delivery_cost && { delivery_cost }),
-      ...(carrier_id && { carrier_id }),
-      ...(pickup_store && { pickup_store })
-    };
+        ...(scheduled_date && { scheduled_date }),
+        ...(delivery_cost && { delivery_cost }),
+        ...(carrier_id && { carrier_id }),
+        ...(pickup_store && { pickup_store })
+      };
 
-    const { error: updateError } = await supabase
-      .from("deliveries")
-      .update(updates)
-      .eq("id", id);
+      const { error: updateError } = await supabase
+        .from("deliveries")
+        .update(updates)
+        .eq("id", id);
 
-    if (updateError) {
-      throw new Error(`Error updating delivery: ${updateError.message}`);
+      if (updateError) {
+        throw new Error(`Error updating delivery: ${updateError.message}`);
+      }
+
+      // Handle notifications for completed deliveries
+      if (finalState === "delivered" && finalState !== delivery.state) {
+        await handleEmailNotifications(delivery);
+      }
+
+      return res.status(200).json({ message: "Delivery updated successfully" });
+    } catch (error: any) {
+      console.error("Unexpected error: ", error);
+      return res.status(400).json({ error: error.message });
     }
-
-    // Handle notifications for completed deliveries
-    if (finalState === "delivered" && finalState !== delivery.state) {
-      await handleEmailNotifications(delivery);
-    }
-
-    return res.status(200).json({ message: "Delivery updated successfully" });
-  } catch (error: any) {
-    console.error("Unexpected error: ", error);
-    return res.status(400).json({ error: error.message });
   }
+
+  res.setHeader("Allow", ["GET", "PUT"]);
+  return res.status(405).end(`Method ${req.method} Not Allowed`);
 }
