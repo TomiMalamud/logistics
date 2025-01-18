@@ -84,17 +84,17 @@ export interface SearchComprobanteResponse {
   TotalItems: number;
 }
 
-export interface Product {
+export interface Concepto {
   Id: string;
   Codigo: string;
   Nombre: string;
-  Estado: string;
-  PrecioFinal: number;
-  Stock: number;
+  Estado?: string;
+  PrecioFinal?: number;
+  Stock?: number;
 }
 
 export interface SearchProductsResponse {
-  Items: Product[];
+  Items: Concepto[];
   TotalItems: number;
   TotalPage: number;
 }

@@ -1,4 +1,4 @@
-import { Product } from "@/types/api";
+import { Concepto } from "@/types/api";
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import FinancingOptions from "./FinancingOptions";
 import { CASH_DISCOUNT } from "@/utils/constants";
 
 interface ProductCardProps {
-  product: Product;
+  product: Concepto;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {

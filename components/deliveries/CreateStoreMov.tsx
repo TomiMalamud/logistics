@@ -119,7 +119,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="mx-auto w-full">
       <form onSubmit={handleSubmit}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="">Movimiento entre Locales</CardTitle>

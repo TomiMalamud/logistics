@@ -2,7 +2,7 @@
 
 import {
   TokenResponse,
-  Product,
+  Concepto,
   Customer,
   Comprobante,
   SearchComprobanteResponse
@@ -264,7 +264,7 @@ export const getComprobanteById = async (id: number): Promise<Comprobante> => {
 };
 
 export interface SearchProductsResponse {
-  Items: Product[];
+  Items: Concepto[];
   TotalItems: number;
   TotalPage: number;
 }

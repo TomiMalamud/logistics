@@ -176,7 +176,7 @@ export default function CreatePickup({ user }: Props) {
   };
 
   return (
-    <Card className="w-full md:w-[540px]">
+    <Card className="mx-auto w-full md:w-[540px]">
       <CardHeader>
         <CardTitle>Nuevo Retiro de Proveedor</CardTitle>
       </CardHeader>

@@ -1,33 +1,72 @@
 import { useQuery } from '@tanstack/react-query';
-import { SearchProductsResponse, APIError } from '@/lib/api';
+import { createClient } from '@/utils/supabase/component';
+import { Product } from '@/types/types';
+import { Concepto } from '@/types/api';
 
-const PRODUCTS_CACHE_KEY = 'products';
+const supabase = createClient();
 
-async function fetchProducts(query: string): Promise<SearchProductsResponse> {
-  if (!query || query.length < 4) {
-    return { Items: [], TotalItems: 0, TotalPage: 0 };
-  }
-
-  const response = await fetch(`/api/search-products?query=${encodeURIComponent(query)}`);
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new APIError(error.message || 'Failed to fetch products', response.status);
-  }
-
-  return response.json();
+interface UseHybridProductsProps {
+  query: string;
+  includeERP?: boolean;
 }
 
-export function useProducts(query: string) {
+async function searchLocalProducts(query: string): Promise<Product[]> {
+  if (query.length < 3) return [];
+  
+  const { data, error } = await supabase
+    .from('products')
+    .select('sku, name')
+    .or(`name.ilike.%${query}%,sku.ilike.%${query}%`)
+    .order('name')
+    .limit(10);
+
+  if (error) throw error;
+  return data;
+}
+
+async function searchERPProducts(query: string): Promise<Concepto[]> {
+  if (query.length < 4) return [];
+  
+  const response = await fetch(`/api/search-products?query=${encodeURIComponent(query)}`);
+  if (!response.ok) throw new Error('Failed to fetch ERP products');
+  
+  const data = await response.json();
+  return data.Items;
+}
+
+async function saveProductToLocal(product: Concepto): Promise<void> {
+  const { error } = await supabase
+    .from('products')
+    .upsert({
+      sku: product.Codigo,
+      name: product.Nombre
+    });
+
+  if (error) throw error;
+}
+
+export function useProducts({ query, includeERP = false }: UseHybridProductsProps) {
   return useQuery({
-    queryKey: [PRODUCTS_CACHE_KEY, query],
-    queryFn: () => fetchProducts(query),
-    enabled: query.length >= 4,
-    select: (data) => ({
-      ...data,
-      Items: data.Items.filter(product => 
-        product.Estado === 'Activo' && product.PrecioFinal >0 && product.Nombre !== '-'
-      )
-    }),
+    queryKey: ['products', query, includeERP],
+    queryFn: async () => {
+      const localProducts = await searchLocalProducts(query);
+      
+      if (!includeERP) {
+        return { local: localProducts, erp: [] };
+      }
+
+      const erpProducts = await searchERPProducts(query);
+      
+      // Save ERP products to local DB
+      await Promise.all(
+        erpProducts.map(product => saveProductToLocal(product))
+      );
+
+      return {
+        local: localProducts,
+        erp: erpProducts
+      };
+    },
+    enabled: query.length >= 3
   });
 }

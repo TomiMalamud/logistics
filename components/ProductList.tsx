@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { useProducts } from "@/lib/hooks/useProducts";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader, X } from "lucide-react";
+import { Check, ChevronsUpDown, Loader, Search, X } from "lucide-react";
 import { useState } from "react";
 import { titleCase } from "title-case";
 import { useDebouncedCallback } from "use-debounce";
@@ -49,11 +49,15 @@ const FormField = ({ label, children, error }: FormFieldProps) => (
 );
 
 export const ProductList = ({ products, onChange }: ProductListProps) => {
-  const [search, setSearch] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const { data: productsData, isLoading: isLoadingProducts } =
-    useProducts(searchQuery);
+  const [search, setSearch] = useState("");
+  const [includeERP, setIncludeERP] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+
+  const { data, isLoading } = useProducts({
+    query: search,
+    includeERP
+  });
 
   const [currentProduct, setCurrentProduct] = useState<ProductItem>({
     id: "",
@@ -63,22 +67,34 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
   });
 
   const debouncedSearch = useDebouncedCallback(
-    (value: string) => setSearchQuery(value),
+    (value: string) => setSearch(value),
     500
   );
 
   const handleSearch = (value: string) => {
-    setSearch(value);
+    setInputValue(value);
     debouncedSearch(value);
   };
 
   const handleProductSelect = (product: any) => {
-    setCurrentProduct((prev) => ({
-      ...prev,
-      id: product.Id,
-      sku: product.Codigo,
-      name: titleCase(product.Nombre.toLowerCase())
-    }));
+    // If it's a local product (has lowercase properties)
+    if ("sku" in product) {
+      setCurrentProduct((prev) => ({
+        ...prev,
+        id: product.sku,
+        sku: product.sku,
+        name: titleCase(product.name.toLowerCase())
+      }));
+    }
+    // If it's an ERP product (has uppercase properties)
+    else {
+      setCurrentProduct((prev) => ({
+        ...prev,
+        id: product.Id || product.Codigo, // Some ERP responses might use different fields
+        sku: product.Codigo,
+        name: titleCase(product.Nombre.toLowerCase())
+      }));
+    }
     setOpen(false);
   };
 
@@ -106,7 +122,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
                   role="combobox"
                   aria-expanded={open}
                   className="w-full justify-between font-normal"
-                  disabled={isLoadingProducts}
+                  disabled={isLoading}
                 >
                   {currentProduct.id
                     ? currentProduct.name
@@ -119,42 +135,86 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
                   <div className="flex items-center border-b px-3">
                     <CommandInput
                       placeholder="Buscar producto..."
-                      value={search}
+                      value={inputValue}
                       onValueChange={handleSearch}
                     />
                   </div>
                   <CommandList>
                     {search === "" ? (
-                      <CommandEmpty className="py-6 text-center text-sm">
-                        Escribí para buscar productos
-                      </CommandEmpty>
-                    ) : isLoadingProducts ? (
+                      <CommandEmpty>Escribí para buscar productos</CommandEmpty>
+                    ) : isLoading ? (
                       <Loader size={16} className="m-4 mx-auto animate-spin" />
-                    ) : !productsData?.Items?.length ? (
-                      <CommandEmpty>No se encontraron productos</CommandEmpty>
                     ) : (
-                      <CommandGroup>
-                        {productsData.Items.map((product) => (
-                          <CommandItem
-                            key={product.Id}
-                            value={titleCase(product.Nombre.toLowerCase())}
-                            onSelect={() => handleProductSelect(product)}
+                      <>
+                        {/* Local Results */}
+                        {data?.local.length > 0 && (
+                          <CommandGroup heading="Productos de la app">
+                            {data.local.map((product) => (
+                              <CommandItem
+                                key={product.sku}
+                                value={product.name}
+                                onSelect={() => handleProductSelect(product)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    currentProduct.sku === product.sku
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <span className="text-sm text-gray-500 mr-2">
+                                  {product.sku}
+                                </span>
+                                {titleCase(product.name.toLowerCase())}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
+
+                        {/* Search in ERP Button */}
+                        {!includeERP && (
+                          <Button
+                            variant="ghost"
+                            className="w-full h-10 justify-start px-2"
+                            onClick={() => setIncludeERP(true)}
                           >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                currentProduct.id === product.Id
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            <span className="text-sm text-gray-500 mr-2">
-                              {product.Codigo}
-                            </span>
-                            {titleCase(product.Nombre.toLowerCase())}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
+                            <Search className="mr-2 h-4 w-4" />
+                            Buscar en ERP
+                          </Button>
+                        )}
+
+                        {/* ERP Results */}
+                        {includeERP && data?.erp.length > 0 && (
+                          <CommandGroup heading="Productos ERP">
+                            {data.erp.map((product) => (
+                              <CommandItem
+                                key={product.Codigo}
+                                value={product.Nombre}
+                                onSelect={() =>
+                                  handleProductSelect({
+                                    sku: product.Codigo,
+                                    name: product.Nombre
+                                  })
+                                }
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    currentProduct.sku === product.Codigo
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <span className="text-sm text-gray-500 mr-2">
+                                  {product.Codigo}
+                                </span>
+                                {titleCase(product.Nombre.toLowerCase())}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
+                      </>
                     )}
                   </CommandList>
                 </Command>
@@ -198,9 +258,9 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
               className="flex group items-center justify-between p-2 bg-gray-50 min-h-12 rounded-md"
             >
               <div className="space-x-2 flex-1">
-                <span className="text-sm text-gray-500">{product.sku}</span>
+                <span className="mx-2 font-bold">{product.quantity}</span>
                 <span className="text-gray-900">{product.name}</span>
-                <span className="ml-2 text-gray-500">{product.quantity}</span>
+                <span className="text-sm text-gray-500">{product.sku}</span>
               </div>
               <Button
                 size="icon"
