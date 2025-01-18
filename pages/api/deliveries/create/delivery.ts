@@ -1,7 +1,7 @@
 // pages//api/deliveries/create/delivery.ts
-import { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/lib/supabase";
 import { createOrUpdateContact, formatPerfitContact } from "@/lib/perfit";
+import { supabase } from "@/lib/supabase";
+import { NextApiRequest, NextApiResponse } from "next";
 import { titleCase } from "title-case";
 
 interface DeliveryRequest {
@@ -131,7 +131,6 @@ export default async function handler(
       .insert([
         {
           order_date,
-          products: JSON.stringify(products),
           customer_id,
           state: "pending",
           scheduled_date: scheduled_date || null,
@@ -152,11 +151,11 @@ export default async function handler(
       throw new Error("Delivery creation failed");
     }
 
-    const deliveryItems = products.map(product => ({
+    const deliveryItems = products.map((product) => ({
       delivery_id: deliveryData.id,
       product_sku: product.sku,
       quantity: product.quantity,
-      pending_quantity: product.quantity // Initially same as quantity
+      pending_quantity: product.quantity
     }));
 
     const { error: itemsError } = await supabase
@@ -166,8 +165,6 @@ export default async function handler(
     if (itemsError) {
       throw new Error(`Error creating delivery items: ${itemsError.message}`);
     }
-
-
 
     // Handle notes if provided
     if (notes?.trim()) {

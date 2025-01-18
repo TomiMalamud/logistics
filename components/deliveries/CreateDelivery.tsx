@@ -16,9 +16,9 @@ import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import Router from "next/router";
 import React, { useState } from "react";
-import CustomerInfo from "./CustomerInfo";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import CustomerInfo from "../CustomerInfo";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 interface CreateProps {
   user: User;

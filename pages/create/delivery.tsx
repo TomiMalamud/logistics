@@ -1,4 +1,4 @@
-import CreateDelivery from "@/components/CreateDelivery";
+import CreateDelivery from "@/components/deliveries/CreateDelivery";
 import Layout from "@/components/Layout";
 import { createClient } from "@/utils/supabase/server-props";
 import type { GetServerSidePropsContext } from "next";

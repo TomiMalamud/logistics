@@ -1,4 +1,4 @@
-import CreateStoreMov from "@/components/CreateStoreMov";
+import CreateStoreMov from "@/components/deliveries/CreateStoreMov";
 import Layout from "@/components/Layout";
 import { createClient } from "@/utils/supabase/server-props";
 import type { GetServerSidePropsContext } from "next";

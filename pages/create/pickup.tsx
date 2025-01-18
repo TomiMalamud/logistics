@@ -1,4 +1,4 @@
-import CreatePickup from "@/components/CreatePickup";
+import CreatePickup from "@/components/deliveries/CreatePickup";
 import Layout from "@/components/Layout";
 import { createClient } from "@/utils/supabase/server-props";
 import type { GetServerSidePropsContext } from "next";

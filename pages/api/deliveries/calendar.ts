@@ -94,20 +94,8 @@ export default async function handler(
 
     // Process deliveries to ensure backward compatibility
     const processDelivery = (delivery: any) => {
-      // If we have delivery_items, convert them to the old products format
-      if (delivery.delivery_items?.length > 0) {
-        delivery.products = delivery.delivery_items.map((item: any) => ({
-          name: item.products?.name || 'Unknown Product',
-          sku: item.product_sku,
-          quantity: item.quantity
-        }));
-      }
-      // If we have neither delivery_items nor products, ensure products is an empty array
-      else if (!delivery.products) {
-        delivery.products = [];
-      }
       // If we have products as a string (jsonb), parse it
-      else if (typeof delivery.products === 'string') {
+      if (typeof delivery.products === 'string') {
         try {
           delivery.products = JSON.parse(delivery.products);
         } catch (e) {
@@ -116,7 +104,8 @@ export default async function handler(
       }
       return delivery;
     };
-
+    
+    
     const allDeliveries = [
       ...(scheduledPending || []).map((d) => ({ ...processDelivery(d), type: "pending" })),
       ...(unscheduledPending || []).map((d) => ({ ...processDelivery(d), type: "pending" })),

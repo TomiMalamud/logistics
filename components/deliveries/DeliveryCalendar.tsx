@@ -106,18 +106,24 @@ export const DraggableDeliveryItem = ({ delivery, onDragEnd, showCosts }) => {
         </TooltipTrigger>
         <TooltipContent>
           <div className="space-y-1 capitalize">
-            <p>
-              {delivery.products && delivery.products.length > 0 && (
-                <div className="space-y-1">
-                  {delivery.products.map((product, index) => (
-                    <div key={index}>
-                      {product.quantity}x{" "}
-                      {titleCase(product.name.toLowerCase())}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </p>
+            {delivery.delivery_items && delivery.delivery_items.length > 0 ? (
+              <div className="space-y-1">
+                {delivery.delivery_items.map((item, index) => (
+                  <div key={index}>
+                    {item.quantity}x{" "}
+                    {titleCase((item.products?.name || "").toLowerCase())}
+                  </div>
+                ))}
+              </div>
+            ) : delivery.products && delivery.products.length > 0 ? (
+              <div className="space-y-1">
+                {delivery.products.map((product, index) => (
+                  <div key={index}>
+                    {product.quantity}x {titleCase(product.name.toLowerCase())}
+                  </div>
+                ))}
+              </div>
+            ) : null}
             <p>📍 {delivery.customers?.address.toLowerCase()}</p>
             <p>📱 {delivery.customers?.phone}</p>
             {showCosts && delivery.delivery_cost && (

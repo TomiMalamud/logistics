@@ -1,4 +1,4 @@
-// components/CreateStoreMov.tsx
+// components/deliveries/CreateStoreMov.tsx
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,7 +21,7 @@ import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { ProductItem, ProductList } from "./ProductList";
+import { ProductItem, ProductList } from "../ProductList";
 
 interface FormFieldProps {
   label?: string;

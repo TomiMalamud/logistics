@@ -42,7 +42,6 @@ export default async function handler(
       .from("deliveries")
       .insert([
         {
-          products,
           supplier_id,
           scheduled_date: scheduled_date || null,
           delivery_cost: delivery_cost || null,
@@ -60,11 +59,27 @@ export default async function handler(
       throw new Error(`Error creating delivery: ${deliveryError.message}`);
     }
 
+    const deliveryItems = products.map((product) => ({
+      delivery_id: delivery.id,
+      product_sku: product.sku,
+      quantity: product.quantity,
+      pending_quantity: product.quantity
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("delivery_items")
+      .insert(deliveryItems);
+
+    if (itemsError) {
+      throw new Error(`Error creating delivery items: ${itemsError.message}`);
+    }
+
     return res.status(200).json(delivery);
   } catch (error) {
     console.error("Error in supplier pickup:", error);
-    return res.status(500).json({ 
-      error: error instanceof Error ? error.message : "An unexpected error occurred" 
+    return res.status(500).json({
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred"
     });
   }
 }

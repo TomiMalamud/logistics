@@ -5,6 +5,8 @@
 /.pnp
 .pnp.js
 
+.vscode
+
 # testing
 /coverage
 
@@ -39,7 +41,3 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-
-nota.csv
-backup.tar
-entregas.csv
