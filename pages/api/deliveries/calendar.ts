@@ -7,6 +7,8 @@ type FeedResponse = {
   feed: CalendarItem[];
   totalItems: number;
   unscheduledCount: number;
+  dailyCosts: Record<string, number>;
+  totalCost: number;
 };
 
 type ErrorResponse = {
@@ -78,10 +80,9 @@ interface CalendarItem {
   created_by?: {
     name: string | null;
   } | null;
-  delivery_cost?: number | null;
-  cost?: number | null;
   carrier?: string | null;
   pickup_store?: string | null;
+  operation_cost?: number | null;
 }
 
 const getPendingDeliveriesQuery = () => `
@@ -195,10 +196,9 @@ export default async function handler(
       })) || (delivery.products ? JSON.parse(delivery.products).map((p: Product) => ({
         quantity: p.quantity || 1,
         name: p.name
-      })) : []),
-      delivery_cost: delivery.delivery_cost
+      })) : [])
     }));
-
+    
     // Process operations
     const processedOperations: CalendarItem[] = (operations || []).map(operation => ({
       id: operation.id,
@@ -213,15 +213,28 @@ export default async function handler(
         quantity: item.quantity,
         name: item.products.name
       })) || [],
-      cost: operation.cost,
+      operation_cost: operation.cost,
       carrier: operation.carriers?.name || null,
       pickup_store: operation.pickup_store
     }));
-
+    const calculateDailyCosts = (operations: DeliveryOperation[]) => {
+      return operations?.reduce((acc, operation) => {
+        const date = operation.operation_date.split('T')[0];
+        acc[date] = (acc[date] || 0) + (operation.cost || 0);
+        return acc;
+      }, {} as Record<string, number>) || {};
+    };
+    
+    // In the handler function, before returning:
+    const dailyCosts = calculateDailyCosts(operations || []);
+    const totalCost = Object.values(dailyCosts).reduce((sum, cost) => sum + cost, 0);
+        
     return res.status(200).json({
       feed: [...processedPending, ...processedOperations],
       totalItems: (scheduledPending?.length || 0) + (operations?.length || 0),
-      unscheduledCount: unscheduledCount || 0
+      unscheduledCount: unscheduledCount || 0,
+      dailyCosts,
+      totalCost    
     });
 
   } catch (err) {

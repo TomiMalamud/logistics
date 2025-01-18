@@ -32,7 +32,6 @@ import Balance from "./Balance";
 import CancelDialog from "./CancelAlertDialog";
 import { DeliveryOperationsDialog } from "./DeliveryOperationsDialog";
 import NotesDialog from "./NotesDialog";
-import { RemitoDownload } from "./RemitoDownload";
 import ScheduledDateDialog from "./ScheduledDateDialog";
 import StateDialog from "./StateDialog";
 
@@ -305,7 +304,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 isConfirming={deliveryLogic.isConfirming}
                 deliveryItems={delivery.delivery_items}
                 delivery={delivery}
-                customer={delivery.customers}              
+                customer={delivery.customers}
               />
             </div>
           )}

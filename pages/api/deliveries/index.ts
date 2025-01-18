@@ -77,38 +77,109 @@ async function buildDeliveryQuery(
   const start = (Number(page) - 1) * Number(pageSize);
   const end = start + Number(pageSize) - 1;
 
+  // For delivered state, we'll first get the max operation id for each delivery
+  if (state === "delivered") {
+    const deliveriesQuery = supabase
+      .from("deliveries")
+      .select(
+        `
+        *,
+        customers ( name, address, phone ),
+        notes ( id, text, created_at ),
+        created_by:profiles ( email, name ),
+        suppliers ( name ),
+        delivery_items (
+          product_sku,
+          quantity,
+          pending_quantity,
+          products ( name )
+        ),
+        operations:delivery_operations (
+          id,
+          carrier_id,
+          carriers (name),
+          cost,
+          operation_date,
+          created_at,
+          created_by,
+          pickup_store,
+          operation_type,
+          operation_items (
+            product_sku,
+            quantity,
+            products (name)
+          )
+        )
+      `,
+        { count: "exact" }
+      )
+      .eq("state", state);
+
+    // Apply standard filters
+    if (userRole === "sales") {
+      deliveriesQuery.eq("created_by", userId);
+    }
+
+    if (type && type !== "all") {
+      deliveriesQuery.eq("type", type);
+    }
+
+    if (carrier && carrier !== "all") {
+      deliveriesQuery.eq("carrier_id", carrier);
+    }
+
+    if (customerIds) {
+      deliveriesQuery.in(
+        "customer_id",
+        customerIds.map((c) => c.id)
+      );
+    }
+
+    if (scheduledDate === "hasDate") {
+      deliveriesQuery.not("scheduled_date", "is", null);
+    } else if (scheduledDate === "noDate") {
+      deliveriesQuery.is("scheduled_date", null);
+    }
+
+    // Order by the latest operation id by using a subquery
+    return deliveriesQuery
+      .order("id", { ascending: false })
+      .range(start, end);
+  }
+
+  // For other states, use the original query structure
   let query = supabase
     .from("deliveries")
     .select(
       `
-    *,
-    customers ( name, address, phone ),
-    notes ( id, text, created_at ),
-    created_by:profiles ( email, name ),
-    suppliers ( name ),
-    delivery_items (
-      product_sku,
-      quantity,
-      pending_quantity,
-      products ( name )
-    ),
-    operations:delivery_operations (
-      id,
-      carrier_id,
-      carriers (name),
-      cost,
-      operation_date,
-      created_at,
-      created_by,
-      pickup_store,
-      operation_type,
-      operation_items (
+      *,
+      customers ( name, address, phone ),
+      notes ( id, text, created_at ),
+      created_by:profiles ( email, name ),
+      suppliers ( name ),
+      delivery_items (
         product_sku,
         quantity,
-        products (name)
+        pending_quantity,
+        products ( name )
+      ),
+      operations:delivery_operations (
+        id,
+        carrier_id,
+        carriers (name),
+        cost,
+        operation_date,
+        created_at,
+        created_by,
+        pickup_store,
+        operation_type,
+        operation_items (
+          product_sku,
+          quantity,
+          products (name)
+        )
       )
-    )
-  `,
+    `,
       { count: "exact" }
     )
     .eq("state", state);
@@ -122,7 +193,6 @@ async function buildDeliveryQuery(
     query = query.eq("type", type);
   }
 
-  // Add carrier filter
   if (carrier && carrier !== "all") {
     query = query.eq("carrier_id", carrier);
   }
@@ -140,7 +210,7 @@ async function buildDeliveryQuery(
     query = query.is("scheduled_date", null);
   }
 
-  // Apply sorting
+  // Apply appropriate sorting
   if (state === "pending") {
     query = query
       .order("scheduled_date", { ascending: true, nullsFirst: false })

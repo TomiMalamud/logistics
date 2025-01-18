@@ -7,13 +7,6 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -24,7 +17,6 @@ import {
 import { useDeliveryBalance } from "@/lib/hooks/useDeliveryBalance";
 import { useRole } from "@/lib/hooks/useRole";
 import { PICKUP_STORES } from "@/utils/constants";
-import _ from "lodash";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
@@ -56,29 +48,32 @@ interface CalendarDelivery {
   created_by?: {
     name: string | null;
   } | null;
-  delivery_cost?: number | null;
+  operation_cost?: number | null;
   cost?: number | null;
   carrier?: string | null;
   pickup_store?: string | null;
-  invoice_id?: number | null;  
+  invoice_id?: number | null;
 }
 
 interface CalendarResponse {
   feed: CalendarDelivery[];
   totalItems: number;
   unscheduledCount: number;
+  dailyCosts: Record<string, number>;
+  totalCost: number;
 }
+
 const getStoreLabel = (storeValue: string) => {
   const store = PICKUP_STORES.find((store) => store.value === storeValue);
   return store ? store.label : storeValue;
 };
 
-export const DraggableDeliveryItem = ({ 
-  delivery, 
-  onDragEnd, 
-  showCosts 
-}: { 
-  delivery: CalendarDelivery; 
+export const DraggableDeliveryItem = ({
+  delivery,
+  onDragEnd,
+  showCosts
+}: {
+  delivery: CalendarDelivery;
   onDragEnd: (id: number, date: string) => void;
   showCosts: boolean;
 }) => {
@@ -128,7 +123,9 @@ export const DraggableDeliveryItem = ({
               {delivery.customer.name.toLowerCase()}
             </div>
             {hasBalance && delivery.type === "pending" && (
-              <div className={`text-red-600 ${isRefreshing ? "opacity-50" : ""}`}>
+              <div
+                className={`text-red-600 ${isRefreshing ? "opacity-50" : ""}`}
+              >
                 Saldo $ {balance}
               </div>
             )}
@@ -147,11 +144,11 @@ export const DraggableDeliveryItem = ({
             )}
             <p>📍 {delivery.customer.address.toLowerCase()}</p>
             <p>📱 {delivery.customer.phone}</p>
-            {showCosts && (delivery.cost || delivery.delivery_cost) && (
+            {showCosts && delivery.operation_cost && (
               <>
                 <p>
                   💲{" "}
-                  {(delivery.cost || delivery.delivery_cost || 0).toLocaleString("es-AR", {
+                  {delivery.operation_cost.toLocaleString("es-AR", {
                     maximumFractionDigits: 0
                   })}{" "}
                 </p>
@@ -201,19 +198,13 @@ const DeliveryCalendar = ({ searchUrl }) => {
   const [unscheduledCount, setUnscheduledCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const [monthlyTotal, setMonthlyTotal] = useState(0);
   const { role } = useRole();
   const showCosts = role === "admin";
-  const [deliveries, setDeliveries] = useState<Record<string, CalendarDelivery[]>>({});
-
-  // Calculate monthly total from deliveries
-  const calculateMonthlyTotal = useCallback((deliveriesData) => {
-    return _(deliveriesData)
-      .values()
-      .flatten()
-      .map((delivery) => delivery.delivery_cost || 0)
-      .sum();
-  }, []);
+  const [deliveries, setDeliveries] = useState<
+    Record<string, CalendarDelivery[]>
+  >({});
+  const [dailyCosts, setDailyCosts] = useState<Record<string, number>>({});
+  const [totalCost, setTotalCost] = useState(0);
 
   const handleDeliveryDragEnd = async (deliveryId, newDate) => {
     try {
@@ -239,34 +230,31 @@ const DeliveryCalendar = ({ searchUrl }) => {
     }
   };
 
-  // Helper function to get normalized date string (YYYY-MM-DD)
-  const getNormalizedDate = (date) => {
-    return date.split("T")[0];
-  };
-
   const fetchMonthDeliveries = useCallback(
     async (month) => {
       setLoading(true);
       try {
         const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
         const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-  
+
         const response = await fetch(
           `${searchUrl}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
         );
-  
+
         if (!response.ok) throw new Error("Failed to fetch deliveries");
-  
+
         const data: CalendarResponse = await response.json();
-  
+
         setUnscheduledCount(data.unscheduledCount);
-  
+        setDailyCosts(data.dailyCosts);
+        setTotalCost(data.totalCost);
+
         // Filter deliveries based on selected type
         const filteredDeliveries = data.feed.filter((delivery) => {
           if (filter === "all") return true;
           return delivery.type === filter;
         });
-  
+
         // Group filtered deliveries by date
         const grouped = filteredDeliveries.reduce((acc, delivery) => {
           const normalizedDate = delivery.display_date.split("T")[0];
@@ -274,14 +262,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
           acc[normalizedDate].push(delivery);
           return acc;
         }, {} as Record<string, CalendarDelivery[]>);
-  
-        const total = _(grouped)
-          .values()
-          .flatten()
-          .map((delivery) => delivery.cost || delivery.delivery_cost || 0)
-          .sum();
-  
-        setMonthlyTotal(total);
+
         setDeliveries(grouped);
       } catch (error) {
         console.error("Error fetching deliveries:", error);
@@ -319,13 +300,11 @@ const DeliveryCalendar = ({ searchUrl }) => {
     const today = new Date().toISOString().split("T")[0];
     const cellDate = currentDate.toISOString().split("T")[0];
     const isToday = today === cellDate;
-    const totalCost = dayDeliveries
-      .map((delivery) => delivery.delivery_cost || 0)
-      .reduce((sum, cost) => sum + cost, 0);
+    const dayCost = dailyCosts[dateStr] || 0;
 
-    const formattedTotalCost =
-      totalCost > 0 && showCosts
-        ? totalCost.toLocaleString("es-AR", {
+    const formattedDayCost =
+      dayCost > 0 && showCosts
+        ? dayCost.toLocaleString("es-AR", {
             style: "currency",
             currency: "ARS",
             maximumFractionDigits: 0
@@ -335,10 +314,8 @@ const DeliveryCalendar = ({ searchUrl }) => {
     return (
       <DroppableCell date={dateStr}>
         <div className="font-medium text-sm m-2 flex justify-between">
-          {formattedTotalCost && (
-            <span className="text-gray-500 font-light">
-              {formattedTotalCost}
-            </span>
+          {formattedDayCost && (
+            <span className="text-gray-500 font-light">{formattedDayCost}</span>
           )}
           {isToday ? (
             <div className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
@@ -392,46 +369,34 @@ const DeliveryCalendar = ({ searchUrl }) => {
               </CardTitle>
               {showCosts && (
                 <CardDescription>
-                  {monthlyTotal > 0 &&
-                    monthlyTotal.toLocaleString("es-AR", {
+                  {totalCost > 0 &&
+                    totalCost.toLocaleString("es-AR", {
                       style: "currency",
                       currency: "ARS",
                       maximumFractionDigits: 0
                     })}
                 </CardDescription>
-              )}
+              )}{" "}
             </div>
-            <div className="flex gap-4">
-              <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="delivered">Entregadas</SelectItem>
-                  <SelectItem value="pending">Pendientes</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    setDate(new Date(date.getFullYear(), date.getMonth() - 1))
-                  }
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    setDate(new Date(date.getFullYear(), date.getMonth() + 1))
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() =>
+                  setDate(new Date(date.getFullYear(), date.getMonth() - 1))
+                }
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() =>
+                  setDate(new Date(date.getFullYear(), date.getMonth() + 1))
+                }
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
