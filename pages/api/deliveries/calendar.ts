@@ -19,7 +19,6 @@ type ErrorResponse = {
 interface PendingDelivery {
   id: number;
   scheduled_date: string;
-  delivery_cost: number | null;
   invoice_id: number | null;  
   customers: {
     name: string;
@@ -90,7 +89,6 @@ const getPendingDeliveriesQuery = () => `
   id,
   state,
   scheduled_date,
-  delivery_cost,
   invoice_id,
   customers!inner (
     name,
@@ -201,7 +199,7 @@ export default async function handler(
         name: p.name
       })) : [])
     }));
-    
+        
     // Process operations
     const processedOperations: CalendarItem[] = (operations || []).map(operation => ({
       id: operation.id,

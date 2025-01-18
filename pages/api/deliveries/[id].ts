@@ -319,23 +319,11 @@ export default async function handler(
       const updates = {
         ...(finalState && {
           state: finalState,
-          ...(finalState === "delivered" && {
-            delivery_date: new Date().toLocaleString("en-US", {
-              timeZone: "America/Argentina/Buenos_Aires"
-            })
-          }),
           ...(finalState === "cancelled" && {
-            delivery_date: null,
-            delivery_cost: null,
-            carrier_id: null,
-            pickup_store: null,
             scheduled_date: null
           })
         }),
         ...(scheduled_date && { scheduled_date }),
-        ...(delivery_cost && { delivery_cost }),
-        ...(carrier_id && { carrier_id }),
-        ...(pickup_store && { pickup_store })
       };
 
       const { error: updateError } = await supabase

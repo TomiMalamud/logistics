@@ -40,8 +40,6 @@ interface FormData {
   products: ProductItem[];
   supplier_id: number | null;
   scheduled_date?: string;
-  delivery_cost?: number;
-  carrier_id?: number;
 }
 
 function FormField({
@@ -73,15 +71,14 @@ export default function CreatePickup({ user }: Props) {
   const [suppliers, setSuppliers] = useState<
     Array<{ id: number; name: string }>
   >([]);
-  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(true);
+  const [isLoadingSuppliers, setLoadingSuppliers] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [costError, setCostError] = useState<string | null>(null);
 
   React.useEffect(() => {
     const fetchSuppliers = async () => {
       try {
-        setIsLoadingSuppliers(true);
+        setLoadingSuppliers(true);
         setError(null);
         const response = await fetch("/api/suppliers");
 
@@ -95,7 +92,7 @@ export default function CreatePickup({ user }: Props) {
         console.error("Error fetching suppliers:", error);
         setError("Failed to load suppliers");
       } finally {
-        setIsLoadingSuppliers(false);
+        setLoadingSuppliers(false);
       }
     };
 
@@ -154,25 +151,6 @@ export default function CreatePickup({ user }: Props) {
 
   const handleProductsChange = (products: ProductItem[]) => {
     setFormData((prev) => ({ ...prev, products }));
-  };
-
-  const handleCostChange = (cost: string) => {
-    if (cost && !isDeliveryCostValid(cost)) {
-      setCostError("El costo debe ser un número válido mayor o igual a 0");
-      return;
-    }
-    setCostError(null);
-    setFormData((prev) => ({
-      ...prev,
-      delivery_cost: cost ? parseInt(cost) : undefined
-    }));
-  };
-
-  const handleCarrierChange = (carrierId: number | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      carrier_id: carrierId
-    }));
   };
 
   return (
@@ -271,16 +249,6 @@ export default function CreatePickup({ user }: Props) {
                 }
               />
             </FormField>
-
-            <FormField error={costError}>
-              <CostCarrierForm
-                initialDeliveryCost={formData.delivery_cost}
-                initialCarrierId={formData.carrier_id}
-                onCarrierChange={handleCarrierChange}
-                onCostChange={handleCostChange}
-                className="pt-2"
-              />
-            </FormField>
           </div>
         </CardContent>
 
@@ -290,7 +258,7 @@ export default function CreatePickup({ user }: Props) {
           </Button>
           <Button
             type="submit"
-            disabled={loading || !!costError || formData.products.length === 0}
+            disabled={loading || formData.products.length === 0}
           >
             {loading ? "Guardando..." : "Guardar"}
           </Button>

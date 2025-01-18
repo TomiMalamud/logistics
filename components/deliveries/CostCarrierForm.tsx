@@ -9,14 +9,7 @@ import {
 import { useCarriers } from "@/lib/hooks/useCarriers";
 import { useState } from "react";
 
-interface Carrier {
-  id: number;
-  name: string;
-}
-
 interface CostCarrierFormProps {
-  initialDeliveryCost?: number | null;
-  initialCarrierId?: number | null;
   onCarrierChange: (id: number | undefined) => void;
   onCostChange: (cost: string) => void;
   required?: boolean;
@@ -30,21 +23,13 @@ export function isDeliveryCostValid(cost: string): boolean {
 }
 
 export default function CostCarrierForm({
-  initialDeliveryCost,
-  initialCarrierId,
   onCarrierChange,
   onCostChange,
   required = false,
   className = ""
 }: CostCarrierFormProps) {
-  // Initialize state with initial values
-  const [deliveryCost, setDeliveryCost] = useState(
-    () => initialDeliveryCost?.toString() ?? ""
-  );
-
-  const [selectedCarrierId, setSelectedCarrierId] = useState<string>(
-    initialCarrierId?.toString() ?? ""
-  );
+  const [deliveryCost, setDeliveryCost] = useState("");
+  const [selectedCarrierId, setSelectedCarrierId] = useState("");
 
   const {
     carriers,
@@ -101,7 +86,7 @@ export default function CostCarrierForm({
               />
             </SelectTrigger>
             <SelectContent>
-              {carriers.map((carrier: Carrier) => (
+              {carriers.map((carrier) => (
                 <SelectItem key={carrier.id} value={carrier.id.toString()}>
                   {carrier.name}
                 </SelectItem>

@@ -16,8 +16,6 @@ export default async function handler(
       products,
       supplier_id,
       scheduled_date,
-      delivery_cost,
-      carrier_id,
       created_by
     } = req.body;
 
@@ -44,8 +42,6 @@ export default async function handler(
         {
           supplier_id,
           scheduled_date: scheduled_date || null,
-          delivery_cost: delivery_cost || null,
-          carrier_id: carrier_id || null,
           created_by,
           type: "supplier_pickup",
           order_date: new Date().toISOString().split("T")[0],
@@ -78,8 +74,7 @@ export default async function handler(
   } catch (error) {
     console.error("Error in supplier pickup:", error);
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred"
+      error: error instanceof Error ? error.message : "An unexpected error occurred"
     });
   }
 }

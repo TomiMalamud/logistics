@@ -127,7 +127,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              placeholder="Si pagó el cliente, indicá cuál"
+              placeholder="Si pagó el cliente, indicá quién"
             />
           </div>
 

@@ -251,22 +251,25 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
       </div>
 
       {products.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {products.map((product) => (
+        <div className="mt-4  bg-gray-50 rounded-lg overflow-hidden">
+          {products.map((product, index) => (
             <div
               key={product.id}
-              className="flex group items-center justify-between p-2 bg-gray-50 min-h-12 rounded-md"
+              className={cn(
+                "flex group items-center justify-between p-2 min-h-12",
+                index !== products.length - 1 && "border-b border-b-slate-200"
+              )}
             >
-              <div className="space-x-2 flex-1">
-                <span className="mx-2 font-bold">{product.quantity}</span>
-                <span className="text-gray-900">{product.name}</span>
+              <div className="space-x-2 flex-1 items-center">
+                <span className="mx-2 text-sm font-bold">{product.quantity}</span>
+                <span className="text-sm text-gray-900">{product.name}</span>
                 <span className="text-sm text-gray-500">{product.sku}</span>
               </div>
               <Button
                 size="icon"
                 variant="ghost"
                 onClick={() => handleRemoveProduct(product.id)}
-                className="h-8 w-8 hidden group-hover:inline-flex"
+                className="h-6 w-6 hidden group-hover:inline-flex"
               >
                 <X className="h-4 w-4" />
               </Button>

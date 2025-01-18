@@ -49,36 +49,42 @@ export default function CarriersPage() {
   async function fetchCarriers() {
     const { data, error } = await supabase
       .from("carriers")
-      .select(
-        `
+      .select(`
         *,
-        deliveries (
-          delivery_date,
-          state
+        delivery_operations!inner (
+          operation_date,
+          operation_type,
+          delivery_id,
+          deliveries!inner (
+            state
+          )
         )
-      `
-      )
+      `)
       .order("name");
-
+  
     if (error) {
       setError("Failed to fetch carriers");
       return;
-    }
+    }  
 
     // Process the data to get the last delivery date
     const processedData = data.map((carrier) => ({
       ...carrier,
       last_delivery:
-        carrier.deliveries
-          ?.filter((d) => d.state === "delivered")
+        carrier.delivery_operations
+          ?.filter(
+            (op) => 
+              op.operation_type === 'delivery' && 
+              op.deliveries?.state === 'delivered'
+          )
           .sort(
             (a, b) =>
-              new Date(b.delivery_date).getTime() -
-              new Date(a.delivery_date).getTime()
-          )[0]?.delivery_date || null,
-      deliveries: undefined
+              new Date(b.operation_date).getTime() -
+              new Date(a.operation_date).getTime()
+          )[0]?.operation_date || null,
+      delivery_operations: undefined
     }));
-
+  
     setCarriers(processedData);
   }
 

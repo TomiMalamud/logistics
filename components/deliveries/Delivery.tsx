@@ -298,8 +298,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 state={deliveryLogic.state}
                 setState={deliveryLogic.setState}
                 setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
-                initialDeliveryCost={delivery.delivery_cost}
-                initialCarrierId={delivery.carrier_id}
                 onConfirm={deliveryLogic.handleConfirmStateChange}
                 isConfirming={deliveryLogic.isConfirming}
                 deliveryItems={delivery.delivery_items}

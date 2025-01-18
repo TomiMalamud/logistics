@@ -210,9 +210,11 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
             </DialogDescription>
           </DialogHeader>
           {deliveryDialog.isLoading && (
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-24 w-full" />
+            <div className="space-y-8 min-h-80 rounded-lg bg-white border p-6">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-12 w-full" />              
             </div>
           )}
           {deliveryDialog.error && (

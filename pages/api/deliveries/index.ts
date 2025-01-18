@@ -124,10 +124,6 @@ async function buildDeliveryQuery(
       deliveriesQuery.eq("type", type);
     }
 
-    if (carrier && carrier !== "all") {
-      deliveriesQuery.eq("carrier_id", carrier);
-    }
-
     if (customerIds) {
       deliveriesQuery.in(
         "customer_id",
@@ -191,10 +187,6 @@ async function buildDeliveryQuery(
 
   if (type && type !== "all") {
     query = query.eq("type", type);
-  }
-
-  if (carrier && carrier !== "all") {
-    query = query.eq("carrier_id", carrier);
   }
 
   if (customerIds) {

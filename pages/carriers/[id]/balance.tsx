@@ -1,6 +1,7 @@
 // pages/carriers/[id]/balance.tsx
 import CarrierBalance from "@/components/CarrierBalance";
 import Layout from "@/components/Layout";
+import { Button } from "@/components/ui/button";
 import { MoveLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -15,10 +16,12 @@ export default function CarrierBalancePage() {
 
   return (
     <Layout title="Cuenta Corriente">
-      <Link href="/carriers" className="flex items-center mb-4 space-x-2">
-        <MoveLeft size={16} />
-        <span className="text-sm">Volver</span>
-      </Link>
+      <Button asChild variant="ghost">
+        <Link href="/carriers" className="flex items-center mb-4 space-x-2">
+          <MoveLeft size={16} />
+          <span className="text-sm">Volver</span>
+        </Link>
+      </Button>
       <CarrierBalance carrierId={id} />
     </Layout>
   );
