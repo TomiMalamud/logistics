@@ -18,7 +18,9 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import {
+  Customer,
   DeliveredType,
+  Delivery,
   DeliveryItem,
   DeliveryState,
   Store
@@ -28,6 +30,7 @@ import { useState } from "react";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 import { Input } from "../ui/input";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { RemitoDownload } from "./RemitoDownload";
 
 interface FormData {
   delivery_cost?: number;
@@ -49,6 +52,8 @@ interface StateDialogProps {
   onConfirm: (data: FormData) => Promise<void>;
   isConfirming: boolean;
   deliveryItems: DeliveryItem[];
+  delivery: Delivery;
+  customer: Customer;
 }
 
 export default function StateDialog({
@@ -59,7 +64,9 @@ export default function StateDialog({
   initialCarrierId,
   onConfirm,
   isConfirming,
-  deliveryItems
+  deliveryItems,
+  delivery,
+  customer
 }: StateDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -72,6 +79,7 @@ export default function StateDialog({
   const [selectedItems, setSelectedItems] = useState<{
     [sku: string]: number;
   }>({});
+
   function getDeliveryStatusText() {
     const pendingItems = Object.values(selectedItems).filter(
       (qty) => qty > 0
@@ -272,13 +280,20 @@ export default function StateDialog({
             )}
 
             <DialogFooter className="mt-auto">
-              <Button
-                onClick={handleFormSubmit}
-                disabled={isConfirming}
-                className="w-full"
-              >
-                {isConfirming ? "Procesando..." : getDeliveryStatusText()}
-              </Button>
+              <div className="flex w-full gap-2">
+                <Button
+                  onClick={handleFormSubmit}
+                  disabled={isConfirming}
+                  className="flex-1"
+                >
+                  {isConfirming ? "Procesando..." : getDeliveryStatusText()}
+                </Button>
+                <RemitoDownload
+                  delivery={delivery}
+                  customer={customer}
+                  selectedItems={selectedItems}
+                />
+              </div>
             </DialogFooter>
           </div>
         </div>

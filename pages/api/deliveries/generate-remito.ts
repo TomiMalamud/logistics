@@ -61,6 +61,10 @@ const validateDeliveryData = (
     return false;
   }
 
+  if (!delivery.products.length) {
+    return false;
+  }
+
   if (!customer?.name || !customer.address || !customer.phone) {
     return false;
   }

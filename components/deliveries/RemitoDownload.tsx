@@ -1,23 +1,23 @@
 import { Customer, Delivery } from "@/types/types";
 import { Download } from "lucide-react";
 import { useState } from "react";
-import { DropdownMenuItem } from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
 
 interface Props {
   delivery: Delivery;
   customer: Customer;
+  selectedItems?: {
+    [sku: string]: number;
+  };
 }
 
-export const RemitoDownload = ({ delivery, customer }: Props) => {
+export const RemitoDownload = ({ delivery, customer, selectedItems }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSelect = (e: Event) => {
+  const handleClick = () => {
     if (!delivery.scheduled_date) {
-      e.preventDefault();
-      setError(
-        "No se puede descargar el remito hasta asignar una fecha de entrega"
-      );
+      setError("No se puede descargar el remito hasta asignar una fecha de entrega");
       return;
     }
 
@@ -29,8 +29,17 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
       setError(null);
       setIsLoading(true);
 
-      if (!Array.isArray(delivery.products)) {
-        throw new Error("Datos de entrega incompletos");
+      // Get the products to include in the remito
+      const productsToInclude = delivery.delivery_items
+        ?.filter(item => selectedItems?.[item.product_sku])
+        .map(item => ({
+          name: item.products?.name || 'Unknown Product',
+          quantity: selectedItems?.[item.product_sku] || 0,
+          sku: item.product_sku
+        }));
+
+      if (!productsToInclude?.length) {
+        throw new Error("No hay productos seleccionados");
       }
 
       if (!customer?.name || !customer.address || !customer.phone) {
@@ -42,7 +51,13 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ delivery, customer })
+        body: JSON.stringify({ 
+          delivery: {
+            ...delivery,
+            products: productsToInclude
+          }, 
+          customer 
+        })
       });
 
       if (!response.ok) {
@@ -68,14 +83,17 @@ export const RemitoDownload = ({ delivery, customer }: Props) => {
   };
 
   return (
-    <DropdownMenuItem onSelect={handleSelect} disabled={isLoading}>
-      <div className="flex flex-col w-full">
-        <div className="flex items-center">
-          <Download className="mr-2 h-4 w-4" />
-          {isLoading ? "Generando PDF..." : "Descargar Remito"}
-        </div>
-        {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-      </div>
-    </DropdownMenuItem>
+    <div className="flex flex-col w-full">
+      <Button 
+        onClick={handleClick} 
+        disabled={isLoading}
+        variant="outline"
+        className="flex items-center gap-2"
+      >
+        <Download className="h-4 w-4" />
+        {isLoading ? "Generando PDF..." : "Descargar Remito"}
+      </Button>
+      {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+    </div>
   );
 };

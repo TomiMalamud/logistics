@@ -304,6 +304,8 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 onConfirm={deliveryLogic.handleConfirmStateChange}
                 isConfirming={deliveryLogic.isConfirming}
                 deliveryItems={delivery.delivery_items}
+                delivery={delivery}
+                customer={delivery.customers}              
               />
             </div>
           )}
@@ -335,10 +337,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 <StickyNote size={12} className="text-gray-600" />
                 Notas
               </DropdownMenuItem>
-              <RemitoDownload
-                delivery={delivery}
-                customer={delivery.customers}
-              />
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <Package size={12} className="text-gray-600" />
                 <DeliveryOperationsDialog
