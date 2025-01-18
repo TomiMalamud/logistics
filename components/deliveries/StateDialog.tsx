@@ -116,19 +116,6 @@ export default function StateDialog({
     return null;
   };
 
-  const getButtonText = () => {
-    if (isConfirming) return "Procesando...";
-
-    const pendingItems = deliveryItems.filter(
-      (item) => item.pending_quantity > 0
-    );
-    if (pendingItems.length > 0) {
-      return "Confirmar entrega parcial";
-    }
-    return "Confirmar entrega total";
-  };
-
-  // In StateDialog.tsx, update ItemSelection:
   function ItemSelection() {
     if (!deliveryItems?.length) return null;
 

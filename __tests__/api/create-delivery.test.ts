@@ -8,7 +8,7 @@ jest.mock('title-case', () => ({
   titleCase: (str: string) => str
 }))
 
-import handler from '@/pages/api/create-delivery'
+import handler from '@/pages/api/deliveries/create/delivery'
 import { mockRequestResponse } from '../utils'
 
 jest.mock('@/lib/perfit', () => ({

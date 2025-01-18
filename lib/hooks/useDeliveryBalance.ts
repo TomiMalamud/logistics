@@ -66,7 +66,7 @@ export const useDeliveryBalance = ({ invoice_id }: UseDeliveryBalanceProps): Use
     }
 
     try {
-      const response = await fetch(`/api/get-invoice?invoice_id=${invoice_id}`);
+      const response = await fetch(`/api/invoices/${invoice_id}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

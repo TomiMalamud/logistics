@@ -79,7 +79,7 @@ export default function InvoiceItems({
 
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/get-invoice?invoice_id=${invoice_id}`);
+        const res = await fetch(`/api/invoices/${invoice_id}`);
         if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
         const items = data.Items || [];

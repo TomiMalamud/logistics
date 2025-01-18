@@ -68,12 +68,9 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
 
   const getLatestOperation = (operations?: DeliveryOperation[]) => {
     if (!operations?.length) return null;
-    return operations.sort(
-      (a, b) =>
-        new Date(b.operation_date).getTime() -
-        new Date(a.operation_date).getTime()
-    )[0];
+    return operations.sort((a, b) => b.id - a.id)[0];
   };
+
   const latestOperation = getLatestOperation(delivery.operations);
 
   const getDisplayName = () => {
@@ -207,12 +204,18 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 : "Visitaremos el domicilio..."}
             </p>
           </div>
-        ) : delivery.state === "delivered" ? (
+        ) : delivery.state !== "pending" ? (
           <div>
-            {latestOperation ? (
+            {latestOperation && (
               <div>
                 <h1 className="font-medium text-black">
-                  {delivery.type === "supplier_pickup"
+                  {latestOperation.operation_type === "cancellation"
+                    ? "Cancelada"
+                    : latestOperation.pickup_store
+                    ? `Retiro en ${getStoreLabel(latestOperation.pickup_store)}`
+                    : latestOperation.carriers
+                    ? `Entregado por ${latestOperation.carriers.name}`
+                    : delivery.type === "supplier_pickup"
                     ? "Retirado"
                     : "Entregado"}
                 </h1>
@@ -220,19 +223,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   {`El ${formatLongDate(latestOperation.operation_date)}`}
                 </p>
               </div>
-            ) : (
-              <div>
-              <h1 className="font-medium text-black">
-                {delivery.type === "supplier_pickup" ? "Retirado" : "Entregado"}
-              </h1>
-              <p className="text-sm mt-1 text-slate-500">
-                {delivery.delivery_date &&
-                  `El ${formatLongDate(delivery.delivery_date)}`}
-              </p>
-            </div>
-  
-            )
-          }
+            )}{" "}
           </div>
         ) : delivery.scheduled_date ? (
           <div>

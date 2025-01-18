@@ -24,7 +24,7 @@ export default function InvoiceSelection({
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const response = await fetch("/api/search-invoices");
+        const response = await fetch("/api/invoices/search");
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Failed to fetch invoices");

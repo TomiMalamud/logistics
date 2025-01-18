@@ -130,7 +130,7 @@ export default function CreatePickup({ user }: Props) {
         created_by: user.id
       };
 
-      const response = await fetch("/api/create-pickup", {
+      const response = await fetch("/api/deliveries/create/pickup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)

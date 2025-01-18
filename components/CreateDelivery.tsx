@@ -204,7 +204,7 @@ export default function CreateDelivery({ user }: CreateProps) {
 
         // Then fetch invoice items
         const itemsRes = await fetch(
-          `/api/get-invoice?invoice_id=${invoice.Id}`
+          `/api/invoices/${invoice.Id}`
         );
         if (!itemsRes.ok) throw new Error("Failed to fetch invoice items");
         const itemsData = await itemsRes.json();
@@ -294,7 +294,7 @@ export default function CreateDelivery({ user }: CreateProps) {
       const body = prepareRequestBody();
       if (!body) throw new Error("Failed to prepare request body");
 
-      const response = await fetch("/api/create-delivery", {
+      const response = await fetch("/api/deliveries/create/delivery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)

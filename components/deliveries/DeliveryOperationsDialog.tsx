@@ -9,6 +9,7 @@ import {
 import { formatLongDate, formatCurrency } from "@/utils/format";
 import { Package, XCircle } from "lucide-react";
 import { DeliveryOperation, OperationType } from "@/types/types";
+import { PICKUP_STORES } from "@/utils/constants";
 
 interface DeliveryOperationsDialogProps {
   operations?: DeliveryOperation[];
@@ -23,10 +24,17 @@ function getOperationTitle(operation: DeliveryOperation) {
   if (operation.operation_type === "cancellation") {
     return "Cancelación";
   }
+  
+  if (operation.pickup_store) {
+    const store = PICKUP_STORES.find(s => s.value === operation.pickup_store);
+    return `Retiro en ${store?.label || operation.pickup_store}`;
+  }
+  
   return operation.carriers
     ? `Entregado por ${operation.carriers.name}`
     : "Entrega";
 }
+
 
 export function DeliveryOperationsDialog({
   operations = [],

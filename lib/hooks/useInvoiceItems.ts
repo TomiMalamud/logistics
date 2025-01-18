@@ -11,7 +11,7 @@ const fetcher = async (url: string): Promise<InvoiceData> => {
 
 export const useInvoiceItems = (invoice_id: number | null) => {
   const { data, error, mutate } = useSWR<InvoiceData>(
-    invoice_id ? `/api/get-invoice?invoice_id=${invoice_id}` : null,
+    invoice_id ? `/api/invoices/${invoice_id}` : null,
     fetcher,
     {
       revalidateOnFocus: false,

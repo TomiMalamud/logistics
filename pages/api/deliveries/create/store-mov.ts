@@ -1,4 +1,4 @@
-// pages/api/create-store-mov.ts
+// pages/api/deliveries/create/store-mov.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
 import { Product } from "@/types/types";

@@ -96,7 +96,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
         }))
       };
 
-      const response = await fetch("/api/create-store-mov", {
+      const response = await fetch("/api/deliveries/create/store-mov", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)

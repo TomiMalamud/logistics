@@ -1,4 +1,4 @@
-// pages/api/create-pickup/index.ts
+// pages/api/deliveries/create/pickup.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
 

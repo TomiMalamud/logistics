@@ -1,4 +1,4 @@
-// pages/api/create-delivery/index.ts
+// pages//api/deliveries/create/delivery.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase";
 import { createOrUpdateContact, formatPerfitContact } from "@/lib/perfit";

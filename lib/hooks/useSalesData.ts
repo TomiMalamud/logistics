@@ -99,7 +99,7 @@ export const useSalesData = (period: PeriodOption, vendedor?: string) => {
           queryParams.append('vendedor', vendedor);
         }
         
-        const response = await fetch(`/api/search-invoices?${queryParams}`);
+        const response = await fetch(`/api/invoices/search?${queryParams}`);
         if (!response.ok) throw new Error('Failed to fetch sales data');
         
         const salesData: SearchComprobanteResponse = await response.json();
