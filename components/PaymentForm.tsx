@@ -24,6 +24,12 @@ interface PaymentFormProps {
   trigger?: React.ReactNode;
 }
 
+interface FormErrors {
+  payment_date?: string;
+  amount?: string;
+  payment_method?: string;
+}
+
 const PaymentForm: React.FC<PaymentFormProps> = ({
   carrierId,
   onSuccess,
@@ -31,6 +37,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState({
     amount: "",
     payment_method: "",
@@ -38,8 +45,32 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     payment_date: new Date().toISOString().split("T")[0]
   });
 
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    if (!formData.payment_date) {
+      newErrors.payment_date = "La fecha de pago es requerida";
+    }
+    
+    if (!formData.amount) {
+      newErrors.amount = "El monto es requerido";
+    }
+    
+    if (!formData.payment_method) {
+      newErrors.payment_method = "El método de pago es requerido";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -64,6 +95,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when field is modified
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   return (
@@ -84,8 +119,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               type="date"
               value={formData.payment_date}
               onChange={handleChange}
-              required
             />
+            {errors.payment_date && (
+              <p className="text-sm text-red-500">{errors.payment_date}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -96,8 +133,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               type="number"
               value={formData.amount}
               onChange={handleChange}
-              required
             />
+            {errors.amount && (
+              <p className="text-sm text-red-500">{errors.amount}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -105,9 +144,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             <Select
               name="payment_method"
               value={formData.payment_method}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, payment_method: value }))
-              }
+              onValueChange={(value) => {
+                setFormData((prev) => ({ ...prev, payment_method: value }));
+                setErrors((prev) => ({ ...prev, payment_method: undefined }));
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar método de pago" />
@@ -118,6 +158,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 <SelectItem value="Cliente">Cliente</SelectItem>
               </SelectContent>
             </Select>
+            {errors.payment_method && (
+              <p className="text-sm text-red-500">{errors.payment_method}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -139,7 +182,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit">
               {isLoading ? "Guardando..." : "Guardar"}
             </Button>
           </div>
