@@ -185,7 +185,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </TooltipProvider>
         </div>
       </div>
-      
       {/* Delivery Date Section */}
       <div className="flex items-center py-4 justify-between">
         {deliveryLogic.isUpdating ? (
@@ -380,7 +379,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         <AlertDescription>
           {delivery.delivery_items && delivery.delivery_items.length > 0 ? (
             <div className="space-y-1">{renderProducts()}</div>
-          ) : (
+          ) : delivery.products && delivery.products.length > 0 ? (
             <div className="space-y-1">
               {delivery.products.map((product, index) => (
                 <div key={index} className="flex items-center text-sm">
@@ -393,6 +392,10 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   )}
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="text-red-500 font-bold">
+              <p>NO SE ENCONTRARON PRODUCTOS. REVISÁ CON ADMINISTRADOR</p>
             </div>
           )}
         </AlertDescription>

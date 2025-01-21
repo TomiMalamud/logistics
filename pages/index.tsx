@@ -396,7 +396,7 @@ export default function Index({ profile }: IndexProps) {
         Array.from({ length: 3 }, (_, index) => (
           <div
             key={index}
-            className="space-y-4 min-h-24 rounded-lg bg-white border p-6"
+            className="space-y-4 min-h-24 mt-4 rounded-lg bg-white border p-6"
           >
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
