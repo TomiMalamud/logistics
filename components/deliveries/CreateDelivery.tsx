@@ -209,7 +209,7 @@ export default function CreateDelivery({ user }: CreateProps) {
         if (!itemsRes.ok) throw new Error("Failed to fetch invoice items");
         const itemsData = await itemsRes.json();
 
-        setInvoiceItems(itemsData.Items || []);
+        setInvoiceItems(itemsData.items || []);
       } catch (error) {
         console.error("Error fetching data:", error);
         setFormData((prev) => ({

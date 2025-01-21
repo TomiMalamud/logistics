@@ -82,7 +82,7 @@ export default function InvoiceItems({
         const res = await fetch(`/api/invoices/${invoice_id}`);
         if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
-        const items = data.Items || [];
+        const items = data.items || [];
         setLocalItems(items);
         setOriginalItems(items);
       } catch (error) {
