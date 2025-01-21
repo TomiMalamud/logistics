@@ -17,8 +17,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCarriers } from "@/lib/hooks/useCarriers";
 import { createClient } from "@/utils/supabase/server-props";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -57,7 +57,7 @@ const DEFAULT_FILTERS = {
   page: "1",
   search: "",
   scheduledDate: "all",
-  type: "all",
+  type: "all"
 };
 
 export default function Index({ profile }: IndexProps) {
@@ -71,7 +71,7 @@ export default function Index({ profile }: IndexProps) {
       search: (router.query.search as string) ?? DEFAULT_FILTERS.search,
       scheduledDate:
         (router.query.scheduledDate as string) ?? DEFAULT_FILTERS.scheduledDate,
-      type: (router.query.type as string) ?? DEFAULT_FILTERS.type,
+      type: (router.query.type as string) ?? DEFAULT_FILTERS.type
     }),
     [router.query]
   );
@@ -170,12 +170,6 @@ export default function Index({ profile }: IndexProps) {
     });
     return `/api/deliveries?${params.toString()}`;
   }, [currentFilters]);
-
-  const {
-    carriers,
-    isLoading: isLoadingCarriers,
-    fetchCarriers
-  } = useCarriers();
 
   // Fetch data
   const { data, error, isLoading, isValidating } = useSWR<FeedResponse>(
@@ -399,17 +393,17 @@ export default function Index({ profile }: IndexProps) {
       {error ? (
         <p className="text-red-500">Error al cargar. Actualizá la página.</p>
       ) : shouldShowPlaceholder ? (
-        <div className="divide-y divide-gray-900/5">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="py-3 space-y-2 animate-pulse">
-              <div className="animate-pulse" />
-              <div className="h-4 w-24 rounded-md bg-gray-200 animate-pulse" />
-              <div className="h-1.5" />
-              <div className="font-bold h-4 w-48 rounded-md bg-gray-200 animate-pulse" />
-              <div className="h-2" />
-            </div>
-          ))}
-        </div>
+        Array.from({ length: 3 }, (_, index) => (
+          <div
+            key={index}
+            className="space-y-4 min-h-24 rounded-lg bg-white border p-6"
+          >
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ))
       ) : (
         <DeliveryList data={data} searchUrl={apiUrl} />
       )}

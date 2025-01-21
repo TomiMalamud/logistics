@@ -289,30 +289,40 @@ export default async function handler(
       let finalState = state;
       // In the PUT handler of [id].ts
       if (state && state !== delivery.state) {
-        try {
-          const isFullyDelivered = await recordOperation(
-            supabase,
-            parseInt(id as string),
-            user.id,
-            state === "cancelled" ? "cancellation" : "delivery",
-            carrier_id || undefined,
-            delivery_cost || undefined,
-            pickup_store || undefined,
-            items
-          );
+        // Validate state transitions
+        if (
+          (delivery.state === "pending" && state === "delivered") ||
+          (state === "cancelled" && delivery.state !== "cancelled")
+        ) {
+          try {
+            const isFullyDelivered = await recordOperation(
+              supabase,
+              parseInt(id as string),
+              user.id,
+              state === "cancelled" ? "cancellation" : "delivery",
+              carrier_id || undefined,
+              delivery_cost || undefined,
+              pickup_store || undefined,
+              items
+            );
 
-          // Only allow delivered state if all items are delivered
-          if (state === "delivered" && !isFullyDelivered) {
-            finalState = "pending";
+            // Only allow delivered state if all items are delivered
+            if (state === "delivered" && !isFullyDelivered) {
+              finalState = "pending";
+            }
+          } catch (error: any) {
+            if (error.message.includes("delivery operations")) {
+              return res.status(400).json({
+                error:
+                  "Invalid delivery operation: Either provide a pickup store or both carrier and cost"
+              });
+            }
+            throw error;
           }
-        } catch (error: any) {
-          if (error.message.includes("delivery operations")) {
-            return res.status(400).json({
-              error:
-                "Invalid delivery operation: Either provide a pickup store or both carrier and cost"
-            });
-          }
-          throw error;
+        } else {
+          return res.status(400).json({
+            error: "Invalid state transition"
+          });
         }
       }
       // Update delivery
@@ -323,7 +333,7 @@ export default async function handler(
             scheduled_date: null
           })
         }),
-        ...(scheduled_date && { scheduled_date }),
+        ...(scheduled_date && { scheduled_date })
       };
 
       const { error: updateError } = await supabase

@@ -214,7 +214,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-28 w-full" />
-              <Skeleton className="h-12 w-full" />              
+              <Skeleton className="h-12 w-full" />
             </div>
           )}
           {deliveryDialog.error && (

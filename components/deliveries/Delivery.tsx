@@ -185,6 +185,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </TooltipProvider>
         </div>
       </div>
+      
       {/* Delivery Date Section */}
       <div className="flex items-center py-4 justify-between">
         {deliveryLogic.isUpdating ? (
@@ -290,7 +291,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         )}
 
         <div className="space-x-2 flex">
-          {delivery.state !== "cancelled" && (
+          {delivery.state === "pending" && (
             <div className="w-24">
               <StateDialog
                 state={deliveryLogic.state}
@@ -311,18 +312,20 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Calendar size={12} className="text-gray-600" />
-                <ScheduledDateDialog
-                  scheduledDate={deliveryLogic.scheduledDate}
-                  setScheduledDate={deliveryLogic.setScheduledDate}
-                  handleConfirmScheduledDate={() => {
-                    deliveryLogic.handleConfirmScheduledDate();
-                    setDropdownOpen(false);
-                  }}
-                  isConfirming={deliveryLogic.isUpdating}
-                />
-              </DropdownMenuItem>
+              {delivery.state === "pending" && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Calendar size={12} className="text-gray-600" />
+                  <ScheduledDateDialog
+                    scheduledDate={deliveryLogic.scheduledDate}
+                    setScheduledDate={deliveryLogic.setScheduledDate}
+                    handleConfirmScheduledDate={() => {
+                      deliveryLogic.handleConfirmScheduledDate();
+                      setDropdownOpen(false);
+                    }}
+                    isConfirming={deliveryLogic.isUpdating}
+                  />
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onSelect={() => {
                   setDropdownOpen(false);

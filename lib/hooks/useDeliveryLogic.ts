@@ -1,9 +1,14 @@
 // useDeliveryLogic.ts
 
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { useState } from "react";
 import { mutate } from "swr";
-import { parsePhoneNumberFromString } from "libphonenumber-js";
-import { Note, Delivery, UseDeliveryLogicParams, Store, DeliveredType } from "types/types";
+import {
+  DeliveredType,
+  DeliveryState,
+  Note,
+  UseDeliveryLogicParams
+} from "types/types";
 
 interface UpdateDeliveryParams {
   delivery_cost?: number;
@@ -15,7 +20,6 @@ interface UpdateDeliveryParams {
     quantity: number;
   }[];
 }
-
 
 export const useDeliveryLogic = ({
   delivery: delivery,
@@ -64,7 +68,6 @@ export const useDeliveryLogic = ({
     }
   };
 
-
   const isToday = (someDate: Date) => {
     return (
       new Date().toISOString().split("T")[0] ===
@@ -72,7 +75,17 @@ export const useDeliveryLogic = ({
     );
   };
 
-  const updateField = async (fieldData: Partial<Delivery>) => {
+  const updateField = async (fieldData: {
+    state?: DeliveryState;
+    scheduled_date?: string | null;
+    pickup_store?: string | null;
+    delivery_cost?: number | null;
+    carrier_id?: number | null;
+    items?: {
+      product_sku: string;
+      quantity: number;
+    }[];
+  }) => {
     try {
       const response = await fetch(`/api/deliveries/${delivery.id}`, {
         method: "PUT",
@@ -92,38 +105,37 @@ export const useDeliveryLogic = ({
 
   const handleConfirmStateChange = async (formData: UpdateDeliveryParams) => {
     setIsConfirming(true);
-  
+
     try {
-      // Determine the new state based on current state
-      let newState;
-      if (state === "cancelled") {
-        newState = "pending"; // Allow uncancelling
-      } else if (state === "delivered") {
-        newState = "pending";
-      } else if (state === "pending") {
-        newState = "delivered";
+      // Only allow pending -> delivered transition
+      if (state !== "pending") {
+        throw new Error("Only pending deliveries can be marked as delivered");
       }
-  
+
       // Prepare update data
-      const updateData = {
-        state: newState,
+      const updateData: {
+        state: DeliveryState;
+        items: { product_sku: string; quantity: number }[];
+        pickup_store?: string | null;
+        delivery_cost?: number | null;
+        carrier_id?: number | null;
+      } = {
+        state: "delivered",
         items: formData.items,
-        ...(newState === "delivered" && {
-          ...(formData.delivery_type === "carrier" && {
-            delivery_cost: formData.delivery_cost,
-            carrier_id: formData.carrier_id,
-            pickup_store: null
-          }),
-          ...(formData.delivery_type === "pickup" && {
-            pickup_store: formData.pickup_store,
-            delivery_cost: null,
-            carrier_id: null
-          })
+        ...(formData.delivery_type === "carrier" && {
+          delivery_cost: formData.delivery_cost,
+          carrier_id: formData.carrier_id,
+          pickup_store: null
+        }),
+        ...(formData.delivery_type === "pickup" && {
+          pickup_store: formData.pickup_store,
+          delivery_cost: null,
+          carrier_id: null
         })
       };
-    
+
       await updateField(updateData);
-      setState(newState);
+      setState("delivered");
       setShowStateAlertDialog(false);
       mutate(fetchURL);
     } catch (error) {
@@ -133,7 +145,7 @@ export const useDeliveryLogic = ({
       setIsConfirming(false);
     }
   };
-  
+
   const handleCancelDelivery = async () => {
     setIsConfirming(true);
     try {
@@ -251,7 +263,6 @@ export const useDeliveryLogic = ({
     setError,
     isUpdatingDeliveryDetails,
 
-
     // Utility functions
     isToday,
     formatNoteDate,
@@ -262,6 +273,6 @@ export const useDeliveryLogic = ({
     handleConfirmScheduledDate,
     handleCancelDelivery,
     handleDeleteScheduledDate,
-    handleUpdateDeliveryDetails,      
+    handleUpdateDeliveryDetails
   };
 };
