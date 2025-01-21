@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { PICKUP_STORES } from "@/utils/constants";
+import { STORES } from "@/utils/constants";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -37,7 +37,7 @@ const FormField = ({ label, children, error }: FormFieldProps) => (
   </div>
 );
 
-type StoreId = (typeof PICKUP_STORES)[number]["value"];
+type StoreId = (typeof STORES)[number]["id"];
 
 interface FormData {
   origin_store: StoreId;
@@ -52,7 +52,7 @@ export default function CreateStoreMov({ user }: { user: User }) {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
-    origin_store: "cd",
+    origin_store: "60835", // CD store ID
     dest_store: "" as StoreId,
     products: [],
     scheduled_date: ""
@@ -150,11 +150,11 @@ export default function CreateStoreMov({ user }: { user: User }) {
                   <SelectValue placeholder="Seleccionar origen" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PICKUP_STORES.map((store) => (
+                  {STORES.map((store) => (
                     <SelectItem
-                      key={store.value}
-                      value={store.value}
-                      disabled={store.value === formData.dest_store}
+                      key={store.id}
+                      value={store.id}
+                      disabled={store.id === formData.dest_store}
                     >
                       {store.label}
                     </SelectItem>
@@ -172,11 +172,11 @@ export default function CreateStoreMov({ user }: { user: User }) {
                   <SelectValue placeholder="Seleccionar destino" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PICKUP_STORES.map((store) => (
+                  {STORES.map((store) => (
                     <SelectItem
-                      key={store.value}
-                      value={store.value}
-                      disabled={store.value === formData.origin_store}
+                      key={store.id}
+                      value={store.id}
+                      disabled={store.id === formData.origin_store}
                     >
                       {store.label}
                     </SelectItem>

@@ -73,7 +73,7 @@ async function buildDeliveryQuery(
   userRole: string,
   customerIds: { id: number }[] | null
 ) {
-  const { state, type, scheduledDate, page, pageSize, carrier } = params;
+  const { state, type, scheduledDate, page, pageSize } = params;
   const start = (Number(page) - 1) * Number(pageSize);
   const end = start + Number(pageSize) - 1;
 
@@ -102,6 +102,7 @@ async function buildDeliveryQuery(
           operation_date,
           created_at,
           created_by,
+          profiles (id, name),
           pickup_store,
           operation_type,
           operation_items (
@@ -167,6 +168,7 @@ async function buildDeliveryQuery(
         operation_date,
         created_at,
         created_by,
+        profiles (id, name),
         pickup_store,
         operation_type,
         operation_items (

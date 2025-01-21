@@ -74,8 +74,8 @@ export const useDeliveryBalance = ({ invoice_id }: UseDeliveryBalanceProps): Use
 
       const data = await response.json();
       
-      if (data && 'Saldo' in data) {
-        const formattedBalance = parseArgentinianNumber(data.Saldo);
+      if (data && 'balance' in data) {
+        const formattedBalance = parseArgentinianNumber(data.balance);
         if (formattedBalance !== null) {
           setBalance(formattedBalance);
           setBalanceInCache(invoice_id, formattedBalance);

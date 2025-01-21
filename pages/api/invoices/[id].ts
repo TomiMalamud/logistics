@@ -1,19 +1,13 @@
 // pages/api/invoices/[id].ts
 import { getComprobanteById } from "@/lib/api";
-import { INVENTORY_LOCATIONS } from "@/utils/constants";
+import { getStore } from "@/utils/constants";
+import { InvoiceItem } from "@/types/types";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-interface InvoiceItem {
-  Id: number;
-  Cantidad: number;
-  Concepto: string;
-  Codigo: string;
-}
-
 type SuccessResponse = {
-  inventarioNombre: string;
-  Saldo: string;
-  Items: InvoiceItem[];
+  inventoryId: string;
+  balance: string;
+  items: InvoiceItem[];
 };
 
 type ErrorResponse = {
@@ -43,15 +37,19 @@ export default async function handler(
   try {
     const invoice = await getComprobanteById(invoiceId);
     const inventoryId = invoice.Inventario.toString();
-    const locationName = INVENTORY_LOCATIONS[inventoryId] ?? "Unknown Location";
+    
+    // Validate if this is a known inventory location
+    if (!getStore(inventoryId)) {
+      console.warn(`Unknown inventory location: ${inventoryId}`);
+    }
 
     return res.status(200).json({
-      inventarioNombre: locationName,
-      Saldo: invoice.Saldo,
-      Items: invoice.Items.map((item) => ({
+      inventoryId,
+      balance: invoice.Saldo,
+      items: invoice.Items.map((item) => ({
+        Codigo: item.Codigo,
         Cantidad: item.Cantidad,
-        Concepto: item.Concepto,
-        Codigo: item.Codigo
+        Concepto: item.Concepto
       }))
     });
   } catch (error: any) {

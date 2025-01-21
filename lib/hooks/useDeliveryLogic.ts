@@ -8,7 +8,7 @@ import { Note, Delivery, UseDeliveryLogicParams, Store, DeliveredType } from "ty
 interface UpdateDeliveryParams {
   delivery_cost?: number;
   carrier_id?: number;
-  pickup_store?: Store;
+  pickup_store?: string;
   delivery_type: DeliveredType;
   items: {
     product_sku: string;

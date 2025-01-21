@@ -13,7 +13,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { useDeliveryLogic } from "@/lib/hooks/useDeliveryLogic";
-import { PICKUP_STORES } from "@/utils/constants";
+import { getStore } from "@/utils/constants";
 import { formatLongDate } from "@/utils/format";
 import {
   Calendar,
@@ -60,11 +60,6 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
 
-  const getStoreLabel = (storeValue: string) => {
-    const store = PICKUP_STORES.find((store) => store.value === storeValue);
-    return store ? store.label : storeValue;
-  };
-
   const getLatestOperation = (operations?: DeliveryOperation[]) => {
     if (!operations?.length) return null;
     return operations.sort((a, b) => b.id - a.id)[0];
@@ -77,9 +72,9 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       case "supplier_pickup":
         return delivery.suppliers?.name;
       case "store_movement":
-        return `Movimiento de ${getStoreLabel(
-          delivery.origin_store
-        )} a ${getStoreLabel(delivery.dest_store)}`;
+        return `Movimiento de ${
+          getStore(delivery.origin_store)?.label || delivery.origin_store
+        } a ${getStore(delivery.dest_store)?.label || delivery.dest_store}`;
       default:
         return delivery.customers?.name;
     }
@@ -211,7 +206,10 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   {latestOperation.operation_type === "cancellation"
                     ? "Cancelada"
                     : latestOperation.pickup_store
-                    ? `Retiro en ${getStoreLabel(latestOperation.pickup_store)}`
+                    ? `Retiro en ${
+                        getStore(latestOperation.pickup_store)?.label ||
+                        latestOperation.pickup_store
+                      }`
                     : latestOperation.carriers
                     ? `Entregado por ${latestOperation.carriers.name}`
                     : delivery.type === "supplier_pickup"

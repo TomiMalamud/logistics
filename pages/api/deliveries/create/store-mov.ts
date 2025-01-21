@@ -2,6 +2,7 @@
 import { createInventoryMovement } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { Product } from "@/types/types";
+import { STORES } from "@/utils/constants";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -40,18 +41,11 @@ export default async function handler(
       return res.status(400).json({ error: "Invalid product format" });
     }
 
-    // Get deposit IDs from store codes
-    const STORE_TO_DEPOSIT_MAP: Record<string, string> = {
-      cd: "60835",
-      "9dejulio": "24471",
-      carcano: "31312"
-    };
+    const originStore = STORES.find((store) => store.id === origin_store);
+    const destStore = STORES.find((store) => store.id === dest_store);
 
-    const originDepositId = STORE_TO_DEPOSIT_MAP[origin_store];
-    const destDepositId = STORE_TO_DEPOSIT_MAP[dest_store];
-
-    if (!originDepositId || !destDepositId) {
-      return res.status(400).json({ error: "Invalid store codes" });
+    if (!originStore || !destStore) {
+      return res.status(400).json({ error: "Invalid store IDs" });
     }
 
     // Create inventory movements in ERP for each product
@@ -59,8 +53,8 @@ export default async function handler(
       products.map(async (product) => {
         try {
           await createInventoryMovement({
-            idDepositoOrigen: originDepositId,
-            idDepositoDestino: destDepositId,
+            idDepositoOrigen: origin_store,
+            idDepositoDestino: dest_store,
             codigo: product.sku,
             cantidad: product.quantity
           });

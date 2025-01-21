@@ -25,17 +25,17 @@ import {
   DeliveryState,
   Store
 } from "@/types/types";
-import { PICKUP_STORES } from "@/utils/constants";
-import { useState } from "react";
-import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
-import { Input } from "../ui/input";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Input } from "../ui/input";
+import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 import { RemitoDownload } from "./RemitoDownload";
+import { STORES } from "@/utils/constants";
 
 interface FormData {
   delivery_cost?: number;
   carrier_id?: number;
-  pickup_store?: Store;
+  pickup_store?: string;
   delivery_type: DeliveredType;
   items: {
     product_sku: string;
@@ -79,6 +79,71 @@ export default function StateDialog({
   const [selectedItems, setSelectedItems] = useState<{
     [sku: string]: number;
   }>({});
+  const [isDirty, setIsDirty] = useState(false);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>();
+
+  const checkFormDirty = useCallback(() => {
+    const hasSelectedItems = Object.values(selectedItems).some(
+      (qty) => qty > 0
+    );
+    const hasDeliveryCostChanged =
+      deliveryCost !== String(initialDeliveryCost || "");
+    const hasCarrierChanged = selectedCarrierId !== initialCarrierId;
+    const hasDeliveryTypeChanged = !!deliveryType;
+    const hasStoreChanged = !!selectedStore;
+
+    return (
+      hasSelectedItems ||
+      hasDeliveryCostChanged ||
+      hasCarrierChanged ||
+      hasDeliveryTypeChanged ||
+      hasStoreChanged
+    );
+  }, [
+    selectedItems,
+    deliveryCost,
+    selectedCarrierId,
+    deliveryType,
+    selectedStore,
+    initialDeliveryCost,
+    initialCarrierId
+  ]);
+
+  // Update dirty state whenever form values change
+  useEffect(() => {
+    setIsDirty(checkFormDirty());
+  }, [
+    selectedItems,
+    deliveryCost,
+    selectedCarrierId,
+    deliveryType,
+    selectedStore,
+    checkFormDirty
+  ]);
+
+  // Handle dialog close
+  const handleOpenChange = (open: boolean) => {
+    if (open === false && isDirty) {
+      // Show confirmation dialog
+      const willClose = window.confirm(
+        "Hay cambios sin guardar. ¿Estás seguro que querés cerrar?"
+      );
+      if (!willClose) return;
+    }
+
+    // Reset form if closing
+    if (open === false) {
+      setSelectedItems({});
+      setDeliveryType(undefined);
+      setDeliveryCost("");
+      setSelectedCarrierId(undefined);
+      setSelectedStore(undefined);
+      setError(null);
+      setIsDirty(false);
+    }
+
+    setOpen(open);
+  };
 
   function getDeliveryStatusText() {
     const pendingItems = Object.values(selectedItems).filter(
@@ -103,22 +168,26 @@ export default function StateDialog({
       }));
 
     if (items.length === 0) {
-      return "Debe seleccionar al menos un producto";
+      return "Seleccioná al menos un producto";
+    }
+
+    if (!deliveryType) {
+      return "Seleccioná el tipo de entrega"
     }
 
     // Validate carrier/pickup store selection
     if (deliveryType === "carrier" && !selectedCarrierId && !initialCarrierId) {
-      return "Debe seleccionar un transportista";
+      return "Seleccioná un transportista";
     }
     if (
       deliveryType === "carrier" &&
       !isDeliveryCostValid(deliveryCost) &&
       !initialDeliveryCost
     ) {
-      return "Debe ingresar un costo válido";
+      return "Ingresá un costo válido";
     }
     if (deliveryType === "pickup" && !selectedStore) {
-      return "Debe seleccionar una sucursal";
+      return "Seleccioná una sucursal";
     }
 
     return null;
@@ -202,7 +271,7 @@ export default function StateDialog({
         carrier_id: selectedCarrierId
       }),
       ...(deliveryType === "pickup" && {
-        pickup_store: selectedStore
+        pickup_store: selectedStoreId
       })
     };
 
@@ -221,16 +290,8 @@ export default function StateDialog({
     setShowStateAlertDialog(true);
   }
 
-  const isSubmitDisabled =
-    isConfirming ||
-    !deliveryType ||
-    (deliveryType === "carrier" &&
-      ((!selectedCarrierId && !initialCarrierId) ||
-        (!isDeliveryCostValid(deliveryCost) && !initialDeliveryCost))) ||
-    (deliveryType === "pickup" && !selectedStore);
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="w-full" onClick={handleDialogTriggerClick}>
           {state === "delivered" ? "Pendiente" : "Entregado"}
@@ -241,8 +302,13 @@ export default function StateDialog({
         <DialogHeader className="mb-2">
           <DialogTitle>Marcar como Entregada</DialogTitle>
           <DialogDescription>
-            <p>Seleccioná el tipo de entrega y productos entregados o retirados.</p>
-            <p>Para el remito, ingresá la cantidad de productos a entregar y tocá Descargar Remito</p>
+            <p>
+              Seleccioná el tipo de entrega y productos entregados o retirados.
+            </p>
+            <p>
+              Para el remito, ingresá la cantidad de productos a entregar y tocá
+              Descargar Remito
+            </p>
           </DialogDescription>
         </DialogHeader>
 
@@ -273,9 +339,9 @@ export default function StateDialog({
 
             {deliveryType === "pickup" && (
               <PickupStoreSelector
-                selectedStore={selectedStore}
-                onStoreChange={(value) => setSelectedStore(value as Store)}
-              />
+  selectedStore={selectedStoreId}
+  onStoreChange={setSelectedStoreId}
+/>
             )}
 
             <DialogFooter className="mt-auto">
@@ -326,7 +392,7 @@ function PickupStoreSelector({
   selectedStore,
   onStoreChange
 }: {
-  selectedStore?: Store;
+  selectedStore?: string;
   onStoreChange: (value: string) => void;
 }) {
   return (
@@ -337,8 +403,8 @@ function PickupStoreSelector({
           <SelectValue placeholder="Seleccioná una sucursal" />
         </SelectTrigger>
         <SelectContent>
-          {PICKUP_STORES.map((store) => (
-            <SelectItem key={store.value} value={store.value}>
+          {STORES.map((store) => (
+            <SelectItem key={store.id} value={store.id}>
               {store.label}
             </SelectItem>
           ))}

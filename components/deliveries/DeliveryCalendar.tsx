@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useDeliveryBalance } from "@/lib/hooks/useDeliveryBalance";
 import { useRole } from "@/lib/hooks/useRole";
-import { PICKUP_STORES } from "@/utils/constants";
+import { getStore } from "@/utils/constants";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
@@ -63,11 +63,6 @@ interface CalendarResponse {
   dailyCosts: Record<string, number>;
   totalCost: number;
 }
-
-const getStoreLabel = (storeValue: string) => {
-  const store = PICKUP_STORES.find((store) => store.value === storeValue);
-  return store ? store.label : storeValue;
-};
 
 export const DraggableDeliveryItem = ({
   delivery,
@@ -166,7 +161,7 @@ export const DraggableDeliveryItem = ({
             {delivery.created_by?.name && <p>✏️ {delivery.created_by.name}</p>}
             {delivery.type === "delivered" && <p>✅ Entregado</p>}
             {delivery.pickup_store && (
-              <p>Retiró en {getStoreLabel(delivery.pickup_store)}</p>
+              <p>Retiró en {getStore(delivery.pickup_store).label}</p>
             )}
           </div>
         </TooltipContent>{" "}

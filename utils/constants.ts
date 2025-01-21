@@ -1,16 +1,14 @@
-export const INVENTORY_LOCATIONS: Record<string, string> = {
-  "24471": "9 DE JULIO 322",
-  "60835": "CD",
-  "31312": "CÁRCANO",
-  "64512": "PENDIENTE DE ENTREGA",
-  "70749": "SEGUNDA SELECCIÓN"
-};
+import { Store } from "@/types/types";
 
-export const PICKUP_STORES = [
-  { value: "cd", label: "CD" },
-  { value: "9dejulio", label: "9 de Julio" },
-  { value: "carcano", label: "Cárcano" }
+export const STORES: Store[] = [
+  { id: "60835", label: "CD" },
+  { id: "24471", label: "9 de Julio" },
+  { id: "31312", label: "Cárcano" },
+  { id: "70749", label: "Segunda Selección" }
 ];
+
+export const getStore = (id: string): Store | undefined => 
+  STORES.find(store => store.id === id);
 
 export const ERP_PROFILES: Record<string, string> = {
   "24194": "Noe",

@@ -52,8 +52,8 @@ export interface Delivery {
   type: string;
   supplier_id: string | null;
   suppliers: Supplier | null;
-  origin_store: Store | null; 
-  dest_store: Store | null; 
+  origin_store: string | null; 
+  dest_store: string | null; 
   products: Product[] | null; // legacy
   delivery_items?: DeliveryItem[];
   operations?: DeliveryOperation[];
@@ -64,7 +64,11 @@ export interface Supplier {
   name: string;
 }
 
-export type Store = "cd" | "9dejulio" | "carcano";
+export interface Store {
+  id: string;    // inventory ID from ERP
+  label: string; // display name
+}
+
 export type DeliveredType = "carrier" | "pickup";
 export type DeliveryType =
   | "home_delivery"
@@ -130,8 +134,12 @@ export interface DeliveryOperation {
   cost: number;
   operation_date: string;
   created_at: string;
-  created_by: string | null;
-  pickup_store: Store | null;
+  created_by: string;
+  profiles?: {
+    id: string;
+    name: string;
+  } | null;
+  pickup_store: string | null;
   operation_type: OperationType;
   operation_items?: OperationItemWithProduct[];
 }
