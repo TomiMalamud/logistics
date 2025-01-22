@@ -11,13 +11,19 @@ interface Props {
   };
 }
 
-export const RemitoDownload = ({ delivery, customer, selectedItems }: Props) => {
+export const RemitoDownload = ({
+  delivery,
+  customer,
+  selectedItems
+}: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleClick = () => {
     if (!delivery.scheduled_date) {
-      setError("No se puede descargar el remito hasta asignar una fecha de entrega");
+      setError(
+        "No se puede descargar el remito hasta asignar una fecha de entrega"
+      );
       return;
     }
 
@@ -31,9 +37,9 @@ export const RemitoDownload = ({ delivery, customer, selectedItems }: Props) => 
 
       // Get the products to include in the remito
       const productsToInclude = delivery.delivery_items
-        ?.filter(item => selectedItems?.[item.product_sku])
-        .map(item => ({
-          name: item.products?.name || 'Unknown Product',
+        ?.filter((item) => selectedItems?.[item.product_sku])
+        .map((item) => ({
+          name: item.products?.name || "Unknown Product",
           quantity: selectedItems?.[item.product_sku] || 0,
           sku: item.product_sku
         }));
@@ -51,12 +57,12 @@ export const RemitoDownload = ({ delivery, customer, selectedItems }: Props) => 
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           delivery: {
             ...delivery,
             products: productsToInclude
-          }, 
-          customer 
+          },
+          customer
         })
       });
 
@@ -84,8 +90,8 @@ export const RemitoDownload = ({ delivery, customer, selectedItems }: Props) => 
 
   return (
     <div className="flex flex-col w-full">
-      <Button 
-        onClick={handleClick} 
+      <Button
+        onClick={handleClick}
         disabled={isLoading}
         variant="outline"
         className="flex items-center gap-2"

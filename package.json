@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+    "test": "jest",
+    "commit": "commit",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "Tomás Malamud",
@@ -65,6 +67,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
     "@eslint/js": "^9.17.0",
     "@swc/jest": "^0.2.37",
     "@testing-library/dom": "^10.4.0",
@@ -77,6 +81,7 @@
     "autoprefixer": "^10.4.14",
     "eslint": "^8.57.1",
     "eslint-config-next": "13.4.19",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.26",
