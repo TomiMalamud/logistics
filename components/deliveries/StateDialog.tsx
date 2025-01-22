@@ -25,12 +25,12 @@ import {
   DeliveryState,
   Store
 } from "@/types/types";
+import { STORES } from "@/utils/constants";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Input } from "../ui/input";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 import { RemitoDownload } from "./RemitoDownload";
-import { STORES } from "@/utils/constants";
 
 interface FormData {
   delivery_cost?: number;
@@ -172,7 +172,7 @@ export default function StateDialog({
     }
 
     if (!deliveryType) {
-      return "Seleccioná el tipo de entrega"
+      return "Seleccioná el tipo de entrega";
     }
 
     // Validate carrier/pickup store selection
@@ -186,7 +186,7 @@ export default function StateDialog({
     ) {
       return "Ingresá un costo válido";
     }
-    if (deliveryType === "pickup" && !selectedStore) {
+    if (deliveryType === "pickup" && !selectedStoreId) {
       return "Seleccioná una sucursal";
     }
 
@@ -339,9 +339,9 @@ export default function StateDialog({
 
             {deliveryType === "pickup" && (
               <PickupStoreSelector
-  selectedStore={selectedStoreId}
-  onStoreChange={setSelectedStoreId}
-/>
+                selectedStore={selectedStoreId}
+                onStoreChange={setSelectedStoreId}
+              />
             )}
 
             <DialogFooter className="mt-auto">
