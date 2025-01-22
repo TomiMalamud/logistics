@@ -109,8 +109,6 @@ export default async function handler(
     // Add header image or fallback text
     const hasLogo = addHeaderImage(doc, margin);
 
-    // Header - Document Type
-    const headerX = hasLogo ? margin + 120 : margin + 150;
     doc
       .fontSize(24)
       .font("Helvetica-Bold")

@@ -86,7 +86,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Error saving payment:", error);
-      // Add error handling here, perhaps with a toast notification
     } finally {
       setIsLoading(false);
     }

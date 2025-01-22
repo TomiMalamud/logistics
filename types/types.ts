@@ -153,6 +153,7 @@ export interface OperationItem {
   operation_id: number;
   product_sku: string;
   quantity: number;
+  store_id: string;
 }
 
 export interface DeliveryItem {

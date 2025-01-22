@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
-    "prepare": "husky"
+    "test": "jest"
   },
   "keywords": [],
   "author": "Tomás Malamud",

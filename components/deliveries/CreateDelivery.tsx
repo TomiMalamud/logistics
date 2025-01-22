@@ -9,9 +9,9 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { sanitizePhoneNumber, validatePhoneNumber } from "@/lib/utils/format";
 import { Comprobante } from "@/types/api";
 import { InvoiceItem } from "@/types/types";
-import { sanitizePhoneNumber, validatePhoneNumber } from "@/lib/utils/format";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import Router from "next/router";
@@ -203,9 +203,7 @@ export default function CreateDelivery({ user }: CreateProps) {
         }
 
         // Then fetch invoice items
-        const itemsRes = await fetch(
-          `/api/invoices/${invoice.Id}`
-        );
+        const itemsRes = await fetch(`/api/invoices/${invoice.Id}`);
         if (!itemsRes.ok) throw new Error("Failed to fetch invoice items");
         const itemsData = await itemsRes.json();
 
