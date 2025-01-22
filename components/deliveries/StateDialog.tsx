@@ -68,6 +68,7 @@ interface StateDialogProps {
   deliveryItems: DeliveryItem[];
   delivery: Delivery;
   customer: Customer;
+  disabled: boolean;
 }
 
 export default function StateDialog({
@@ -80,7 +81,8 @@ export default function StateDialog({
   isConfirming,
   deliveryItems,
   delivery,
-  customer
+  customer,
+  disabled
 }: StateDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -369,7 +371,7 @@ export default function StateDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full" onClick={handleDialogTriggerClick}>
+        <Button className="w-full" onClick={handleDialogTriggerClick} disabled={disabled}>
           {state === "delivered" ? "Pendiente" : "Entregado"}
         </Button>
       </DialogTrigger>

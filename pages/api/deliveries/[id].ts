@@ -13,13 +13,14 @@ interface UpdateDeliveryBody {
   items?: {
     product_sku: string;
     quantity: number;
+    store_id: string;pro
   }[];
 }
 
 async function validateDeliveryItems(
   supabase: any,
   deliveryId: number,
-  items: { product_sku: string; quantity: number }[]
+  items: { product_sku: string; quantity: number; store_id: string }[]
 ) {
   const { data, error } = await supabase
     .from("delivery_items")
@@ -30,6 +31,10 @@ async function validateDeliveryItems(
   if (!data) throw new Error("No delivery items found");
 
   for (const item of items) {
+    if (!item.store_id) {
+      throw new Error(`Store ID is required for product ${item.product_sku}`);
+    }
+
     const existingItem = data.find((d) => d.product_sku === item.product_sku);
     if (!existingItem) {
       throw new Error(`Product ${item.product_sku} not found in delivery`);
@@ -47,13 +52,15 @@ async function processItems(
   supabase: any,
   operation_id: number,
   delivery_id: number,
-  items: { product_sku: string; quantity: number }[]
+  items: { product_sku: string; quantity: number; store_id: string }[]
 ) {
   // Create operation items
   const { error: opItemsError } = await supabase.from("operation_items").insert(
     items.map((item) => ({
       operation_id,
-      ...item
+      product_sku: item.product_sku,
+      quantity: item.quantity,
+      store_id: item.store_id 
     }))
   );
 
@@ -101,7 +108,7 @@ async function recordOperation(
   carrier_id?: number,
   delivery_cost?: number,
   pickup_store?: Store,
-  items?: { product_sku: string; quantity: number }[]
+  items?: { product_sku: string; quantity: number, store_id: string }[]
 ) {
   // For delivery operations, validate that either carrier info or pickup_store is provided
   if (operationType === "delivery") {

@@ -1,18 +1,16 @@
 // Balance.tsx
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useDeliveryBalance } from "@/hooks/useDeliveryBalance";
 import { RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
 
 interface BalanceProps {
-  invoice_id: number;
+  balance: string | null;
+  error: string | null;
+  isRefreshing: boolean;
+  refetch: () => Promise<void>;
 }
 
-export default function Balance({ invoice_id }: BalanceProps) {
-  const { balance, error, isRefreshing, refetch } = useDeliveryBalance({
-    invoice_id
-  });
-
+export default function Balance({ balance, error, isRefreshing, refetch }: BalanceProps) {
   if (error) {
     return (
       <div className="flex items-center gap-2">

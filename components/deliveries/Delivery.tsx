@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { useDeliveryBalance } from "@/hooks/useDeliveryBalance";
 import { useDeliveryLogic } from "@/hooks/useDeliveryLogic";
 import { getStore } from "@/lib/utils/constants";
 import { formatLongDate } from "@/lib/utils/format";
@@ -59,6 +60,13 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
+
+  const balanceData = useDeliveryBalance({
+    invoice_id: delivery.state === "pending" ? delivery.invoice_id : null
+  });
+
+  const isDeliveryDisabled =
+    balanceData.balance && balanceData.balance !== "0,00";
 
   const getLatestOperation = (operations?: DeliveryOperation[]) => {
     if (!operations?.length) return null;
@@ -292,18 +300,38 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         <div className="space-x-2 flex">
           {delivery.state === "pending" && (
             <div className="w-24">
-              <StateDialog
-                state={deliveryLogic.state}
-                setState={deliveryLogic.setState}
-                setShowStateAlertDialog={deliveryLogic.setShowStateAlertDialog}
-                onConfirm={deliveryLogic.handleConfirmStateChange}
-                isConfirming={deliveryLogic.isConfirming}
-                deliveryItems={delivery.delivery_items}
-                delivery={delivery}
-                customer={delivery.customers}
-              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-24">
+                      <StateDialog
+                        state={deliveryLogic.state}
+                        setState={deliveryLogic.setState}
+                        setShowStateAlertDialog={
+                          deliveryLogic.setShowStateAlertDialog
+                        }
+                        onConfirm={deliveryLogic.handleConfirmStateChange}
+                        isConfirming={deliveryLogic.isConfirming}
+                        deliveryItems={delivery.delivery_items}
+                        delivery={delivery}
+                        customer={delivery.customers}
+                        disabled={isDeliveryDisabled}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  {isDeliveryDisabled && (
+                    <TooltipContent>
+                      <p>
+                        No se puede marcar como entregado hasta que se registre
+                        el pago
+                      </p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
+
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -408,9 +436,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </p>
         </div>
       )}
-      {delivery.state === "pending" && delivery.type !== "supplier_pickup" && (
-        <Balance invoice_id={delivery.invoice_id} />
-      )}
+      {delivery.state === "pending" && delivery.invoice_id && <Balance {...balanceData} />}
       {/* Notes Section */}
       <div className="border-t pt-4">
         {deliveryLogic.newNotas.length > 0 ? (
