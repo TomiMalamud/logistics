@@ -2,7 +2,7 @@
 import { createInventoryMovement } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { Product } from "@/types/types";
-import { STORES } from "@/utils/constants";
+import { STORES } from "@/lib/utils/constants";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(

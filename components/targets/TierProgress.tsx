@@ -6,7 +6,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EMPLOYEE_TIER_TARGETS } from "@/utils/constants";
+import { EMPLOYEE_TIER_TARGETS } from "@/lib/utils/constants";
 import React from "react";
 import { Progress } from "../ui/progress";
 

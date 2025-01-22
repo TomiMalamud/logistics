@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { createClient } from '@/utils/supabase/component';
+import { createClient } from '@/lib/utils/supabase/component';
 import { Product } from '@/types/types';
 import { Concepto } from '@/types/api';
 

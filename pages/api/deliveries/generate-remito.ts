@@ -1,5 +1,5 @@
 // pages/api/deliveries/generate-remito.ts
-import { formatDate } from "@/utils/format";
+import { formatDate } from "@/lib/utils/format";
 import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
 import PDFDocument from "pdfkit";

@@ -8,7 +8,7 @@ import {
   CardTitle
 } from "../ui/card";
 import FinancingOptions from "./FinancingOptions";
-import { CASH_DISCOUNT } from "@/utils/constants";
+import { CASH_DISCOUNT } from "@/lib/utils/constants";
 
 interface ProductCardProps {
   product: Concepto;

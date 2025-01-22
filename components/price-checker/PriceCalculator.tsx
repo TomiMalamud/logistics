@@ -10,7 +10,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CASH_DISCOUNT, FINANCING_OPTIONS } from "@/utils/constants";
+import { CASH_DISCOUNT, FINANCING_OPTIONS } from "@/lib/utils/constants";
 import { DollarSign, Plus, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 

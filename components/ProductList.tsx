@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
-import { useProducts } from "@/lib/hooks/useProducts";
+import { useProducts } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown, Loader, Search, X } from "lucide-react";
 import { useState } from "react";

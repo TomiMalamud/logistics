@@ -24,7 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { Carrier } from "@/types/types";
-import { formatDate, sanitizePhoneNumber, validatePhoneNumber } from "@/utils/format";
+import { formatDate, sanitizePhoneNumber, validatePhoneNumber } from "@/lib/utils/format";
 import { DollarSign, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";

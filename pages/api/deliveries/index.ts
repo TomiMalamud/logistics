@@ -1,6 +1,6 @@
 // pages/api/deliveries/index.ts
 
-import createClient from "@/utils/supabase/api";
+import createClient from "@/lib/utils/supabase/api";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { DeliveryState, DeliveryType } from "@/types/types";

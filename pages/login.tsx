@@ -9,7 +9,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/utils/supabase/component";
+import { createClient } from "@/lib/utils/supabase/component";
 import { useRouter } from "next/router";
 import { useState } from "react";
 

@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { STORES } from "@/utils/constants";
+import { STORES } from "@/lib/utils/constants";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/router";

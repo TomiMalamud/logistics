@@ -1,5 +1,5 @@
-import { useRole } from "@/lib/hooks/useRole";
-import { createClient } from "@/utils/supabase/component";
+import { useRole } from "@/hooks/useRole";
+import { createClient } from "@/lib/utils/supabase/component";
 import { User } from "lucide-react";
 import Head from "next/head";
 import Image from "next/image";

@@ -1,6 +1,6 @@
 // lib/hooks/useRole.ts
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/utils/supabase/component'
+import { createClient } from '@/lib/utils/supabase/component'
 import type { Role } from 'types/types'
 
 const supabase = createClient()

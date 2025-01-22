@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import SalesDashboard from "@/components/targets/SalesDashboard";
 import type { Profile } from "@/types/types";
-import { createClient } from "@/utils/supabase/server-props";
+import { createClient } from "@/lib/utils/supabase/server-props";
 import type { GetServerSidePropsContext } from "next";
 
 interface TargetsPageProps {

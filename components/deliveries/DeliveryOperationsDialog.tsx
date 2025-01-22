@@ -6,10 +6,10 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { formatLongDate, formatCurrency } from "@/utils/format";
+import { formatLongDate, formatCurrency } from "@/lib/utils/format";
 import { Package, XCircle } from "lucide-react";
 import { DeliveryOperation, OperationType } from "@/types/types";
-import { getStore } from "@/utils/constants";
+import { getStore } from "@/lib/utils/constants";
 
 interface DeliveryOperationsDialogProps {
   operations?: DeliveryOperation[];

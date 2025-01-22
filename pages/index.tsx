@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { createClient } from "@/utils/supabase/server-props";
+import { createClient } from "@/lib/utils/supabase/server-props";
 import type { User } from "@supabase/supabase-js";
 import {
   Calendar,

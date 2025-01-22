@@ -1,5 +1,5 @@
-import InvoiceItems from "@/components/InvoiceItems";
-import InvoiceSelection from "@/components/InvoiceSelection";
+import InvoiceItems from "@/components/deliveries/InvoiceItems";
+import InvoiceSelection from "@/components/deliveries/InvoiceSelection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Comprobante } from "@/types/api";
 import { InvoiceItem } from "@/types/types";
-import { sanitizePhoneNumber, validatePhoneNumber } from "@/utils/format";
+import { sanitizePhoneNumber, validatePhoneNumber } from "@/lib/utils/format";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import Router from "next/router";

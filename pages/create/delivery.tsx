@@ -1,6 +1,6 @@
 import CreateDelivery from "@/components/deliveries/CreateDelivery";
 import Layout from "@/components/Layout";
-import { createClient } from "@/utils/supabase/server-props";
+import { createClient } from "@/lib/utils/supabase/server-props";
 import type { GetServerSidePropsContext } from "next";
 
 export default function CreateDeliveryPage({ user }) {

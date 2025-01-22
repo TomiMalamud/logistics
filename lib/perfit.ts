@@ -1,6 +1,6 @@
 // lib/perfit.ts
 import { PerfitContact, PerfitResponse } from '@/types/types';
-import { isEmailValid } from '@/utils/emailVal';
+import { isEmailValid } from '@/lib/utils/emailVal';
 
 const PERFIT_BASE_URL = 'https://api.myperfit.com/v2';
 const PERFIT_ACCOUNT = 'rohisommiers2';

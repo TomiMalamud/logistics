@@ -25,7 +25,7 @@ import {
   DeliveryState,
   Store
 } from "@/types/types";
-import { STORES } from "@/utils/constants";
+import { STORES } from "@/lib/utils/constants";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Input } from "../ui/input";

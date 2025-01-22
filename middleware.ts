@@ -1,7 +1,7 @@
 // middleware.ts
 import { type NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { updateSession } from '@/utils/supabase/middleware'
+import { updateSession } from '@/lib/utils/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 
 // Protected routes that only admins can access

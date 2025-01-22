@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { FINANCING_OPTIONS } from "@/utils/constants";
+import { FINANCING_OPTIONS } from "@/lib/utils/constants";
 import { Plus } from "lucide-react";
 
 const calculateInstallment = (price: number, months: number, discount = 0) => {

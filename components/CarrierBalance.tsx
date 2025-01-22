@@ -17,7 +17,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import type { BalanceResponse } from "@/pages/api/carriers/[id]/balance";
-import { formatCurrency, formatDate } from "@/utils/format";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { Loader2 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import PaymentForm from "./PaymentForm";

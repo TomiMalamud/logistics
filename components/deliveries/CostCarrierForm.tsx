@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { useCarriers } from "@/lib/hooks/useCarriers";
+import { useCarriers } from "@/hooks/useCarriers";
 import { useState } from "react";
 
 interface CostCarrierFormProps {

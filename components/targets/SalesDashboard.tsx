@@ -16,9 +16,9 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { PeriodOption, useSalesData } from "@/lib/hooks/useSalesData";
+import { PeriodOption, useSalesData } from "@/hooks/useSalesData";
 import type { Profile } from "@/types/types";
-import { ERP_PROFILES } from "@/utils/constants";
+import { ERP_PROFILES } from "@/lib/utils/constants";
 import { Rocket } from "lucide-react";
 import { useState } from "react";
 import SalesChart from "./SalesChart";

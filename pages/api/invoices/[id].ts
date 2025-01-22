@@ -1,6 +1,6 @@
 // pages/api/invoices/[id].ts
 import { getComprobanteById } from "@/lib/api";
-import { getStore } from "@/utils/constants";
+import { getStore } from "@/lib/utils/constants";
 import { InvoiceItem } from "@/types/types";
 import type { NextApiRequest, NextApiResponse } from "next";
 

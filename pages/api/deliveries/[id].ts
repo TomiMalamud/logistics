@@ -1,7 +1,7 @@
 // pages/api/deliveries/[id].ts
 
 import { Product, Store } from "@/types/types";
-import createClient from "@/utils/supabase/api";
+import createClient from "@/lib/utils/supabase/api";
 import { NextApiRequest, NextApiResponse } from "next";
 
 interface UpdateDeliveryBody {
@@ -151,7 +151,7 @@ async function recordOperation(
 }
 async function handleEmailNotifications(delivery: any) {
   if (delivery.created_by?.email && delivery.customers) {
-    const { scheduleFollowUpEmail } = await import("@/utils/resend");
+    const { scheduleFollowUpEmail } = await import("@/lib/utils/resend");
     await scheduleFollowUpEmail({
       salesPersonEmail: delivery.created_by.email,
       salesPersonName: delivery.created_by.name,
@@ -161,7 +161,7 @@ async function handleEmailNotifications(delivery: any) {
   }
 
   if (delivery.customers?.email) {
-    const { triggerEmail } = await import("@/utils/email");
+    const { triggerEmail } = await import("@/lib/utils/email");
     const hasGani = (delivery.products as Product[])?.some((p) =>
       p.name.toLowerCase().includes("colchon gani")
     );

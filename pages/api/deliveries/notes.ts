@@ -1,7 +1,7 @@
 // pages/api/deliveries/notes.ts
 
 import { NextApiRequest, NextApiResponse } from "next";
-import createClient from "@/utils/supabase/api";
+import createClient from "@/lib/utils/supabase/api";
 
 export default async function handler(
   req: NextApiRequest,

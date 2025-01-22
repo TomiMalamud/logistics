@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProducts } from "@/lib/hooks/useProducts";
+import { useProducts } from "@/hooks/useProducts";
 import { Calculator } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
