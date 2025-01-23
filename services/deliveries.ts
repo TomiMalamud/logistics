@@ -14,6 +14,11 @@ interface DeliveryItem {
   store_id: string;
 }
 
+interface CreateNoteParams {
+  deliveryId: number;
+  text: string;
+}
+
 interface ListDeliveriesParams {
   state: DeliveryState;
   page: number;
@@ -23,6 +28,14 @@ interface ListDeliveriesParams {
   type?: DeliveryType;
   userId?: string;
   userRole?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface ListOperationsParams {
+  startDate: string;
+  endDate: string;
+  type: "delivery" | "cancellation";
 }
 
 interface ProcessItemsParams {
@@ -192,6 +205,55 @@ const createDeliveryService = (supabase: SupabaseClient) => {
       };
     }
   };
+
+  const listOperations = async ({
+    startDate,
+    endDate,
+    type,
+  }: ListOperationsParams) => {
+    try {
+      const { data, error } = await supabase
+        .from("delivery_operations")
+        .select(
+          `
+          id,
+          delivery:deliveries!inner (
+            id,
+            customers!inner (
+              name,
+              address,
+              phone
+            )
+          ),
+          operation_date,
+          cost,
+          pickup_store,
+          carriers (
+            name
+          ),
+          operation_items (
+            quantity,
+            products (
+              name
+            )
+          )
+        `
+        )
+        .eq("operation_type", type)
+        .gte("operation_date", startDate)
+        .lte("operation_date", endDate);
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      return {
+        data: [],
+        error:
+          error instanceof Error ? error.message : "Failed to fetch operations",
+      };
+    }
+  };
+
   const processItems = async ({
     operationId,
     deliveryId,
@@ -387,6 +449,33 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     }
   };
 
+  const createNote = async ({ deliveryId, text }: CreateNoteParams) => {
+    try {
+      // Validate delivery exists
+      const delivery = await getDelivery(deliveryId);
+
+      // Insert the note
+      const { data, error } = await supabase
+        .from("notes")
+        .insert([
+          {
+            delivery_id: deliveryId,
+            text,
+          },
+        ])
+        .select("*");
+
+      if (error) throw new Error(`Error creating note: ${error.message}`);
+      if (!data?.length) throw new Error("Note created but no data returned");
+
+      return { data: data[0] };
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Failed to create note",
+      };
+    }
+  };
+
   return {
     validateItems,
     processItems,
@@ -396,12 +485,16 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     handleNotifications,
     listDeliveries,
     searchCustomers,
+    createNote,
+    listOperations,
   };
 };
 
 export { createDeliveryService };
 export type {
+  CreateNoteParams,
   DeliveryItem,
+  ListDeliveriesParams,
   ProcessItemsParams,
   RecordOperationParams,
   UpdateDeliveryParams,

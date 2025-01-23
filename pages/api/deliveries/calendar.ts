@@ -1,8 +1,9 @@
 // pages/api/deliveries/calendar.ts
-import { supabase } from "@/lib/supabase";
+import createClient from "@/lib/utils/supabase/api";
+import { createDeliveryService } from "@/services/deliveries";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Product } from "@/types/types";
 
+// Keep all your original type definitions here
 type FeedResponse = {
   feed: CalendarItem[];
   totalItems: number;
@@ -15,11 +16,10 @@ type ErrorResponse = {
   error: string;
 };
 
-// Interface for pending deliveries from DB
 interface PendingDelivery {
   id: number;
   scheduled_date: string;
-  invoice_id: number | null;  
+  invoice_id: number | null;
   customers: {
     name: string;
     address: string;
@@ -28,17 +28,18 @@ interface PendingDelivery {
   created_by: {
     name: string | null;
   } | null;
-  delivery_items: {
-    quantity: number;
-    pending_quantity: number;
-    products: {
-      name: string;
-    };
-  }[] | null;
-  products: string | null; // JSON string of legacy products
+  delivery_items:
+    | {
+        quantity: number;
+        pending_quantity: number;
+        products: {
+          name: string;
+        };
+      }[]
+    | null;
+  products: string | null;
 }
 
-// Interface for delivery operations from DB
 interface DeliveryOperation {
   id: number;
   operation_date: string;
@@ -54,20 +55,21 @@ interface DeliveryOperation {
       phone: string | null;
     };
   };
-  operation_items: {
-    quantity: number;
-    products: {
-      name: string;
-    };
-  }[] | null;
+  operation_items:
+    | {
+        quantity: number;
+        products: {
+          name: string;
+        };
+      }[]
+    | null;
 }
 
-// Common interface for calendar items
 interface CalendarItem {
   id: number;
   type: "pending" | "delivered";
   display_date: string;
-  invoice_id?: number | null;  
+  invoice_id?: number | null;
   customer: {
     name: string;
     address: string;
@@ -85,52 +87,15 @@ interface CalendarItem {
   operation_cost?: number | null;
 }
 
-const getPendingDeliveriesQuery = () => `
-  id,
-  state,
-  scheduled_date,
-  invoice_id,
-  customers!inner (
-    name,
-    address,
-    phone
-  ),
-  created_by:profiles (
-    name
-  ),
-  delivery_items (
-    quantity,
-    pending_quantity,
-    products (
-      name
-    )
-  ),
-  products
-`;
-
-const getDeliveryOperationsQuery = () => `
-  id,
-  delivery:deliveries!inner (
-    id,
-    customers!inner (
-      name,
-      address,
-      phone
-    )
-  ),
-  operation_date,
-  cost,
-  pickup_store,
-  carriers (
-    name
-  ),
-  operation_items (
-    quantity,
-    products (
-      name
-    )
-  )
-`;
+const calculateDailyCosts = (operations: DeliveryOperation[]) => {
+  return (
+    operations?.reduce((acc, operation) => {
+      const date = operation.operation_date.split("T")[0];
+      acc[date] = (acc[date] || 0) + (operation.cost || 0);
+      return acc;
+    }, {} as Record<string, number>) || {}
+  );
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -142,104 +107,122 @@ export default async function handler(
 
   const { startDate, endDate } = req.query;
 
-  if (!startDate || !endDate) {
-    return res.status(400).json({ error: "Start and end dates are required" });
+  if (
+    !startDate ||
+    !endDate ||
+    Array.isArray(startDate) ||
+    Array.isArray(endDate)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Valid start and end dates are required" });
   }
 
   try {
-    // Get pending deliveries with scheduled dates
-    const { data: scheduledPending, error: scheduledError } = await supabase
-      .from("deliveries")
-      .select(getPendingDeliveriesQuery())
-      .eq("state", "pending")
-      .not("scheduled_date", "is", null)
-      .gte("scheduled_date", startDate)
-      .lte("scheduled_date", endDate) as { data: PendingDelivery[] | null, error: any };
+    const supabase = createClient(req, res);
+    const deliveryService = createDeliveryService(supabase);
 
-    // Get pending deliveries without scheduled dates (for count only)
-    const { count: unscheduledCount, error: unscheduledError } = await supabase
-      .from("deliveries")
-      .select("id", { count: "exact" })
-      .eq("state", "pending")
-      .is("scheduled_date", null);
-
-    // Get delivery operations
-    const { data: operations, error: operationsError } = await supabase
-      .from("delivery_operations")
-      .select(getDeliveryOperationsQuery())
-      .eq("operation_type", "delivery")
-      .gte("operation_date", startDate)
-      .lte("operation_date", endDate) as { data: DeliveryOperation[] | null, error: any };
-
-    if (scheduledError || unscheduledError || operationsError) {
-      console.error("Error fetching data:", 
-        scheduledError || unscheduledError || operationsError
-      );
-      return res.status(500).json({ error: "Failed to fetch data" });
+    // Authenticate user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
+    // Get pending deliveries with scheduled dates
+    const { data: scheduled, error: scheduledError } =
+      await deliveryService.listDeliveries({
+        state: "pending",
+        page: 1,
+        pageSize: 1000,
+        scheduledDate: "hasDate",
+        startDate, // Add these to ListDeliveriesParams interface
+        endDate,
+      });
+
+    if (scheduledError) {
+      throw new Error(scheduledError);
+    }
+
+    // Get unscheduled count
+    const { data: unscheduled, count: unscheduledCount } =
+      await deliveryService.listDeliveries({
+        state: "pending",
+        page: 1,
+        pageSize: 1,
+        scheduledDate: "noDate",
+      });
+
+    // Get delivery operations
+    const { data: operations } = (await deliveryService.listOperations({
+      startDate,
+      endDate,
+      type: "delivery",
+    })) as { data: DeliveryOperation[] };
+
     // Process pending deliveries
-    const processedPending: CalendarItem[] = (scheduledPending || []).map(delivery => ({
-      id: delivery.id,
-      type: "pending",
-      display_date: delivery.scheduled_date,
-      invoice_id: delivery.invoice_id,
-      customer: {
-        name: delivery.customers.name,
-        address: delivery.customers.address,
-        phone: delivery.customers.phone
-      },
-      created_by: delivery.created_by,
-      items: delivery.delivery_items?.map(item => ({
-        quantity: item.quantity,
-        pending_quantity: item.pending_quantity,
-        name: item.products.name
-      })) || (delivery.products ? JSON.parse(delivery.products).map((p: Product) => ({
-        quantity: p.quantity || 1,
-        name: p.name
-      })) : [])
-    }));
-        
-    // Process operations
-    const processedOperations: CalendarItem[] = (operations || []).map(operation => ({
-      id: operation.id,
-      type: "delivered",
-      display_date: operation.operation_date,
-      customer: {
-        name: operation.delivery.customers.name,
-        address: operation.delivery.customers.address,
-        phone: operation.delivery.customers.phone
-      },
-      items: operation.operation_items?.map(item => ({
-        quantity: item.quantity,
-        name: item.products.name
-      })) || [],
-      operation_cost: operation.cost,
-      carrier: operation.carriers?.name || null,
-      pickup_store: operation.pickup_store
-    }));
-    const calculateDailyCosts = (operations: DeliveryOperation[]) => {
-      return operations?.reduce((acc, operation) => {
-        const date = operation.operation_date.split('T')[0];
-        acc[date] = (acc[date] || 0) + (operation.cost || 0);
-        return acc;
-      }, {} as Record<string, number>) || {};
-    };
-    
-    // In the handler function, before returning:
+    const pendingItems: CalendarItem[] = (scheduled as PendingDelivery[]).map(
+      (delivery) => ({
+        id: delivery.id,
+        type: "pending",
+        display_date: delivery.scheduled_date,
+        invoice_id: delivery.invoice_id,
+        customer: {
+          name: delivery.customers.name,
+          address: delivery.customers.address,
+          phone: delivery.customers.phone,
+        },
+        created_by: delivery.created_by,
+        items:
+          delivery.delivery_items?.map((item) => ({
+            quantity: item.quantity,
+            name: item.products.name,
+          })) || [],
+      })
+    );
+
+    // Process delivered items
+    const deliveredItems: CalendarItem[] = (operations || []).map(
+      (operation) => ({
+        id: operation.id,
+        type: "delivered",
+        display_date: operation.operation_date,
+        customer: {
+          name: operation.delivery.customers.name,
+          address: operation.delivery.customers.address,
+          phone: operation.delivery.customers.phone,
+        },
+        items:
+          operation.operation_items?.map((item) => ({
+            quantity: item.quantity,
+            name: item.products.name,
+          })) || [],
+        operation_cost: operation.cost,
+        carrier: operation.carriers?.name || null,
+        pickup_store: operation.pickup_store,
+      })
+    );
+
     const dailyCosts = calculateDailyCosts(operations || []);
-    const totalCost = Object.values(dailyCosts).reduce((sum, cost) => sum + cost, 0);
-        
+    const totalCost = Object.values(dailyCosts).reduce(
+      (sum, cost) => sum + cost,
+      0
+    );
+
     return res.status(200).json({
-      feed: [...processedPending, ...processedOperations],
-      totalItems: (scheduledPending?.length || 0) + (operations?.length || 0),
+      feed: [...pendingItems, ...deliveredItems],
+      totalItems: pendingItems.length + deliveredItems.length,
       unscheduledCount: unscheduledCount || 0,
       dailyCosts,
-      totalCost    
+      totalCost,
     });
-
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    return res.status(500).json({ error: "An unexpected error occurred" });
+  } catch (error) {
+    console.error("Calendar API error:", error);
+    return res.status(500).json({
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    });
   }
 }
