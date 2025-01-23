@@ -34,7 +34,7 @@ export type Product = {
 };
 
 export type DeliveryState = "pending" | "delivered" | "cancelled";
-export type DeliveryItemState = "pending" | "delivered"; 
+export type DeliveryItemState = "pending" | "delivered";
 
 // Delivery Interface
 export interface Delivery {
@@ -52,8 +52,8 @@ export interface Delivery {
   type: string;
   supplier_id: string | null;
   suppliers: Supplier | null;
-  origin_store: string | null; 
-  dest_store: string | null; 
+  origin_store: string | null;
+  dest_store: string | null;
   products: Product[] | null; // legacy
   delivery_items?: DeliveryItem[];
   operations?: DeliveryOperation[];
@@ -65,7 +65,7 @@ export interface Supplier {
 }
 
 export interface Store {
-  id: string;    // inventory ID from ERP
+  id: string; // inventory ID from ERP
   label: string; // display name
 }
 
@@ -122,12 +122,12 @@ export interface PerfitResponse {
 }
 
 export type Role = "admin" | "sales";
-export type OperationType = 'delivery' | 'cancellation';
+export type OperationType = "delivery" | "cancellation";
 
 export interface DeliveryOperation {
   id: number;
   delivery_id: number;
-  carriers?: {  
+  carriers?: {
     id: number;
     name: string;
   };
@@ -153,7 +153,7 @@ export interface OperationItem {
   operation_id: number;
   product_sku: string;
   quantity: number;
-  store_id: string;
+  store_id?: string;
 }
 
 export interface DeliveryItem {
@@ -175,7 +175,7 @@ export interface Carrier {
   service_hours?: string;
   notes?: string;
   last_delivery: string;
-  type: 'local' | 'national';
+  type: "local" | "national";
   is_reliable: boolean;
   avg_cost?: number;
 }

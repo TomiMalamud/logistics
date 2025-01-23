@@ -4,13 +4,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDeliveryBalance } from "@/hooks/useDeliveryBalance";
 import { useDeliveryLogic } from "@/hooks/useDeliveryLogic";
@@ -24,7 +24,7 @@ import {
   Package,
   StickyNote,
   Store,
-  X
+  X,
 } from "lucide-react";
 import React from "react";
 import { DeliveryOperation, DeliveryProps, Profile } from "types/types";
@@ -52,17 +52,17 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         email:
           typeof delivery.created_by === "string"
             ? "" // default empty string when we only have the id
-            : delivery.created_by?.email ?? ""
-      }
+            : delivery.created_by?.email ?? "",
+      },
     },
-    fetchURL
+    fetchURL,
   });
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
 
   const balanceData = useDeliveryBalance({
-    invoice_id: delivery.state === "pending" ? delivery.invoice_id : null
+    invoice_id: delivery.state === "pending" ? delivery.invoice_id : null,
   });
 
   const isDeliveryDisabled =
@@ -436,7 +436,9 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           </p>
         </div>
       )}
-      {delivery.state === "pending" && delivery.invoice_id && <Balance {...balanceData} />}
+      {delivery.state === "pending" && delivery.invoice_id && (
+        <Balance {...balanceData} />
+      )}
       {/* Notes Section */}
       <div className="border-t pt-4">
         {deliveryLogic.newNotas.length > 0 ? (

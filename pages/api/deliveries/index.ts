@@ -108,6 +108,7 @@ async function buildDeliveryQuery(
           operation_items (
             product_sku,
             quantity,
+            store_id,
             products (name)
           )
         )
@@ -139,9 +140,7 @@ async function buildDeliveryQuery(
     }
 
     // Order by the latest operation id by using a subquery
-    return deliveriesQuery
-      .order("id", { ascending: false })
-      .range(start, end);
+    return deliveriesQuery.order("id", { ascending: false }).range(start, end);
   }
 
   // For other states, use the original query structure
@@ -174,6 +173,7 @@ async function buildDeliveryQuery(
         operation_items (
           product_sku,
           quantity,
+          store_id,
           products (name)
         )
       )
@@ -231,7 +231,7 @@ export default async function handler(
     // Authentication
     const {
       data: { user },
-      error: userError
+      error: userError,
     } = await supabase.auth.getUser();
     if (userError || !user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -256,7 +256,7 @@ export default async function handler(
       search: (req.query.search as string) || "",
       scheduledDate: (req.query.scheduledDate as ScheduledDateFilter) || "all",
       type: (req.query.type as DeliveryType) || "all",
-      carrier: (req.query.carrier as string) || "all"
+      carrier: (req.query.carrier as string) || "all",
     };
 
     validateQueryParams(queryParams);
@@ -283,13 +283,13 @@ export default async function handler(
       feed: data,
       page: Number(queryParams.page),
       totalPages: Math.ceil(count / Number(queryParams.pageSize)),
-      totalItems: count
+      totalItems: count,
     });
   } catch (error) {
     console.error("Error in deliveries API:", error);
     return res.status(500).json({
       error:
-        error instanceof Error ? error.message : "An unexpected error occurred"
+        error instanceof Error ? error.message : "An unexpected error occurred",
     });
   }
 }

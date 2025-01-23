@@ -4,12 +4,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { formatLongDate, formatCurrency } from "@/lib/utils/format";
-import { Package, XCircle } from "lucide-react";
-import { DeliveryOperation, OperationType } from "@/types/types";
 import { getStore } from "@/lib/utils/constants";
+import { formatCurrency, formatLongDate } from "@/lib/utils/format";
+import { DeliveryOperation, OperationType } from "@/types/types";
+import { Package, XCircle } from "lucide-react";
+import { titleCase } from "title-case";
 
 interface DeliveryOperationsDialogProps {
   operations?: DeliveryOperation[];
@@ -24,21 +25,20 @@ function getOperationTitle(operation: DeliveryOperation) {
   if (operation.operation_type === "cancellation") {
     return "Cancelación";
   }
-  
+
   if (operation.pickup_store) {
     const store = getStore(operation.pickup_store);
     return `Retiro en ${store?.label || operation.pickup_store}`;
   }
-  
+
   return operation.carriers
     ? `Entregado por ${operation.carriers.name}`
     : "Entrega";
 }
 
-
 export function DeliveryOperationsDialog({
   operations = [],
-  trigger
+  trigger,
 }: DeliveryOperationsDialogProps) {
   return (
     <Dialog>
@@ -68,7 +68,10 @@ export function DeliveryOperationsDialog({
                 return (
                   <div
                     key={operation.id}
-                    className={`border rounded-lg p-4 space-y-4 ${operation.operation_type === "cancellation" && 'bg-red-100'}`}
+                    className={`border rounded-lg p-4 space-y-4 ${
+                      operation.operation_type === "cancellation" &&
+                      "bg-red-100"
+                    }`}
                   >
                     <div className="flex justify-between text-stone-800 items-start">
                       <div className="flex items-center gap-2 ">
@@ -86,11 +89,12 @@ export function DeliveryOperationsDialog({
                           )}
                         </p>
                       </div>
-                        {operation.profiles?.name && (
-                          <p className="text-sm text-slate-600">
-                            {operation.profiles.name} | {formatLongDate(operation.operation_date)}
-                          </p>
-                        )}
+                      {operation.profiles?.name && (
+                        <p className="text-sm text-slate-600">
+                          {operation.profiles.name} |{" "}
+                          {formatLongDate(operation.operation_date)}
+                        </p>
+                      )}
                     </div>
 
                     {isDelivery && operation.operation_items && (
@@ -101,14 +105,23 @@ export function DeliveryOperationsDialog({
                         {operation.operation_items.map((item, idx) => (
                           <div
                             key={`${operation.id}-${idx}`}
-                            className="flex items-center text-sm"
+                            className="flex items-center justify-between text-sm"
                           >
-                            <span className="font-medium">
-                              {item.quantity}x
-                            </span>
-                            <span className="ml-2 text-slate-600 capitalize">
-                              {item.products?.name.toLowerCase() || item.product_sku}
-                            </span>
+                            <div>
+                              <span className="font-medium">
+                                {item.quantity}x
+                              </span>
+                              <span className="ml-2 text-slate-600 capitalize">
+                                {titleCase(item.products?.name.toLowerCase()) ||
+                                  item.product_sku}
+                              </span>
+                            </div>
+                            {item.store_id && (
+                              <span className="ml-2 text-slate-500">
+                                Descontado de{" "}
+                                {getStore("24471")?.label || item.store_id}
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>
