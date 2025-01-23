@@ -6,7 +6,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface CancelDialogProps {
@@ -20,7 +20,7 @@ export default function CancelDialog({
   open,
   onOpenChange,
   onConfirm,
-  isConfirming
+  isConfirming,
 }: CancelDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -28,9 +28,9 @@ export default function CancelDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta acción cancelará la entrega y no se puede deshacer. Se
-            eliminarán la fecha programada, el transportista asignado y el costo
-            de envío.
+            Esta acción cancelará la entrega y no se puede deshacer. El pago al
+            transporte no se elimina, revisá la cuenta corriente. Si necesitás
+            eliminarla por completo, contactate con el administrador.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

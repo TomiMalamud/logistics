@@ -1,3 +1,5 @@
+import parsePhoneNumberFromString from "libphonenumber-js";
+
 export const sanitizePhoneNumber = (phone: string): string =>
   phone.replace(/[^0-9]/g, "");
 
@@ -19,10 +21,31 @@ export const formatLongDate = (dateString: string) => {
     weekday: "long",
     day: "numeric",
     month: "short",
-    timeZone: "UTC"
+    timeZone: "UTC",
   });
 };
 
 export const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("es-AR");
+};
+
+export const formatNoteDate = (dateString: string) => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "Invalid Date";
+  return date.toLocaleString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+
+export const formatPhoneNumber = (phoneNumber?: string) => {
+  if (!phoneNumber) return "Number not available";
+  const parsed = parsePhoneNumberFromString(phoneNumber, "AR");
+  return parsed
+    ? parsed.formatInternational().replace("+54 ", "")
+    : "Invalid phone number";
 };

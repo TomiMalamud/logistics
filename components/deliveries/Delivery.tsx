@@ -12,10 +12,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDelivery } from "@/hooks/useDelivery";
 import { useDeliveryBalance } from "@/hooks/useDeliveryBalance";
-import { useDeliveryLogic } from "@/hooks/useDeliveryLogic";
 import { getStore } from "@/lib/utils/constants";
-import { formatLongDate } from "@/lib/utils/format";
+import {
+  formatDate,
+  formatLongDate,
+  formatNoteDate,
+  formatPhoneNumber,
+} from "@/lib/utils/format";
 import {
   Calendar,
   Factory,
@@ -37,26 +42,46 @@ import ScheduledDateDialog from "./ScheduledDateDialog";
 import StateDialog from "./StateDialog";
 
 export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
-  const deliveryLogic = useDeliveryLogic({
-    delivery: {
-      ...delivery,
-      created_by: {
-        id:
-          typeof delivery.created_by === "string"
-            ? delivery.created_by
-            : delivery.created_by?.id ?? "",
-        name:
-          typeof delivery.created_by === "string"
-            ? "" // default empty string when we only have the id
-            : delivery.created_by?.name ?? "",
-        email:
-          typeof delivery.created_by === "string"
-            ? "" // default empty string when we only have the id
-            : delivery.created_by?.email ?? "",
-      },
+  // Normalize the created_by data structure
+  const normalizedDelivery = {
+    ...delivery,
+    created_by: {
+      id:
+        typeof delivery.created_by === "string"
+          ? delivery.created_by
+          : delivery.created_by?.id ?? "",
+      name:
+        typeof delivery.created_by === "string"
+          ? ""
+          : delivery.created_by?.name ?? "",
+      email:
+        typeof delivery.created_by === "string"
+          ? ""
+          : delivery.created_by?.email ?? "",
     },
-    fetchURL,
-  });
+  };
+
+  const {
+    // State
+    state,
+    setState,
+    scheduledDate,
+    setScheduledDate,
+    notes,
+    newNote,
+    setNewNote,
+    showStateDialog,
+    setShowStateDialog,
+    isLoading,
+    error,
+
+    // Actions
+    handleStateChange,
+    handleCancellation,
+    addNote,
+    updateScheduledDate,
+  } = useDelivery({ delivery: normalizedDelivery, fetchURL });
+
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
@@ -109,6 +134,8 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
 
   const displayIcon = getDisplayIcon();
 
+  const today = new Date().toISOString().split("T")[0];
+
   const handleCancelClick = () => {
     setDropdownOpen(false);
     setIsCancelDialogOpen(true);
@@ -139,9 +166,9 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
       {/* Error Alert */}
-      {deliveryLogic.error && (
+      {error && (
         <Alert variant="destructive">
-          <AlertDescription>{deliveryLogic.error}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {/* Header Section */}
@@ -160,7 +187,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 rel="noreferrer"
               >
                 <p className="text-slate-600 text-sm hover:underline-offset-4 hover:underline ">
-                  {deliveryLogic.formatArgentinePhoneNumber(displayPhone)}
+                  {formatPhoneNumber(displayPhone)}
                 </p>
               </a>
             </>
@@ -195,7 +222,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       </div>
       {/* Delivery Date Section */}
       <div className="flex items-center py-4 justify-between">
-        {deliveryLogic.isUpdating ? (
+        {isLoading.update ? (
           <div>
             <h1 className="font-medium text-slate-500">
               Actualizando fecha de entrega...
@@ -258,7 +285,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                     : "Entrega programada"}
                 </h1>
                 <p className="text-sm mt-1 text-slate-500">
-                  {deliveryLogic.isToday(new Date(delivery.scheduled_date)) ? (
+                  {formatDate(delivery.scheduled_date) === formatDate(today) ? (
                     <span>
                       {delivery.type === "supplier_pickup"
                         ? "Retiro programado "
@@ -305,18 +332,16 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                   <TooltipTrigger asChild>
                     <div className="w-24">
                       <StateDialog
-                        state={deliveryLogic.state}
-                        setState={deliveryLogic.setState}
-                        setShowStateAlertDialog={
-                          deliveryLogic.setShowStateAlertDialog
-                        }
-                        onConfirm={deliveryLogic.handleConfirmStateChange}
-                        isConfirming={deliveryLogic.isConfirming}
+                        state={state}
+                        setState={setState}
+                        setShowStateAlertDialog={setShowStateDialog}
+                        onConfirm={handleStateChange}
+                        isConfirming={isLoading.state}
                         deliveryItems={delivery.delivery_items}
                         delivery={delivery}
                         customer={delivery.customers}
                         disabled={isDeliveryDisabled}
-                      />
+                      />{" "}
                     </div>
                   </TooltipTrigger>
                   {isDeliveryDisabled && (
@@ -343,13 +368,13 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Calendar size={12} className="text-gray-600" />
                   <ScheduledDateDialog
-                    scheduledDate={deliveryLogic.scheduledDate}
-                    setScheduledDate={deliveryLogic.setScheduledDate}
+                    scheduledDate={scheduledDate}
+                    setScheduledDate={setScheduledDate}
                     handleConfirmScheduledDate={() => {
-                      deliveryLogic.handleConfirmScheduledDate();
+                      updateScheduledDate();
                       setDropdownOpen(false);
                     }}
-                    isConfirming={deliveryLogic.isUpdating}
+                    isConfirming={isLoading.update}
                   />
                 </DropdownMenuItem>
               )}
@@ -388,18 +413,18 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         <NotesDialog
           isOpen={isNotesDialogOpen}
           onClose={() => setIsNotesDialogOpen(false)}
-          notes={deliveryLogic.newNotas}
-          newNote={deliveryLogic.newNote}
-          setNewNote={deliveryLogic.setNewNote}
-          isAddingNote={deliveryLogic.isAddingNote}
-          onAddNote={deliveryLogic.handleAddNote}
-          formatNoteDate={deliveryLogic.formatNoteDate}
+          notes={notes}
+          newNote={newNote}
+          setNewNote={setNewNote}
+          isAddingNote={isLoading.note}
+          onAddNote={addNote}
+          formatNoteDate={formatNoteDate}
         />
         <CancelDialog
           open={isCancelDialogOpen}
           onOpenChange={setIsCancelDialogOpen}
-          onConfirm={deliveryLogic.handleCancelDelivery}
-          isConfirming={deliveryLogic.isConfirming}
+          onConfirm={handleCancellation}
+          isConfirming={isLoading.state}
         />
       </div>
       {/* Product Alert */}
@@ -441,33 +466,27 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       )}
       {/* Notes Section */}
       <div className="border-t pt-4">
-        {deliveryLogic.newNotas.length > 0 ? (
+        {notes.length > 0 ? (
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">
-              {deliveryLogic.newNotas[
-                deliveryLogic.newNotas.length - 1
-              ].text.toLowerCase()}{" "}
-              |{" "}
-              {deliveryLogic.formatNoteDate(
-                deliveryLogic.newNotas[deliveryLogic.newNotas.length - 1]
-                  .created_at || ""
-              )}
+              {notes[notes.length - 1].text.toLowerCase()} |{" "}
+              {formatNoteDate(notes[notes.length - 1].created_at || "")}
             </p>
-            {deliveryLogic.newNotas.length > 1 && (
+            {notes.length > 1 && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsNotesDialogOpen(true)}
                 className="text-xs text-slate-500"
               >
-                Ver {deliveryLogic.newNotas.length - 1} notas más
+                Ver {notes.length - 1} notas más
               </Button>
             )}
           </div>
         ) : (
           <p className="text-sm text-slate-500">No hay notas</p>
         )}
-      </div>{" "}
+      </div>
     </div>
   );
 }
