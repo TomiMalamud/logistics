@@ -1,9 +1,75 @@
 // pages/api/deliveries/create/store-mov.ts
 import { createInventoryMovement } from "@/lib/api";
-import { supabase } from "@/lib/supabase";
+import { getStore } from "@/lib/utils/constants";
+import createClient from "@/lib/utils/supabase/api";
+import { createDeliveryService } from "@/services/deliveries";
 import { Product } from "@/types/types";
-import { STORES } from "@/lib/utils/constants";
 import { NextApiRequest, NextApiResponse } from "next";
+
+interface StoreMovementRequest {
+  origin_store: string;
+  dest_store: string;
+  products: Array<{
+    name: string;
+    sku: string;
+    quantity: number;
+  }>;
+  scheduled_date?: string;
+  created_by: string;
+}
+
+const validateRequest = (body: StoreMovementRequest): void => {
+  if (!body.origin_store || !body.dest_store) {
+    throw new Error("Origin and destination stores are required");
+  }
+
+  if (!body.products?.length) {
+    throw new Error("Products array is required and cannot be empty");
+  }
+
+  if (!Array.isArray(body.products)) {
+    throw new Error("Products must be an array");
+  }
+
+  const isValidProduct = (p: any): p is Product =>
+    typeof p === "object" &&
+    typeof p.name === "string" &&
+    typeof p.sku === "string" &&
+    typeof p.quantity === "number";
+
+  if (!body.products.every(isValidProduct)) {
+    throw new Error("Invalid product format");
+  }
+
+  const originStore = getStore(body.origin_store);
+  const destStore = getStore(body.dest_store);
+
+  if (!originStore || !destStore) {
+    throw new Error("Invalid store IDs");
+  }
+};
+
+const createInventoryMovements = async (
+  origin_store: string,
+  dest_store: string,
+  products: Product[]
+): Promise<void> => {
+  await Promise.all(
+    products.map(async (product) => {
+      try {
+        await createInventoryMovement({
+          idDepositoOrigen: origin_store,
+          idDepositoDestino: dest_store,
+          codigo: product.sku,
+          cantidad: product.quantity,
+        });
+      } catch (error) {
+        console.error(`Error moving product ${product.sku}:`, error);
+        throw error;
+      }
+    })
+  );
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,57 +81,28 @@ export default async function handler(
   }
 
   try {
+    const supabase = createClient(req, res);
+    const deliveryService = createDeliveryService(supabase);
+
+    // Authenticate user
     const {
-      origin_store,
-      dest_store,
-      products, // Keep for backwards compatibility
-      scheduled_date,
-      created_by
-    } = req.body;
-
-    // Validate required fields and product structure
-    if (!products || !origin_store || !dest_store || !Array.isArray(products)) {
-      return res
-        .status(400)
-        .json({ error: "Missing or invalid required fields" });
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Validate product structure
-    const isValidProduct = (p: any): p is Product =>
-      typeof p === "object" &&
-      typeof p.name === "string" &&
-      typeof p.sku === "string" &&
-      typeof p.quantity === "number";
+    const body = req.body as StoreMovementRequest;
+    validateRequest(body);
 
-    if (!products.every(isValidProduct)) {
-      return res.status(400).json({ error: "Invalid product format" });
-    }
+    const { origin_store, dest_store, products, scheduled_date, created_by } =
+      body;
 
-    const originStore = STORES.find((store) => store.id === origin_store);
-    const destStore = STORES.find((store) => store.id === dest_store);
+    // Create inventory movements in ERP
+    await createInventoryMovements(origin_store, dest_store, products);
 
-    if (!originStore || !destStore) {
-      return res.status(400).json({ error: "Invalid store IDs" });
-    }
-
-    // Create inventory movements in ERP for each product
-    await Promise.all(
-      products.map(async (product) => {
-        try {
-          await createInventoryMovement({
-            idDepositoOrigen: origin_store,
-            idDepositoDestino: dest_store,
-            codigo: product.sku,
-            cantidad: product.quantity
-          });
-        } catch (error) {
-          console.error(`Error moving product ${product.sku}:`, error);
-          throw error;
-        }
-      })
-    );
-
-    // Create delivery without products field
+    // Create delivery record
     const { data: delivery, error: deliveryError } = await supabase
       .from("deliveries")
       .insert([
@@ -76,15 +113,14 @@ export default async function handler(
           origin_store,
           dest_store,
           order_date: new Date().toISOString().split("T")[0],
-          state: "pending"
-        }
+          state: "pending",
+        },
       ])
       .select()
       .single();
 
-    if (deliveryError) {
-      console.error("Delivery error details:", deliveryError);
-      throw new Error(`Error creating delivery: ${deliveryError.message}`);
+    if (deliveryError || !delivery) {
+      throw new Error(deliveryError?.message || "Failed to create delivery");
     }
 
     // Create delivery items
@@ -92,7 +128,7 @@ export default async function handler(
       delivery_id: delivery.id,
       product_sku: product.sku,
       quantity: product.quantity,
-      pending_quantity: product.quantity
+      pending_quantity: product.quantity,
     }));
 
     const { error: itemsError } = await supabase
@@ -103,12 +139,15 @@ export default async function handler(
       throw new Error(`Error creating delivery items: ${itemsError.message}`);
     }
 
-    return res.status(200).json(delivery);
+    return res.status(200).json({
+      message: "Store movement created successfully",
+      delivery,
+    });
   } catch (error) {
-    console.error("Error in store movement:", error);
-    return res.status(500).json({
+    console.error("Store movement error:", error);
+    return res.status(400).json({
       error:
-        error instanceof Error ? error.message : "An unexpected error occurred"
+        error instanceof Error ? error.message : "An unexpected error occurred",
     });
   }
 }
