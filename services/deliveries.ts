@@ -1,11 +1,28 @@
 // lib/services/delivery.ts
-import { Delivery, DeliveryState, Product, Store } from "@/types/types";
+import {
+  Delivery,
+  DeliveryState,
+  DeliveryType,
+  Product,
+  Store,
+} from "@/types/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 interface DeliveryItem {
   product_sku: string;
   quantity: number;
   store_id: string;
+}
+
+interface ListDeliveriesParams {
+  state: DeliveryState;
+  page: number;
+  pageSize: number;
+  search?: string;
+  scheduledDate?: "all" | "hasDate" | "noDate";
+  type?: DeliveryType;
+  userId?: string;
+  userRole?: string;
 }
 
 interface ProcessItemsParams {
@@ -58,6 +75,123 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     }
   };
 
+  const searchCustomers = async (search: string) => {
+    if (!search) return null;
+
+    const searchTerm = `%${search}%`;
+    const { data, error } = await supabase
+      .from("customers")
+      .select("id")
+      .or(`name.ilike.${searchTerm},address.ilike.${searchTerm}`);
+
+    if (error) throw new Error("Failed to fetch customers");
+    return data;
+  };
+
+  // lib/services/delivery.ts
+
+  const listDeliveries = async ({
+    state,
+    page,
+    pageSize,
+    search,
+    scheduledDate,
+    type,
+    userId,
+    userRole,
+  }: ListDeliveriesParams) => {
+    try {
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize - 1;
+
+      let query = supabase
+        .from("deliveries")
+        .select(
+          `
+        *,
+        customers ( name, address, phone ),
+        notes ( id, text, created_at ),
+        created_by:profiles ( email, name ),
+        suppliers ( name ),
+        delivery_items (
+          product_sku,
+          quantity,
+          pending_quantity,
+          products ( name )
+        ),
+        operations:delivery_operations (
+          id,
+          carrier_id,
+          carriers (name),
+          cost,
+          operation_date,
+          created_at,
+          created_by,
+          profiles (id, name),
+          pickup_store,
+          operation_type,
+          operation_items (
+            product_sku,
+            quantity,
+            store_id,
+            products (name)
+          )
+        )
+      `,
+          { count: "exact" }
+        )
+        .eq("state", state);
+
+      // Apply filters
+      if (userRole === "sales") {
+        query = query.eq("created_by", userId);
+      }
+
+      if (type && type !== "all") {
+        query = query.eq("type", type);
+      }
+
+      if (search) {
+        const customerIds = await searchCustomers(search);
+        if (customerIds?.length) {
+          query = query.in(
+            "customer_id",
+            customerIds.map((c) => c.id)
+          );
+        } else {
+          return { data: [], count: 0 }; // No matching customers
+        }
+      }
+
+      if (scheduledDate === "hasDate") {
+        query = query.not("scheduled_date", "is", null);
+      } else if (scheduledDate === "noDate") {
+        query = query.is("scheduled_date", null);
+      }
+
+      // Apply appropriate sorting
+      if (state === "pending") {
+        query = query
+          .order("scheduled_date", { ascending: true, nullsFirst: false })
+          .order("order_date", { ascending: true });
+      } else {
+        query = query.order("order_date", { ascending: false });
+      }
+
+      const { data, error, count } = await query.range(start, end);
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return { data, count };
+    } catch (error) {
+      return {
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  };
   const processItems = async ({
     operationId,
     deliveryId,
@@ -260,6 +394,8 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     getDelivery,
     updateDelivery,
     handleNotifications,
+    listDeliveries,
+    searchCustomers,
   };
 };
 

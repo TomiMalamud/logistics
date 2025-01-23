@@ -1,225 +1,15 @@
 // pages/api/deliveries/index.ts
-
 import createClient from "@/lib/utils/supabase/api";
+import { createDeliveryService } from "@/services/deliveries";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { DeliveryState, DeliveryType } from "@/types/types";
 
-// Types
-type ScheduledDateFilter = "all" | "hasDate" | "noDate";
-
-interface QueryParams {
-  state: DeliveryState;
-  page: string;
-  pageSize: string;
-  search: string;
-  scheduledDate: ScheduledDateFilter;
-  type: DeliveryType;
-  carrier?: string;
-}
-
-interface FeedResponse {
-  feed: any[];
-  page: number;
-  totalPages: number;
-  totalItems: number;
-}
-
-interface ErrorResponse {
-  error: string;
-}
-
-// Constants
-const DEFAULT_PAGE_SIZE = "40";
+const DEFAULT_PAGE_SIZE = 40;
 const DEFAULT_STATE: DeliveryState = "pending";
 
-// Helper functions
-function validateQueryParams(
-  params: Partial<QueryParams>
-): params is QueryParams {
-  const { state, scheduledDate } = params;
-
-  if (state && !["pending", "delivered", "cancelled"].includes(state)) {
-    throw new Error("Invalid state parameter");
-  }
-
-  if (scheduledDate && !["all", "hasDate", "noDate"].includes(scheduledDate)) {
-    throw new Error("Invalid scheduledDate parameter");
-  }
-
-  return true;
-}
-
-async function getCustomerIds(supabase: SupabaseClient, search: string) {
-  if (!search) return null;
-
-  const searchTerm = `%${search}%`;
-  const { data, error } = await supabase
-    .from("customers")
-    .select("id")
-    .or(`name.ilike.${searchTerm},address.ilike.${searchTerm}`);
-
-  if (error) {
-    throw new Error("Failed to fetch customers");
-  }
-
-  return data;
-}
-
-async function buildDeliveryQuery(
-  supabase: SupabaseClient,
-  params: QueryParams,
-  userId: string,
-  userRole: string,
-  customerIds: { id: number }[] | null
-) {
-  const { state, type, scheduledDate, page, pageSize } = params;
-  const start = (Number(page) - 1) * Number(pageSize);
-  const end = start + Number(pageSize) - 1;
-
-  // For delivered state, we'll first get the max operation id for each delivery
-  if (state === "delivered") {
-    const deliveriesQuery = supabase
-      .from("deliveries")
-      .select(
-        `
-        *,
-        customers ( name, address, phone ),
-        notes ( id, text, created_at ),
-        created_by:profiles ( email, name ),
-        suppliers ( name ),
-        delivery_items (
-          product_sku,
-          quantity,
-          pending_quantity,
-          products ( name )
-        ),
-        operations:delivery_operations (
-          id,
-          carrier_id,
-          carriers (name),
-          cost,
-          operation_date,
-          created_at,
-          created_by,
-          profiles (id, name),
-          pickup_store,
-          operation_type,
-          operation_items (
-            product_sku,
-            quantity,
-            store_id,
-            products (name)
-          )
-        )
-      `,
-        { count: "exact" }
-      )
-      .eq("state", state);
-
-    // Apply standard filters
-    if (userRole === "sales") {
-      deliveriesQuery.eq("created_by", userId);
-    }
-
-    if (type && type !== "all") {
-      deliveriesQuery.eq("type", type);
-    }
-
-    if (customerIds) {
-      deliveriesQuery.in(
-        "customer_id",
-        customerIds.map((c) => c.id)
-      );
-    }
-
-    if (scheduledDate === "hasDate") {
-      deliveriesQuery.not("scheduled_date", "is", null);
-    } else if (scheduledDate === "noDate") {
-      deliveriesQuery.is("scheduled_date", null);
-    }
-
-    // Order by the latest operation id by using a subquery
-    return deliveriesQuery.order("id", { ascending: false }).range(start, end);
-  }
-
-  // For other states, use the original query structure
-  let query = supabase
-    .from("deliveries")
-    .select(
-      `
-      *,
-      customers ( name, address, phone ),
-      notes ( id, text, created_at ),
-      created_by:profiles ( email, name ),
-      suppliers ( name ),
-      delivery_items (
-        product_sku,
-        quantity,
-        pending_quantity,
-        products ( name )
-      ),
-      operations:delivery_operations (
-        id,
-        carrier_id,
-        carriers (name),
-        cost,
-        operation_date,
-        created_at,
-        created_by,
-        profiles (id, name),
-        pickup_store,
-        operation_type,
-        operation_items (
-          product_sku,
-          quantity,
-          store_id,
-          products (name)
-        )
-      )
-    `,
-      { count: "exact" }
-    )
-    .eq("state", state);
-
-  // Apply filters
-  if (userRole === "sales") {
-    query = query.eq("created_by", userId);
-  }
-
-  if (type && type !== "all") {
-    query = query.eq("type", type);
-  }
-
-  if (customerIds) {
-    query = query.in(
-      "customer_id",
-      customerIds.map((c) => c.id)
-    );
-  }
-
-  if (scheduledDate === "hasDate") {
-    query = query.not("scheduled_date", "is", null);
-  } else if (scheduledDate === "noDate") {
-    query = query.is("scheduled_date", null);
-  }
-
-  // Apply appropriate sorting
-  if (state === "pending") {
-    query = query
-      .order("scheduled_date", { ascending: true, nullsFirst: false })
-      .order("order_date", { ascending: true });
-  } else {
-    query = query.order("order_date", { ascending: false });
-  }
-
-  return query.range(start, end);
-}
-
-// Main handler
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<FeedResponse | ErrorResponse>
+  res: NextApiResponse
 ) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -227,6 +17,7 @@ export default async function handler(
 
   try {
     const supabase = createClient(req, res);
+    const deliveryService = createDeliveryService(supabase);
 
     // Authentication
     const {
@@ -248,41 +39,47 @@ export default async function handler(
       throw new Error("Failed to fetch user role");
     }
 
-    // Parse and validate query parameters
-    const queryParams = {
-      state: (req.query.state as DeliveryState) || DEFAULT_STATE,
-      page: (req.query.page as string) || "1",
-      pageSize: (req.query.pageSize as string) || DEFAULT_PAGE_SIZE,
-      search: (req.query.search as string) || "",
-      scheduledDate: (req.query.scheduledDate as ScheduledDateFilter) || "all",
-      type: (req.query.type as DeliveryType) || "all",
-      carrier: (req.query.carrier as string) || "all",
-    };
+    // Parse query parameters
+    const {
+      state = DEFAULT_STATE,
+      page = "1",
+      pageSize = String(DEFAULT_PAGE_SIZE),
+      search = "",
+      scheduledDate = "all",
+      type = "all",
+    } = req.query;
 
-    validateQueryParams(queryParams);
+    // Validate state parameter
+    if (!["pending", "delivered", "cancelled"].includes(state as string)) {
+      return res.status(400).json({ error: "Invalid state parameter" });
+    }
 
-    // Get matching customer IDs for search
-    const customerIds = await getCustomerIds(supabase, queryParams.search);
+    // Validate scheduledDate parameter
+    if (!["all", "hasDate", "noDate"].includes(scheduledDate as string)) {
+      return res.status(400).json({ error: "Invalid scheduledDate parameter" });
+    }
 
-    // Build and execute query
-    const query = await buildDeliveryQuery(
-      supabase,
-      queryParams,
-      user.id,
-      profile.role,
-      customerIds
-    );
+    const result = await deliveryService.listDeliveries({
+      state: state as DeliveryState,
+      page: Number(page),
+      pageSize: Number(pageSize),
+      search: search as string,
+      scheduledDate: scheduledDate as "all" | "hasDate" | "noDate",
+      type: type as DeliveryType,
+      userId: user.id,
+      userRole: profile.role,
+    });
 
-    const { data, error, count } = await query;
+    if ("error" in result) {
+      throw new Error(result.error);
+    }
 
-    if (error) throw new Error("Failed to fetch deliveries");
-    if (!data || count === null)
-      throw new Error("Invalid response from database");
+    const { data, count } = result;
 
     return res.status(200).json({
       feed: data,
-      page: Number(queryParams.page),
-      totalPages: Math.ceil(count / Number(queryParams.pageSize)),
+      page: Number(page),
+      totalPages: Math.ceil(count / Number(pageSize)),
       totalItems: count,
     });
   } catch (error) {
