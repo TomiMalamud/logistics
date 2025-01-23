@@ -11,14 +11,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  navigationMenuTriggerStyle
+  navigationMenuTriggerStyle,
 } from "./ui/navigation-menu";
 
 interface LayoutProps {
@@ -35,7 +37,7 @@ interface NavItem {
 
 const Layout = ({
   children,
-  title = "Entregas | ROHI Sommiers"
+  title = "Entregas | ROHI Sommiers",
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -47,44 +49,38 @@ const Layout = ({
         path: "/",
         label: "Entregas",
         showOnMobile: true,
-        roles: ["admin", "sales"]
+        roles: ["admin", "sales"],
       },
       {
         path: "/calendar",
         label: "Calendario",
         showOnMobile: false,
-        roles: ["admin", "sales"]
+        roles: ["admin", "sales"],
       },
       {
         path: "/price-checker",
         label: "Precios",
         showOnMobile: true,
-        roles: ["admin", "sales"]
+        roles: ["admin", "sales"],
       },
       {
         path: "/carriers",
         label: "Transportes",
         showOnMobile: true,
-        roles: ["admin"]
+        roles: ["admin"],
       },
       {
         path: "/tv",
         label: "Teles",
         showOnMobile: false,
-        roles: ["admin", "sales"]
+        roles: ["admin", "sales"],
       },
       {
         path: "/targets",
         label: "Objetivos",
         showOnMobile: false,
-        roles: ["admin", "sales"]
+        roles: ["admin", "sales"],
       },
-      {
-        path: "/update-prices",
-        label: "Actualizar Precios",
-        showOnMobile: false,
-        roles: ["admin"]
-      }
     ],
     []
   );
@@ -105,7 +101,7 @@ const Layout = ({
   const getNavButtonClasses = useCallback(
     (path: string, showOnMobile: boolean): string => {
       const baseClasses =
-        router.pathname === path ? "text-gray-950" : "text-gray-600";
+        router.pathname === path ? "text-stone-950" : "text-stone-600";
       const mobileClasses = showOnMobile ? "" : "hidden md:block";
 
       return `${baseClasses} ${mobileClasses}`.trim();
@@ -157,12 +153,27 @@ const Layout = ({
             unoptimized
           />
           <nav className="flex items-center">{renderNavButtons()}</nav>
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="group text-stone-600 inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+                Herramientas
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link href="/update-prices">Actualizar Precios</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/update-stock">Actualizar Stock</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="text-gray-600 md:block hidden mr-4"
+              className="text-stone-600 md:block hidden mr-4"
             >
               <User className="h-4 w-4" />
             </Button>

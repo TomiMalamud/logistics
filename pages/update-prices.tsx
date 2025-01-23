@@ -7,12 +7,13 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Upload } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
+import Layout from "@/components/Layout";
 
 interface ERPRow {
   SKU: string;
@@ -51,12 +52,12 @@ export default function UpdatePrices() {
         const sheet = workbook.Sheets[sheetName];
 
         const jsonData = XLSX.utils.sheet_to_json(sheet, {
-          range: "A1:Q1048576"
+          range: "A1:Q1048576",
         }) as ERPRow[];
 
         const roundedData = jsonData.map((row) => ({
           ...row,
-          "Precio Final": Math.round(row["Precio Final"])
+          "Precio Final": Math.round(row["Precio Final"]),
         }));
 
         setErpData(roundedData);
@@ -90,7 +91,7 @@ export default function UpdatePrices() {
             setResult("Archivo de Tienda Nube subido correctamente.");
           },
           header: true,
-          encoding: "ISO-8859-1"
+          encoding: "ISO-8859-1",
         });
       };
       reader.readAsText(file, "ISO-8859-1");
@@ -129,7 +130,7 @@ export default function UpdatePrices() {
         return {
           ...ecommerceRow,
           "Precio promocional": newPrecioPromocional.toString(),
-          Precio: newPrecio.toString()
+          Precio: newPrecio.toString(),
         };
       } else {
         notFoundCount++;
@@ -149,7 +150,7 @@ export default function UpdatePrices() {
     const csv = Papa.unparse(updatedData);
 
     const blob = new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), csv], {
-      type: "text/csv;charset=utf-8;"
+      type: "text/csv;charset=utf-8;",
     });
 
     const link = document.createElement("a");
@@ -169,7 +170,7 @@ export default function UpdatePrices() {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <Layout title="Actualizar Precios">
       {result && (
         <Alert className="mb-4 max-w-md bg-green-100 mx-auto">
           <AlertTitle>¡Listo!</AlertTitle>
@@ -298,6 +299,6 @@ export default function UpdatePrices() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </Layout>
   );
 }
