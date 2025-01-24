@@ -89,13 +89,23 @@ export default function CompareStock() {
 
     if (!validTypes.includes(file.type)) {
       throw new Error(
-        "Formato de archivo inválido. Por favor sube un archivo Excel (.xlsx)"
+        "Formato de archivo inválido. Por favor subí un archivo Excel (.xlsx)"
       );
     }
 
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
     if (file.size > MAX_SIZE) {
       throw new Error("El archivo es demasiado grande. Máximo 5MB permitido.");
+    }
+  };
+
+  // Add column validation helper function
+  const validateColumns = (headers: string[], requiredColumns: string[]) => {
+    const missingColumns = requiredColumns.filter(
+      (col) => !headers.includes(col)
+    );
+    if (missingColumns.length > 0) {
+      throw new Error(`Columnas faltantes: ${missingColumns.join(", ")}`);
     }
   };
 
@@ -118,14 +128,22 @@ export default function CompareStock() {
       setSelectedErpSheet(firstSheet);
 
       const sheet = workbook.Sheets[firstSheet];
+
+      // Get headers from the first row
+      const headers = Object.keys(XLSX.utils.sheet_to_json(sheet)[0] || {});
+
+      // Validate required columns
+      const requiredColumns = ["Codigo", "Stock Disponible", "Nombre"];
+      validateColumns(headers, requiredColumns);
+
       const jsonData = XLSX.utils.sheet_to_json(sheet) as ERPRow[];
       setErpData(jsonData);
       setResult("Archivo de ERP subido correctamente.");
     } catch (error) {
       setResult(
         error instanceof Error
-          ? error.message
-          : "Error al procesar el archivo de ERP."
+          ? `Error: ${error.message}. Las columnas deben ser exactamente: 'Codigo', 'Stock Disponible', y 'Nombre' (respetando mayúsculas y minúsculas). Descargá el archivo sin modificar de Contabilium.`
+          : "Error desconocido al procesar el archivo."
       );
     } finally {
       setIsLoading((prev) => ({ ...prev, erp: false }));
@@ -151,14 +169,22 @@ export default function CompareStock() {
       setSelectedSkuSheet(firstSheet);
 
       const sheet = workbook.Sheets[firstSheet];
+
+      // Get headers from the first row
+      const headers = Object.keys(XLSX.utils.sheet_to_json(sheet)[0] || {});
+
+      // Validate required columns
+      const requiredColumns = ["SKU"];
+      validateColumns(headers, requiredColumns);
+
       const jsonData = XLSX.utils.sheet_to_json(sheet) as SkuRow[];
       setSkuData(jsonData);
       setResult("Archivo de SKUs subido correctamente.");
     } catch (error) {
       setResult(
         error instanceof Error
-          ? error.message
-          : "Error al procesar el archivo de SKUs."
+          ? `Error: ${error.message}. La columna debe ser exactamente 'SKU' (respetando mayúsculas). Los SKU deben tener el dígito de control.`
+          : "Error desconocido al procesar el archivo."
       );
     } finally {
       setIsLoading((prev) => ({ ...prev, sku: false }));
@@ -287,12 +313,17 @@ export default function CompareStock() {
   return (
     <Layout title="Comparar Inventario">
       {result && (
-        <Alert className="mb-4 max-w-md bg-green-100 mx-auto">
-          <AlertTitle>¡Listo!</AlertTitle>
-          <AlertDescription>{result}</AlertDescription>
+        <Alert
+          className={`mb-4 max-w-md mx-auto ${
+            result.startsWith("Error:") ? "bg-red-100" : "bg-green-100"
+          }`}
+        >
+          <AlertTitle>
+            {result.startsWith("Error:") ? "Error" : "¡Listo!"}
+          </AlertTitle>
+          <AlertDescription>{result.replace("Error: ", "")}</AlertDescription>
         </Alert>
       )}
-
       <Card className="w-full max-w-xl mx-auto">
         <CardHeader>
           <CardTitle>Comparación de Inventario Físico vs Sistema</CardTitle>
@@ -317,8 +348,8 @@ export default function CompareStock() {
                 )}
                 <p className="text-sm text-gray-600">
                   {erpDropzone.isDragActive
-                    ? "Suelta el archivo aquí"
-                    : "Arrastra o haz click para subir el archivo del Sistema (.xlsx)"}
+                    ? "Soltá el archivo acá"
+                    : "Arrastrá o hacé click para subir el archivo del Sistema (.xlsx)"}
                 </p>
               </div>
             </div>
@@ -364,8 +395,8 @@ export default function CompareStock() {
                 )}
                 <p className="text-sm text-gray-600">
                   {skuDropzone.isDragActive
-                    ? "Suelta el archivo aquí"
-                    : "Arrastra o haz click para subir el archivo de Inventario Físico (.xlsx)"}
+                    ? "Soltá el archivo acá"
+                    : "Arrastrá o hacé click para subir el archivo de Inventario Físico (.xlsx)"}
                 </p>
               </div>
             </div>
