@@ -84,6 +84,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
   const [formData, setFormData] = React.useState({
     address: "",
     phone: "",
+    dni: "",
     email: null as string | null,
     emailBypassReason: "",
     scheduled_date: "",
@@ -157,6 +158,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
           .join(", "),
         phone: sanitizedPhone,
         email: customer.Email || null,
+        dni: customer.NroDoc || null,
       }));
 
       setInvoiceItems(itemsData.items || []);
@@ -240,6 +242,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
         created_by: user.id,
         products: transformedItems,
         store_id: storeId,
+        dni: formData.dni,
       };
 
       const response = await fetch("/api/deliveries/create/delivery", {

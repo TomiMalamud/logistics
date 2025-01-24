@@ -2,7 +2,6 @@
 import { createInventoryMovement } from "@/lib/api";
 import { getStore } from "@/lib/utils/constants";
 import createClient from "@/lib/utils/supabase/api";
-import { createDeliveryService } from "@/services/deliveries";
 import { Product } from "@/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -82,7 +81,6 @@ export default async function handler(
 
   try {
     const supabase = createClient(req, res);
-    const deliveryService = createDeliveryService(supabase);
 
     // Authenticate user
     const {

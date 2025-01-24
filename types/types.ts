@@ -58,6 +58,7 @@ export interface Delivery {
   products: Product[] | null; // legacy
   delivery_items?: DeliveryItem[];
   operations?: DeliveryOperation[];
+  store_id?: string;
 }
 
 export interface Supplier {

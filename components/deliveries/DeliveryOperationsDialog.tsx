@@ -119,7 +119,8 @@ export function DeliveryOperationsDialog({
                             {item.store_id && (
                               <span className="ml-2 text-slate-500">
                                 Descontado de{" "}
-                                {getStore("24471")?.label || item.store_id}
+                                {getStore(item.store_id)?.label ||
+                                  item.store_id}
                               </span>
                             )}
                           </div>

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { STORES } from "@/lib/utils/constants";
+import { getStore, STORES } from "@/lib/utils/constants";
 import {
   Customer,
   DeliveredType,
@@ -27,7 +27,7 @@ import {
   Store,
 } from "@/types/types";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, AlertDescription } from "../ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Input } from "../ui/input";
 import {
   Table,
@@ -50,6 +50,11 @@ interface FormData {
     quantity: number;
     store_id: string;
   }[];
+}
+
+interface LoadingStates {
+  inventory: boolean;
+  form: boolean;
 }
 
 interface SelectedItem {
@@ -97,6 +102,10 @@ export default function StateDialog({
   }>({});
   const [isDirty, setIsDirty] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>();
+  const [loadingStates, setLoadingStates] = useState<LoadingStates>({
+    inventory: false,
+    form: false,
+  });
 
   const checkFormDirty = useCallback(() => {
     const hasSelectedItems = Object.values(selectedItems).some(
@@ -333,15 +342,72 @@ export default function StateDialog({
     }
     setError(null);
 
+    // Get items that have quantities selected
+    const itemsToProcess = Object.entries(selectedItems)
+      .filter(([_, item]) => item.quantity > 0)
+      .map(([sku, item]) => ({
+        product_sku: sku,
+        quantity: item.quantity,
+        store_id: item.store_id,
+      }));
+
+    if (!itemsToProcess.length) {
+      setError("No hay items seleccionados para procesar");
+      return;
+    }
+
+    // Process inventory movements if needed
+    if (delivery.store_id) {
+      const needsInventoryMovement = itemsToProcess.some(
+        (item) => item.store_id && item.store_id !== delivery.store_id
+      );
+      const allStoresValid = itemsToProcess.every((item) => item.store_id);
+
+      if (needsInventoryMovement && allStoresValid) {
+        try {
+          setLoadingStates((prev) => ({ ...prev, inventory: true }));
+
+          // Process inventory movements sequentially
+          for (const item of itemsToProcess) {
+            if (delivery.store_id === item.store_id) {
+              continue;
+            }
+
+            const response = await fetch("/api/inventory/movement", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                origin_store: item.store_id,
+                dest_store: delivery.store_id,
+                product_sku: item.product_sku,
+                quantity: item.quantity,
+              }),
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(
+                error.error || "Failed to process inventory movement"
+              );
+            }
+          }
+        } catch (error) {
+          setLoadingStates((prev) => ({ ...prev, inventory: false }));
+          const errorMessage =
+            error instanceof Error
+              ? `Error al procesar el movimiento de stock: ${error.message}`
+              : "Error al procesar el movimiento de stock";
+          setError(errorMessage);
+          return;
+        }
+        setLoadingStates((prev) => ({ ...prev, inventory: false }));
+      }
+    }
+
+    // Submit delivery form
     const formData: FormData = {
       delivery_type: deliveryType,
-      items: Object.entries(selectedItems)
-        .filter(([_, item]) => item.quantity > 0)
-        .map(([sku, item]) => ({
-          product_sku: sku,
-          quantity: item.quantity,
-          store_id: item.store_id,
-        })),
+      items: itemsToProcess,
       ...(deliveryType === "carrier" && {
         delivery_cost: isDeliveryCostValid(deliveryCost)
           ? parseFloat(deliveryCost)
@@ -354,13 +420,26 @@ export default function StateDialog({
     };
 
     try {
+      setLoadingStates((prev) => ({ ...prev, form: true }));
       await onConfirm(formData);
       setOpen(false);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Error al procesar la entrega"
       );
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, form: false }));
     }
+  }
+
+  function getButtonText() {
+    if (loadingStates.inventory) {
+      return "Moviendo mercadería...";
+    }
+    if (loadingStates.form) {
+      return "Procesando...";
+    }
+    return getDeliveryStatusText();
   }
 
   function handleDialogTriggerClick() {
@@ -406,6 +485,54 @@ export default function StateDialog({
             selectedItems={selectedItems}
             setSelectedItems={setSelectedItems}
           />
+          {Object.values(selectedItems).some((item) => {
+            const originStore = STORES.find((s) => s.id === item.store_id);
+            const targetStore = getStore(delivery.store_id);
+            return item.quantity > 0 && originStore && targetStore;
+          }) && (
+            <Alert>
+              <AlertTitle className="text-gray-600">
+                Al confirmar la entrega, se van a realizar los siguientes
+                movimientos
+              </AlertTitle>
+              <AlertDescription className="mt-2">
+                {Object.entries(selectedItems)
+                  .filter(([_, item]) => item.quantity > 0)
+                  .map(([sku]) => {
+                    const item = deliveryItems.find(
+                      (i) => i.product_sku === sku
+                    );
+                    const originStore = STORES.find(
+                      (s) => s.id === selectedItems[sku]?.store_id
+                    );
+                    if (!item || !originStore) return null;
+
+                    const targetStore = getStore(delivery.store_id);
+                    const isSameStore = delivery.store_id === originStore.id;
+
+                    if (isSameStore) {
+                      return (
+                        <div key={sku} className="mb-1 text-sm">
+                          <span className="font-medium">
+                            {item.product_sku}
+                          </span>
+                          {`: permanece en ${originStore.label}`}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={sku} className="mb-1 text-sm">
+                        <span className="font-medium">{item.product_sku}</span>
+                        {`: de ${originStore.label} a ${
+                          targetStore?.label || "N/A"
+                        }`}
+                      </div>
+                    );
+                  })}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <DeliveryTypeSelector
             value={deliveryType}
@@ -431,11 +558,12 @@ export default function StateDialog({
             <div className="flex w-full gap-2">
               <Button
                 onClick={handleFormSubmit}
-                disabled={isConfirming}
+                disabled={loadingStates.inventory || loadingStates.form}
                 className="flex-1"
               >
-                {isConfirming ? "Procesando..." : getDeliveryStatusText()}
+                {getButtonText()}
               </Button>
+
               <RemitoDownload
                 delivery={delivery}
                 customer={customer}

@@ -17,6 +17,7 @@ interface DeliveryRequest {
   name: string;
   address: string;
   phone: string;
+  dni: string; // NroDoc from the ERP
   scheduled_date?: string;
   notes?: string;
   created_by: string;
@@ -33,6 +34,7 @@ const validateRequest = (body: DeliveryRequest): void => {
     "address",
     "phone",
     "store_id",
+    "dni",
   ];
   const missingFields = requiredFields.filter((field) => !body[field]);
 
@@ -56,6 +58,57 @@ const syncWithPerfit = async (email: string, name: string): Promise<void> => {
     console.error("Failed to sync contact with Perfit:", error);
     // Continue with delivery creation even if Perfit sync fails
   }
+};
+
+const findOrUpdateCustomer = async (supabase, customerData) => {
+  // First try to find the customer by DNI
+  const { data: existingCustomer } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("dni", customerData.dni)
+    .maybeSingle();
+
+  if (existingCustomer) {
+    // Update customer information if they exist
+    const { data: updatedCustomer, error: updateError } = await supabase
+      .from("customers")
+      .update({
+        name: customerData.name,
+        address: customerData.address,
+        phone: customerData.phone,
+        email: customerData.email,
+      })
+      .eq("id", existingCustomer.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new Error(`Failed to update customer: ${updateError.message}`);
+    }
+
+    return updatedCustomer.id;
+  }
+
+  // Create new customer if they don't exist
+  const { data: newCustomer, error: createError } = await supabase
+    .from("customers")
+    .insert([
+      {
+        name: customerData.name,
+        address: customerData.address,
+        phone: customerData.phone,
+        email: customerData.email,
+        dni: customerData.dni,
+      },
+    ])
+    .select()
+    .single();
+
+  if (createError) {
+    throw new Error(`Failed to create customer: ${createError.message}`);
+  }
+
+  return newCustomer.id;
 };
 
 export default async function handler(
@@ -91,6 +144,7 @@ export default async function handler(
       name,
       address,
       phone,
+      dni,
       scheduled_date,
       notes,
       created_by,
@@ -105,37 +159,13 @@ export default async function handler(
     }
 
     // Find or create customer
-    const { data: customerData } = await supabase
-      .from("customers")
-      .select("id")
-      .eq("name", name)
-      .eq("address", address)
-      .eq("phone", phone)
-      .maybeSingle();
-
-    // Create customer if not found
-    const customer_id =
-      customerData?.id ||
-      (await (async () => {
-        const { data: newCustomer, error: createError } = await supabase
-          .from("customers")
-          .insert([
-            {
-              name: name,
-              address: address,
-              phone: phone,
-              email: email,
-            },
-          ])
-          .select("id")
-          .single();
-
-        if (createError || !newCustomer) {
-          throw new Error(createError?.message || "Failed to create customer");
-        }
-
-        return newCustomer.id;
-      })());
+    const customer_id = await findOrUpdateCustomer(supabase, {
+      name,
+      address,
+      phone,
+      email,
+      dni,
+    });
 
     // Create delivery transaction
     const { data: delivery, error: deliveryError } = await supabase
