@@ -98,3 +98,8 @@ export interface SearchProductsResponse {
   TotalItems: number;
   TotalPage: number;
 }
+
+export interface InvoiceDetailsResponse {
+  items: InvoiceItem[];
+  inventoryId?: string;
+}

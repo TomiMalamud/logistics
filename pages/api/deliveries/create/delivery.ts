@@ -1,9 +1,9 @@
 // pages/api/deliveries/create/delivery.ts
-import { createDeliveryService } from "@/services/deliveries";
+import { createOrUpdateContact, formatPerfitContact } from "@/lib/perfit";
 import createClient from "@/lib/utils/supabase/api";
+import { createDeliveryService } from "@/services/deliveries";
 import { NextApiRequest, NextApiResponse } from "next";
 import { titleCase } from "title-case";
-import { createOrUpdateContact, formatPerfitContact } from "@/lib/perfit";
 
 interface DeliveryRequest {
   order_date: string;
@@ -22,10 +22,18 @@ interface DeliveryRequest {
   created_by: string;
   email: string | null;
   emailBypassReason?: string;
+  store_id: string;
 }
 
 const validateRequest = (body: DeliveryRequest): void => {
-  const requiredFields = ["order_date", "products", "name", "address", "phone"];
+  const requiredFields = [
+    "order_date",
+    "products",
+    "name",
+    "address",
+    "phone",
+    "store_id",
+  ];
   const missingFields = requiredFields.filter((field) => !body[field]);
 
   if (missingFields.length > 0) {
@@ -88,6 +96,7 @@ export default async function handler(
       created_by,
       email,
       emailBypassReason,
+      store_id,
     } = body;
 
     // Sync with Perfit if email is provided
@@ -142,6 +151,7 @@ export default async function handler(
           invoice_id,
           type: "home_delivery",
           email_bypass_reason: emailBypassReason,
+          store_id,
         },
       ])
       .select()
