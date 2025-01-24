@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -15,7 +15,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { STORES } from "@/lib/utils/constants";
 import {
@@ -24,7 +24,7 @@ import {
   Delivery,
   DeliveryItem,
   DeliveryState,
-  Store
+  Store,
 } from "@/types/types";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, AlertDescription } from "../ui/alert";
@@ -35,7 +35,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "../ui/table";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 import { RemitoDownload } from "./RemitoDownload";
@@ -82,7 +82,7 @@ export default function StateDialog({
   deliveryItems,
   delivery,
   customer,
-  disabled
+  disabled,
 }: StateDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -122,7 +122,7 @@ export default function StateDialog({
     deliveryType,
     selectedStore,
     initialDeliveryCost,
-    initialCarrierId
+    initialCarrierId,
   ]);
 
   // Update dirty state whenever form values change
@@ -134,7 +134,7 @@ export default function StateDialog({
     selectedCarrierId,
     deliveryType,
     selectedStore,
-    checkFormDirty
+    checkFormDirty,
   ]);
 
   // Handle dialog close
@@ -181,7 +181,7 @@ export default function StateDialog({
       .map(([sku, item]) => ({
         product_sku: sku,
         quantity: item.quantity,
-        store_id: item.store_id
+        store_id: item.store_id,
       }));
 
     if (items.length === 0) {
@@ -218,7 +218,7 @@ export default function StateDialog({
   function ItemSelectionTable({
     deliveryItems,
     selectedItems,
-    setSelectedItems
+    setSelectedItems,
   }: {
     deliveryItems: DeliveryItem[];
     selectedItems: { [sku: string]: SelectedItem };
@@ -258,7 +258,7 @@ export default function StateDialog({
                     </p>
                   </TableCell>
                   <TableCell className="p-3 text-center text-sm">
-                    {item.quantity}
+                    {item.pending_quantity}
                   </TableCell>
                   <TableCell className="p-3">
                     <Input
@@ -277,8 +277,8 @@ export default function StateDialog({
                             ...selectedItems[item.product_sku],
                             quantity: qty,
                             // Reset store selection if quantity becomes 0
-                            ...(qty === 0 && { store_id: "" })
-                          }
+                            ...(qty === 0 && { store_id: "" }),
+                          },
                         });
                       }}
                       className="w-20 mx-auto"
@@ -292,8 +292,8 @@ export default function StateDialog({
                           ...selectedItems,
                           [item.product_sku]: {
                             ...selectedItems[item.product_sku],
-                            store_id: value
-                          }
+                            store_id: value,
+                          },
                         });
                       }}
                       disabled={selectedQuantity === 0}
@@ -340,17 +340,17 @@ export default function StateDialog({
         .map(([sku, item]) => ({
           product_sku: sku,
           quantity: item.quantity,
-          store_id: item.store_id
+          store_id: item.store_id,
         })),
       ...(deliveryType === "carrier" && {
         delivery_cost: isDeliveryCostValid(deliveryCost)
           ? parseFloat(deliveryCost)
           : undefined,
-        carrier_id: selectedCarrierId
+        carrier_id: selectedCarrierId,
       }),
       ...(deliveryType === "pickup" && {
-        pickup_store: selectedStoreId
-      })
+        pickup_store: selectedStoreId,
+      }),
     };
 
     try {
@@ -371,7 +371,11 @@ export default function StateDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full" onClick={handleDialogTriggerClick} disabled={disabled}>
+        <Button
+          className="w-full"
+          onClick={handleDialogTriggerClick}
+          disabled={disabled}
+        >
           {state === "delivered" ? "Pendiente" : "Entregado"}
         </Button>
       </DialogTrigger>
@@ -438,7 +442,7 @@ export default function StateDialog({
                 selectedItems={Object.fromEntries(
                   Object.entries(selectedItems).map(([sku, item]) => [
                     sku,
-                    item.quantity
+                    item.quantity,
                   ])
                 )}
               />
@@ -452,7 +456,7 @@ export default function StateDialog({
 
 function DeliveryTypeSelector({
   value,
-  onChange
+  onChange,
 }: {
   value: DeliveredType;
   onChange: (value: string) => void;
@@ -473,7 +477,7 @@ function DeliveryTypeSelector({
 
 function PickupStoreSelector({
   selectedStore,
-  onStoreChange
+  onStoreChange,
 }: {
   selectedStore?: string;
   onStoreChange: (value: string) => void;

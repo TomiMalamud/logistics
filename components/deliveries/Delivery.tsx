@@ -144,25 +144,30 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const renderProducts = () => {
     const items = delivery.delivery_items || [];
     return items.map((item, index) => (
-      <div key={index} className="flex items-center text-sm">
-        <span className="font-medium">{item.quantity}x</span>
-        <span className="ml-2 capitalize">
+      <div
+        key={index}
+        className={`grid grid-cols-[50%,35%,15%] gap-2 items-center text-sm ${
+          index !== items.length - 1 ? "border-b border-b-gray-200 pb-2" : ""
+        }`}
+      >
+        <span className="capitalize truncate">
           {item.products?.name?.toLowerCase() || "Unknown Product"}
         </span>
-        {item.product_sku && (
-          <span className="ml-2 text-slate-500">{item.product_sku}</span>
-        )}
+
         <span
-          className={`ml-2 ${
+          className={`whitespace-nowrap ${
             item.pending_quantity > 0 ? "text-yellow-600" : "text-green-600"
-          } `}
+          }`}
         >
-          Pendiente: {item.pending_quantity}
+          {item.pending_quantity} pendiente de {item.quantity}
+        </span>
+
+        <span className="text-slate-500 text-right mr-8 font-mono text-xs">
+          {item.product_sku}
         </span>
       </div>
     ));
   };
-
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
       {/* Error Alert */}
@@ -431,23 +436,30 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       <Alert className="bg-slate-50">
         <AlertDescription>
           {delivery.delivery_items && delivery.delivery_items.length > 0 ? (
-            <div className="space-y-1">{renderProducts()}</div>
+            <div className="space-y-2">{renderProducts()}</div>
           ) : delivery.products && delivery.products.length > 0 ? (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {delivery.products.map((product, index) => (
-                <div key={index} className="flex items-center text-sm">
-                  <span className="font-medium">{product.quantity}x</span>
-                  <span className="ml-2 capitalize">
-                    {product.name.toLowerCase()}
+                <div
+                  key={index}
+                  className="grid grid-cols-[1fr,auto,auto] gap-4 items-center text-sm"
+                >
+                  <span className="capitalize truncate">
+                    {product.quantity}x {product.name.toLowerCase()}
+                  </span>
+                  <span className="whitespace-nowrap">
+                    {product.quantity} total
                   </span>
                   {product.sku && (
-                    <span className="ml-2 text-slate-500">{product.sku}</span>
+                    <span className="text-slate-500 font-mono text-xs">
+                      {product.sku}
+                    </span>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-red-500 font-bold">
+            <div className="text-red-500 font-medium">
               <p>NO SE ENCONTRARON PRODUCTOS. REVISÁ CON ADMINISTRADOR</p>
             </div>
           )}
