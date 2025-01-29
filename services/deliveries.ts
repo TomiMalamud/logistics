@@ -205,7 +205,6 @@ const createDeliveryService = (supabase: SupabaseClient) => {
       };
     }
   };
-
   const listOperations = async ({
     startDate,
     endDate,
@@ -217,9 +216,10 @@ const createDeliveryService = (supabase: SupabaseClient) => {
         .select(
           `
           id,
-          delivery:deliveries!inner (
+          delivery:deliveries (
             id,
-            customers!inner (
+            type,
+            customers (
               name,
               address,
               phone

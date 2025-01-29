@@ -3,7 +3,6 @@ import createClient from "@/lib/utils/supabase/api";
 import { createDeliveryService } from "@/services/deliveries";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-// Keep all your original type definitions here
 type FeedResponse = {
   feed: CalendarItem[];
   totalItems: number;
@@ -24,7 +23,7 @@ interface PendingDelivery {
     name: string;
     address: string;
     phone: string | null;
-  };
+  } | null;
   created_by: {
     name: string | null;
   } | null;
@@ -49,11 +48,13 @@ interface DeliveryOperation {
     name: string;
   } | null;
   delivery: {
+    id: number;
+    type: string;
     customers: {
       name: string;
       address: string;
       phone: string | null;
-    };
+    } | null;
   };
   operation_items:
     | {
@@ -69,8 +70,9 @@ interface CalendarItem {
   id: number;
   type: "pending" | "delivered";
   display_date: string;
+  delivery_type?: string;
   invoice_id?: number | null;
-  customer: {
+  customer?: {
     name: string;
     address: string;
     phone: string | null;
@@ -138,7 +140,7 @@ export default async function handler(
         page: 1,
         pageSize: 1000,
         scheduledDate: "hasDate",
-        startDate, // Add these to ListDeliveriesParams interface
+        startDate,
         endDate,
       });
 
@@ -169,11 +171,13 @@ export default async function handler(
         type: "pending",
         display_date: delivery.scheduled_date,
         invoice_id: delivery.invoice_id,
-        customer: {
-          name: delivery.customers.name,
-          address: delivery.customers.address,
-          phone: delivery.customers.phone,
-        },
+        ...(delivery.customers && {
+          customer: {
+            name: delivery.customers.name,
+            address: delivery.customers.address,
+            phone: delivery.customers.phone,
+          },
+        }),
         created_by: delivery.created_by,
         items:
           delivery.delivery_items?.map((item) => ({
@@ -189,11 +193,14 @@ export default async function handler(
         id: operation.id,
         type: "delivered",
         display_date: operation.operation_date,
-        customer: {
-          name: operation.delivery.customers.name,
-          address: operation.delivery.customers.address,
-          phone: operation.delivery.customers.phone,
-        },
+        delivery_type: operation.delivery.type,
+        ...(operation.delivery.customers && {
+          customer: {
+            name: operation.delivery.customers.name,
+            address: operation.delivery.customers.address,
+            phone: operation.delivery.customers.phone,
+          },
+        }),
         items:
           operation.operation_items?.map((item) => ({
             quantity: item.quantity,

@@ -5,14 +5,14 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDeliveryBalance } from "@/hooks/useDeliveryBalance";
 import { useRole } from "@/hooks/useRole";
@@ -32,25 +32,27 @@ interface DroppableCellProps {
   date: string;
   children: React.ReactNode;
 }
+
+interface Customer {
+  name: string;
+  address: string;
+  phone: string | null;
+}
+
 interface CalendarDelivery {
   id: number;
   type: "pending" | "delivered";
   display_date: string;
-  customer: {
-    name: string;
-    address: string;
-    phone: string | null;
-  };
+  delivery_type?: string;
+  customer?: Customer;
   items: Array<{
     quantity: number;
-    pending_quantity: number;
     name: string;
   }>;
   created_by?: {
     name: string | null;
   } | null;
   operation_cost?: number | null;
-  cost?: number | null;
   carrier?: string | null;
   pickup_store?: string | null;
   invoice_id?: number | null;
@@ -67,14 +69,14 @@ interface CalendarResponse {
 export const DraggableDeliveryItem = ({
   delivery,
   onDragEnd,
-  showCosts
+  showCosts,
 }: {
   delivery: CalendarDelivery;
   onDragEnd: (id: number, date: string) => void;
   showCosts: boolean;
 }) => {
   const { balance, isRefreshing } = useDeliveryBalance({
-    invoice_id: delivery.invoice_id || null
+    invoice_id: delivery.invoice_id || null,
   });
 
   const hasBalance = balance && balance !== "0,00";
@@ -82,20 +84,33 @@ export const DraggableDeliveryItem = ({
     type: "DELIVERY",
     item: { id: delivery.id },
     collect: (monitor) => ({
-      isDragging: monitor.isDragging()
+      isDragging: monitor.isDragging(),
     }),
     end: (item, monitor) => {
       const dropResult = monitor.getDropResult() as DropResult | null;
       if (dropResult) {
         onDragEnd(item.id, dropResult.date);
       }
-    }
+    },
   }));
 
   const today = new Date().toISOString().split("T")[0];
   const isPastDue =
     delivery.display_date < today && delivery.type !== "delivered";
   const isToday = delivery.display_date === today;
+
+  const getDeliveryLabel = () => {
+    if (delivery.customer) {
+      return delivery.customer.name.toLowerCase();
+    }
+    if (delivery.delivery_type === "store_movement") {
+      return "Movimiento entre sucursales";
+    }
+    if (delivery.delivery_type === "supplier_pickup") {
+      return "Retiro de proveedor";
+    }
+    return "Sin destino";
+  };
 
   return (
     <TooltipProvider>
@@ -115,10 +130,8 @@ export const DraggableDeliveryItem = ({
               }
             `}
           >
-            <div className="truncate capitalize">
-              {delivery.customer.name.toLowerCase()}
-            </div>
-            {hasBalance && delivery.type === "pending" && (
+            <div className="truncate capitalize">{getDeliveryLabel()}</div>
+            {hasBalance && delivery.type === "pending" && delivery.customer && (
               <div
                 className={`text-red-600 ${isRefreshing ? "opacity-50" : ""}`}
               >
@@ -134,26 +147,23 @@ export const DraggableDeliveryItem = ({
                 {delivery.items.map((item, index) => (
                   <div key={index}>
                     {item.quantity}x {titleCase(item.name.toLowerCase())}
-                    {delivery.type === "pending" &&
-                      item.pending_quantity > 0 && (
-                        <span className="text-amber-600">
-                          {" "}
-                          (Pendiente: {item.pending_quantity})
-                        </span>
-                      )}
                   </div>
                 ))}
               </div>
             )}
-            <p>📍 {delivery.customer.address.toLowerCase()}</p>
-            <p>📱 {delivery.customer.phone}</p>
+            {delivery.customer && (
+              <>
+                <p>📍 {delivery.customer.address.toLowerCase()}</p>
+                <p>📱 {delivery.customer.phone}</p>
+              </>
+            )}
             {showCosts && delivery.operation_cost && (
               <>
                 <p>
                   💲{" "}
                   {delivery.operation_cost.toLocaleString("es-AR", {
-                    maximumFractionDigits: 0
-                  })}{" "}
+                    maximumFractionDigits: 0,
+                  })}
                 </p>
                 {delivery.carrier && <p>🚚 {delivery.carrier}</p>}
               </>
@@ -164,7 +174,7 @@ export const DraggableDeliveryItem = ({
               <p>Retiró en {getStore(delivery.pickup_store).label}</p>
             )}
           </div>
-        </TooltipContent>{" "}
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -180,8 +190,8 @@ const DroppableCell = ({ date, children }: DroppableCellProps) => {
     accept: "DELIVERY",
     drop: () => ({ date }),
     collect: (monitor) => ({
-      isOver: monitor.isOver()
-    })
+      isOver: monitor.isOver(),
+    }),
   }));
 
   return (
@@ -214,11 +224,11 @@ const DeliveryCalendar = ({ searchUrl }) => {
       const response = await fetch(`/api/deliveries/${deliveryId}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          scheduled_date: newDate
-        })
+          scheduled_date: newDate,
+        }),
       });
 
       if (!response.ok) {
@@ -310,7 +320,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
         ? dayCost.toLocaleString("es-AR", {
             style: "currency",
             currency: "ARS",
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
           })
         : "";
 
@@ -367,7 +377,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
               <CardTitle className="text-xl">
                 {date.toLocaleDateString("es", {
                   month: "long",
-                  year: "numeric"
+                  year: "numeric",
                 })}
               </CardTitle>
               {showCosts && (
@@ -376,7 +386,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
                     totalCost.toLocaleString("es-AR", {
                       style: "currency",
                       currency: "ARS",
-                      maximumFractionDigits: 0
+                      maximumFractionDigits: 0,
                     })}
                 </CardDescription>
               )}{" "}
