@@ -3,25 +3,47 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EMPLOYEE_TIER_TARGETS } from "@/lib/utils/constants";
+import { EMPLOYEE_TIER_TARGETS, TIER_BONUSES } from "@/lib/utils/constants";
 import React from "react";
 import { Progress } from "../ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 const getTierTargets = (employeeId: string | undefined) => {
   if (!employeeId || employeeId === "all") {
     // Default targets when no specific employee is selected
     return {
-      base: { name: "Base", target: 50000000, color: "bg-purple-600/40" },
+      base: {
+        name: "Base",
+        target: 50000000,
+        color: "bg-purple-600/40",
+        bonus: TIER_BONUSES.base,
+      },
       despegue: {
         name: "Despegue",
         target: 60000000,
-        color: "bg-purple-600/80"
+        color: "bg-purple-600/80",
+        bonus: TIER_BONUSES.despegue,
       },
-      full: { name: "Full", target: 70000000, color: "bg-purple-600" },
-      xxl: { name: "XXL", target: 80000000, color: "bg-yellow-500" }
+      full: {
+        name: "Full",
+        target: 70000000,
+        color: "bg-purple-600",
+        bonus: TIER_BONUSES.full,
+      },
+      xxl: {
+        name: "XXL",
+        target: 80000000,
+        color: "bg-yellow-500",
+        bonus: TIER_BONUSES.xxl,
+      },
     };
   }
 
@@ -30,19 +52,27 @@ const getTierTargets = (employeeId: string | undefined) => {
     base: {
       name: "Base",
       target: employeeTargets.base,
-      color: "bg-purple-600/40"
+      color: "bg-purple-600/40",
+      bonus: TIER_BONUSES.base,
     },
     despegue: {
       name: "Despegue",
       target: employeeTargets.despegue,
-      color: "bg-purple-600/80"
+      color: "bg-purple-600/80",
+      bonus: TIER_BONUSES.despegue,
     },
     full: {
       name: "Full",
       target: employeeTargets.full,
-      color: "bg-purple-600"
+      color: "bg-purple-600",
+      bonus: TIER_BONUSES.full,
     },
-    xxl: { name: "XXL", target: employeeTargets.xxl, color: "bg-yellow-500" }
+    xxl: {
+      name: "XXL",
+      target: employeeTargets.xxl,
+      color: "bg-yellow-500",
+      bonus: TIER_BONUSES.xxl,
+    },
   };
 };
 
@@ -78,7 +108,7 @@ const getProgressBarColor = (
   return tiers.base.color;
 };
 
-const Checkpoint = ({ value, tierName, color, tiers }) => {
+const Checkpoint = ({ value, tierName, color, tiers, bonus }) => {
   const position = `${(value / tiers.xxl.target) * 100}%`;
 
   return (
@@ -86,13 +116,26 @@ const Checkpoint = ({ value, tierName, color, tiers }) => {
       className="absolute transform -translate-x-1/2"
       style={{ left: position }}
     >
-      <div className="flex justify-center">
-        <div className={`w-4 h-4 rounded-full ${color}`} />
-      </div>
-      <div className="text-xs text-muted-foreground flex flex-col items-center mt-1">
-        <div>{tierName}</div>
-        <div>${(value / 1000000).toFixed(0)}M</div>
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="flex justify-center">
+              <div className={`w-4 h-4 rounded-full ${color}`} />
+            </div>
+            <div className="text-xs text-muted-foreground flex flex-col items-center mt-1">
+              <div>{tierName}</div>
+              <div>${(value / 1000000).toFixed(0)}M</div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              {bonus > 0
+                ? `Bono: $${bonus.toLocaleString("es-AR")}`
+                : "Sin bono en esta etapa"}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 };
@@ -106,7 +149,7 @@ interface TierProgressProps {
 const TierProgress: React.FC<TierProgressProps> = ({
   totalSales,
   isLoading,
-  employeeId
+  employeeId,
 }) => {
   if (isLoading) {
     return (
@@ -178,24 +221,28 @@ const TierProgress: React.FC<TierProgressProps> = ({
                   tierName="Base"
                   color={tiers.base.color}
                   tiers={tiers}
+                  bonus={tiers.base.bonus}
                 />
                 <Checkpoint
                   value={tiers.despegue.target}
                   tierName="Despegue"
                   color={tiers.despegue.color}
                   tiers={tiers}
+                  bonus={tiers.despegue.bonus}
                 />
                 <Checkpoint
                   value={tiers.full.target}
                   tierName="Full"
                   color={tiers.full.color}
                   tiers={tiers}
+                  bonus={tiers.full.bonus}
                 />
                 <Checkpoint
                   value={tiers.xxl.target}
                   tierName="XXL"
                   color={tiers.xxl.color}
                   tiers={tiers}
+                  bonus={tiers.xxl.bonus}
                 />
               </div>
             </div>
