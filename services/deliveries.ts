@@ -308,6 +308,40 @@ const createDeliveryService = (supabase: SupabaseClient) => {
 
     return !remainingItems?.length;
   };
+  const processStoreMovement = async (
+    operation: {
+      delivery_id: number;
+      pickup_store: string;
+    },
+    items: Array<{
+      product_sku: string;
+      quantity: number;
+      store_id: string;
+    }>,
+    delivery: {
+      origin_store: string;
+      dest_store: string;
+    }
+  ) => {
+    const { createInventoryMovement } = await import("@/lib/api");
+
+    // Process each item as a separate inventory movement in the ERP
+    await Promise.all(
+      items.map(async (item) => {
+        try {
+          await createInventoryMovement({
+            idDepositoOrigen: delivery.origin_store,
+            idDepositoDestino: delivery.dest_store,
+            codigo: item.product_sku,
+            cantidad: item.quantity,
+          });
+        } catch (error) {
+          console.error(`Error moving product ${item.product_sku}:`, error);
+          throw error;
+        }
+      })
+    );
+  };
 
   const recordOperation = async ({
     deliveryId,
@@ -318,6 +352,9 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     pickupStore,
     items,
   }: RecordOperationParams) => {
+    // Get the delivery details first
+    const delivery = await getDelivery(deliveryId);
+
     // For delivery operations, validate that either carrier info or pickup_store is provided
     if (operationType === "delivery") {
       if (pickupStore) {
@@ -347,6 +384,17 @@ const createDeliveryService = (supabase: SupabaseClient) => {
 
     if (operationError) {
       throw new Error(`Error creating operation: ${operationError.message}`);
+    }
+
+    // Handle store movement in ERP if this is a store movement delivery
+    if (
+      operationType === "delivery" &&
+      delivery.type === "store_movement" &&
+      items?.length &&
+      delivery.origin_store &&
+      delivery.dest_store
+    ) {
+      await processStoreMovement(operation, items, delivery);
     }
 
     // Process items only for deliveries
@@ -480,6 +528,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     validateItems,
     processItems,
     recordOperation,
+    processStoreMovement,
     getDelivery,
     updateDelivery,
     handleNotifications,

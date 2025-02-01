@@ -1,5 +1,3 @@
-// pages/api/deliveries/create/store-mov.ts
-import { createInventoryMovement } from "@/lib/api";
 import { getStore } from "@/lib/utils/constants";
 import createClient from "@/lib/utils/supabase/api";
 import { Product } from "@/types/types";
@@ -48,28 +46,6 @@ const validateRequest = (body: StoreMovementRequest): void => {
   }
 };
 
-const createInventoryMovements = async (
-  origin_store: string,
-  dest_store: string,
-  products: Product[]
-): Promise<void> => {
-  await Promise.all(
-    products.map(async (product) => {
-      try {
-        await createInventoryMovement({
-          idDepositoOrigen: origin_store,
-          idDepositoDestino: dest_store,
-          codigo: product.sku,
-          cantidad: product.quantity,
-        });
-      } catch (error) {
-        console.error(`Error moving product ${product.sku}:`, error);
-        throw error;
-      }
-    })
-  );
-};
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -96,9 +72,6 @@ export default async function handler(
 
     const { origin_store, dest_store, products, scheduled_date, created_by } =
       body;
-
-    // Create inventory movements in ERP
-    await createInventoryMovements(origin_store, dest_store, products);
 
     // Create delivery record
     const { data: delivery, error: deliveryError } = await supabase
