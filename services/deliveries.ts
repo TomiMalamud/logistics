@@ -60,6 +60,13 @@ interface UpdateDeliveryParams {
   scheduledDate?: string | null;
 }
 
+const TYPE_ORDER: Record<DeliveryType, number> = {
+  store_movement: 1,
+  supplier_pickup: 2,
+  home_delivery: 3,
+  all: 4,
+} as const;
+
 const createDeliveryService = (supabase: SupabaseClient) => {
   const validateItems = async (deliveryId: number, items: DeliveryItem[]) => {
     const { data, error } = await supabase
@@ -185,8 +192,9 @@ const createDeliveryService = (supabase: SupabaseClient) => {
       // Apply appropriate sorting
       if (state === "pending") {
         query = query
-          .order("scheduled_date", { ascending: true, nullsFirst: false })
-          .order("order_date", { ascending: true });
+          .order("type", { ascending: false })
+          .order("scheduled_date")
+          .order("order_date");
       } else {
         query = query.order("order_date", { ascending: false });
       }
