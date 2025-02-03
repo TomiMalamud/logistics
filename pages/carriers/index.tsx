@@ -10,7 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,16 +19,19 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { Carrier } from "@/types/types";
-import { formatDate, sanitizePhoneNumber, validatePhoneNumber } from "@/lib/utils/format";
+import {
+  formatDate,
+  sanitizePhoneNumber,
+  validatePhoneNumber,
+} from "@/lib/utils/format";
 import { DollarSign, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
 
 export default function CarriersPage() {
   const [carriers, setCarriers] = useState<Carrier[]>([]);
@@ -49,23 +52,25 @@ export default function CarriersPage() {
   async function fetchCarriers() {
     const { data, error } = await supabase
       .from("carriers")
-      .select(`
+      .select(
+        `
         *,
-        delivery_operations!inner (
+        delivery_operations (
           operation_date,
           operation_type,
           delivery_id,
-          deliveries!inner (
+          deliveries (
             state
           )
         )
-      `)
+      `
+      )
       .order("name");
-  
+
     if (error) {
       setError("Failed to fetch carriers");
       return;
-    }  
+    }
 
     // Process the data to get the last delivery date
     const processedData = data.map((carrier) => ({
@@ -73,18 +78,18 @@ export default function CarriersPage() {
       last_delivery:
         carrier.delivery_operations
           ?.filter(
-            (op) => 
-              op.operation_type === 'delivery' && 
-              op.deliveries?.state === 'delivered'
+            (op) =>
+              op.operation_type === "delivery" &&
+              op.deliveries?.state === "delivered"
           )
           .sort(
             (a, b) =>
               new Date(b.operation_date).getTime() -
               new Date(a.operation_date).getTime()
           )[0]?.operation_date || null,
-      delivery_operations: undefined
+      delivery_operations: undefined,
     }));
-  
+
     setCarriers(processedData);
   }
 
@@ -113,7 +118,7 @@ export default function CarriersPage() {
       notes: formData.get("notes") as string,
       type: formData.get("type") as string,
       avg_cost: Number(formData.get("avg_cost")) || 0,
-      is_reliable: formData.get("is_reliable") === "true"
+      is_reliable: formData.get("is_reliable") === "true",
     };
 
     if (!carrierData.type) {
@@ -318,13 +323,9 @@ export default function CarriersPage() {
                 </a>
               </div>
               <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild                  
-                >
+                <Button variant="outline" size="sm" asChild>
                   <Link href={`/carriers/${carrier.id}/balance`}>
-                  <DollarSign className="w-4 h-4" />
+                    <DollarSign className="w-4 h-4" />
                   </Link>
                 </Button>
                 <Button
