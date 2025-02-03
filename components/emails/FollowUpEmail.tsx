@@ -8,7 +8,7 @@ import {
   Link,
   Preview,
   Section,
-  Text
+  Text,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
 
@@ -21,7 +21,7 @@ interface FollowUpProps {
 export const FollowUp = ({
   customerName,
   salesPersonName,
-  customerPhone
+  customerPhone,
 }: FollowUpProps) => {
   const previewText = `Seguimiento - ${customerName}`;
 
@@ -29,10 +29,7 @@ export const FollowUp = ({
   const message = `
 ¡Hola! ¿Cómo andás? Soy ${salesPersonName} de ROHI Sommiers.
 
-Te escribo para ver qué tal te está resultando tu compra. ¿Ya la pudiste probar? Me interesa saber si cumple con lo que esperabas.
-Si tenés alguna duda sobre cómo cuidarlo o cualquier otra consulta, ¡no dudes en preguntarme!
-    
-¡Gracias por confiar en ROHI Sommiers! Es un placer para nosotros que nos hayas elegido para mejorar tu descanso.`;
+Te escribo para ver qué tal te está resultando tu compra.`;
 
   // Crear el link de WhatsApp con el mensaje codificado
   const whatsappLink = `https://wa.me/549${customerPhone}?text=${encodeURIComponent(

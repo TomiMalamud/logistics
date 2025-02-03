@@ -16,6 +16,7 @@ interface Customer {
   name: string;
   phone: string;
   address: string;
+  dni?: string; // Added optional DNI field
 }
 
 interface Delivery {
@@ -30,7 +31,7 @@ const addHeaderImage = (doc: PDFKit.PDFDocument, margin: number): boolean => {
     const logoPath = path.join(process.cwd(), "public", "logo.jpg");
     doc.image(logoPath, margin, margin, {
       fit: [100, 60],
-      align: "center"
+      align: "center",
     });
     return true;
   } catch (error) {
@@ -57,7 +58,11 @@ const validateDeliveryData = (
   delivery: Partial<Delivery>,
   customer: Partial<Customer>
 ): boolean => {
-  if (!delivery?.id || !delivery.scheduled_date || !Array.isArray(delivery.products)) {
+  if (
+    !delivery?.id ||
+    !delivery.scheduled_date ||
+    !Array.isArray(delivery.products)
+  ) {
     return false;
   }
 
@@ -81,13 +86,15 @@ export default async function handler(
 
     // Validate input data
     if (!validateDeliveryData(delivery, customer)) {
-      return res.status(400).json({ message: "Invalid delivery or customer data" });
+      return res
+        .status(400)
+        .json({ message: "Invalid delivery or customer data" });
     }
 
     // Create PDF document
     const doc = new PDFDocument({
       size: "A4",
-      margin: 0
+      margin: 0,
     });
 
     // Set response headers
@@ -117,14 +124,18 @@ export default async function handler(
     doc
       .fontSize(10)
       .font("Helvetica")
-      .text("Cod. 91", (pageWidth - doc.widthOfString("Cod. 91")) / 2, margin + 35);
+      .text(
+        "Cod. 91",
+        (pageWidth - doc.widthOfString("Cod. 91")) / 2,
+        margin + 35
+      );
 
     // Header - Document Info
     doc.font("Helvetica");
     rightAlignedText(doc, "Remito Original", pageWidth - margin, margin + 25);
     rightAlignedText(
       doc,
-      `Nro.: ${String(delivery.id).padStart(6, "0")}`,
+      `Nro.: 0006-${String(delivery.id).padStart(8, "0")}`,
       pageWidth - margin,
       margin + 40
     );
@@ -174,17 +185,24 @@ export default async function handler(
       .fontSize(12)
       .font("Helvetica")
       .text(`Razón social: ${customer.name}`, margin + 10, customerBoxY + 15)
-      .text(`Tel: ${customer.phone}`, margin + 10, customerBoxY + 35)
+      .text(`Tel: ${customer.phone}`, margin + 10, customerBoxY + 35);
+
+    // Add DNI if available
+    if (customer.dni) {
+      const idType = customer.dni.length === 8 ? "DNI: " : "CUIT: ";
+      doc.text(`${idType}${customer.dni}`, margin + 300, customerBoxY + 15);
+    }
+
+    doc
       .text(`Domicilio: ${customer.address}`, margin + 10, customerBoxY + 55)
-      .text("Condición de IVA: Consumidor final", margin + 10, customerBoxY + 75);
+      .text(
+        "Condición de IVA: Consumidor final",
+        margin + 10,
+        customerBoxY + 75
+      );
 
     // Customer Information - Right Side
-    rightAlignedText(
-      doc,
-      "",
-      rightColumnX,
-      customerBoxY + 35
-    );
+    rightAlignedText(doc, "", rightColumnX, customerBoxY + 35);
 
     // Products Table
     const tableTop = customerBoxY + 110;
@@ -245,26 +263,23 @@ export default async function handler(
       .fontSize(8)
       .text(
         "REVISE SU UNIDAD. NO SE RECIBEN RECLAMOS POR RAYADURAS O GOLPES OCASIONADOS EN EL TRANSPORTE. " +
-        "Esta merc. goza de gtia. Recuerde que cuenta con 10 días corridos desde la entrega de su producto " +
-        "para revocar su aceptación. Al recibir la mercadería, acepta nuestros términos y condiciones.",
+          "Esta merc. goza de gtia. Recuerde que cuenta con 10 días corridos desde la entrega de su producto " +
+          "para revocar su aceptación. Al recibir la mercadería, acepta nuestros términos y condiciones.",
         margin,
         footerY + 20,
         {
           width: contentWidth,
-          align: "left"
+          align: "left",
         }
       );
 
     // Signature Line
-    doc.fontSize(10).text(
-      "Recibí conforme_________________________",
-      margin,
-      footerY + 90,
-      {
+    doc
+      .fontSize(10)
+      .text("Recibí conforme_________________________", margin, footerY + 90, {
         width: contentWidth,
-        align: "right"
-      }
-    );
+        align: "right",
+      });
 
     // Finalize the PDF
     doc.end();

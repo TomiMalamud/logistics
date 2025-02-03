@@ -7,7 +7,7 @@ export const validatePhoneNumber = (phone: string): boolean =>
   /^\d{10}$/.test(phone);
 
 export const formatDate = (dateString: string): string => {
-  return new Date(`${dateString}T12:00:00`).toLocaleDateString();
+  return new Date(`${dateString}T12:00:00`).toLocaleDateString("es-AR");
 };
 
 export const formatLongDate = (dateString: string) => {

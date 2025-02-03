@@ -6,6 +6,7 @@ export interface Customer {
   address: string;
   phone?: string;
   email?: string;
+  dni?: string;
 }
 
 // Note Interface

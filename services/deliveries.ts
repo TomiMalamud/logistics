@@ -129,7 +129,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
         .select(
           `
         *,
-        customers ( name, address, phone ),
+        customers ( name, address, phone, dni ),
         notes ( id, text, created_at ),
         created_by:profiles ( email, name ),
         suppliers ( name ),
