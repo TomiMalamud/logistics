@@ -39,6 +39,12 @@ import {
 } from "../ui/table";
 import CostCarrierForm, { isDeliveryCostValid } from "./CostCarrierForm";
 import { RemitoDownload } from "./RemitoDownload";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 interface FormData {
   delivery_cost?: number;
@@ -450,12 +456,8 @@ export default function StateDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          className="w-full"
-          onClick={handleDialogTriggerClick}
-          disabled={disabled}
-        >
-          {state === "delivered" ? "Pendiente" : "Entregado"}
+        <Button className="w-full" onClick={handleDialogTriggerClick}>
+          Entregado
         </Button>
       </DialogTrigger>
 
@@ -556,13 +558,31 @@ export default function StateDialog({
 
           <DialogFooter>
             <div className="flex w-full gap-2">
-              <Button
-                onClick={handleFormSubmit}
-                disabled={loadingStates.inventory || loadingStates.form}
-                className="flex-1"
-              >
-                {getButtonText()}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        onClick={handleFormSubmit}
+                        disabled={
+                          loadingStates.inventory ||
+                          loadingStates.form ||
+                          disabled
+                        }
+                        className="flex-1"
+                      >
+                        {getButtonText()}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      No se puede marcar como entregado hasta que se registre el
+                      pago
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               <RemitoDownload
                 delivery={delivery}

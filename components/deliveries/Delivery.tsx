@@ -332,33 +332,17 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         <div className="space-x-2 flex">
           {delivery.state === "pending" && (
             <div className="w-24">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="w-24">
-                      <StateDialog
-                        state={state}
-                        setState={setState}
-                        setShowStateAlertDialog={setShowStateDialog}
-                        onConfirm={handleStateChange}
-                        isConfirming={isLoading.state}
-                        deliveryItems={delivery.delivery_items}
-                        delivery={delivery}
-                        customer={delivery.customers}
-                        disabled={isDeliveryDisabled}
-                      />{" "}
-                    </div>
-                  </TooltipTrigger>
-                  {isDeliveryDisabled && (
-                    <TooltipContent>
-                      <p>
-                        No se puede marcar como entregado hasta que se registre
-                        el pago
-                      </p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <StateDialog
+                state={state}
+                setState={setState}
+                setShowStateAlertDialog={setShowStateDialog}
+                onConfirm={handleStateChange}
+                isConfirming={isLoading.state}
+                deliveryItems={delivery.delivery_items}
+                delivery={delivery}
+                customer={delivery.customers}
+                disabled={isDeliveryDisabled}
+              />{" "}
             </div>
           )}
 
