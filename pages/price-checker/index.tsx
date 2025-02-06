@@ -1,4 +1,4 @@
-// pages/price-checker/index.tsx
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Layout from "@/components/Layout";
 import { ProductCard } from "@/components/price-checker/ProductCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -7,24 +7,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts } from "@/hooks/useProducts";
-import { Calculator } from "lucide-react";
+import { Calculator, Search } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { useDebounce } from "use-debounce";
+import HelpDialog from "@/components/price-checker/HelpDialog";
 
 export default function PriceChecker() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch] = useDebounce(search, 1000);
+  const [queryTerm, setQueryTerm] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  const {
-    data,
-    isLoading,
-    isError,
-    error
-  } = useProducts({
-    query: debouncedSearch,
-    includeERP: true // Always search in ERP for price checker
+
+  const { data, isLoading, isError, error } = useProducts({
+    query: queryTerm,
+    includeERP: true,
   });
 
   useEffect(() => {
@@ -33,34 +27,66 @@ export default function PriceChecker() {
     }
   }, []);
 
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (search.length >= 2) {
+      setQueryTerm(search);
+    }
+  };
+
   return (
     <Layout title="Precios">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-x-2 mb-6">
-          <Input
-            ref={inputRef}
-            type="search"
-            placeholder="Buscá por SKU o nombre. Mínimo 4 caracteres"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sw-full bg-white"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-          />
+        <HelpDialog />
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center gap-x-2 mb-6 mt-2"
+        >
+          <div className="relative flex-1">
+            <Input
+              ref={inputRef}
+              type="search"
+              placeholder="Buscá por SKU o nombre. Mínimo 2 caracteres"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-white pr-10"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              enterKeyHint="search"
+            />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3"
+              disabled={search.length < 2}
+              title="Buscar"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
           <Button variant="outline" asChild>
             <Link href="/price-checker/calculator">
               <Calculator />
             </Link>
           </Button>
-        </div>
+        </form>
+
+        {search.length < 2 && queryTerm === "" && (
+          <Alert>
+            <AlertDescription>
+              Ingresá al menos 2 caracteres y presioná Enter para buscar
+            </AlertDescription>
+          </Alert>
+        )}
 
         {isError && (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>
               {error instanceof Error
                 ? error.message
-                : "Error fetching products"}
+                : "Error al buscar productos"}
             </AlertDescription>
           </Alert>
         )}
@@ -81,15 +107,13 @@ export default function PriceChecker() {
           </div>
         )}
 
-        {!isLoading &&
-          data?.erp.length === 0 &&
-          debouncedSearch.length >= 4 && (
-            <Alert className="mb-4">
-              <AlertDescription>
-                No se encontraron productos para: {debouncedSearch}
-              </AlertDescription>
-            </Alert>
-          )}
+        {!isLoading && data?.erp.length === 0 && queryTerm.length >= 2 && (
+          <Alert className="mb-4">
+            <AlertDescription>
+              No se encontraron productos para: {queryTerm}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {!isLoading &&
           data?.erp.map((product) => (

@@ -49,14 +49,18 @@ export const TIER_BONUSES = {
 
 export interface FinancingOption {
   months: number;
-  discount: number;
+  discount?: number;
+  interest?: number;
   label: string;
+  cards?: string[];
 }
 
 export const CASH_DISCOUNT = 20; // 20% discount for cash payments
 
 export const FINANCING_OPTIONS: FinancingOption[] = [
+  { months: 12, interest: 25, label: "12 cuotas" },
+  { months: 10, discount: 0, label: "10 cuotas", cards: ["Sólo Naranja"] },
   { months: 6, discount: 0, label: "6 cuotas" },
-  { months: 3, discount: 5, label: "3 cuotas o Plan Z" },
+  { months: 3, discount: 5, label: "3 cuotas" },
   { months: 1, discount: 15, label: "1 cuota" },
 ];

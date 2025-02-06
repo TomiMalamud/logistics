@@ -155,7 +155,7 @@ const Layout = ({
           <nav className="flex items-center">{renderNavButtons()}</nav>
           <div>
             <DropdownMenu>
-              <DropdownMenuTrigger className="group text-stone-600 inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+              <DropdownMenuTrigger className="group hidden sm:inline-flex text-stone-600 h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
                 Herramientas
               </DropdownMenuTrigger>
               <DropdownMenuContent>

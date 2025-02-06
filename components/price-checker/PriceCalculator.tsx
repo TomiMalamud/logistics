@@ -7,7 +7,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CASH_DISCOUNT, FINANCING_OPTIONS } from "@/lib/utils/constants";
@@ -24,14 +24,14 @@ interface PaymentSplit {
 export default function PriceCalculator() {
   const [price, setPrice] = useState(100000);
   const [payments, setPayments] = useState<PaymentSplit[]>([
-    { id: "1", method: "6", amount: 0 }
+    { id: "1", method: "6", amount: 0 },
   ]);
 
   const numberFormatter = useMemo(
     () =>
       new Intl.NumberFormat("es-AR", {
         maximumFractionDigits: 0,
-        useGrouping: true
+        useGrouping: true,
       }),
     []
   );
@@ -41,7 +41,7 @@ export default function PriceCalculator() {
       new Intl.NumberFormat("es-AR", {
         style: "currency",
         currency: "ARS",
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
       }),
     []
   );
@@ -49,7 +49,7 @@ export default function PriceCalculator() {
   const addPaymentMethod = useCallback(() => {
     setPayments((prev) => [
       ...prev,
-      { id: (prev.length + 1).toString(), method: "6", amount: 0 }
+      { id: (prev.length + 1).toString(), method: "6", amount: 0 },
     ]);
   }, []);
 
@@ -98,7 +98,7 @@ export default function PriceCalculator() {
       totalOriginalAmount,
       totalSavings,
       remaining: remainingWithDiscount,
-      finalTotal: payments.reduce((sum, p) => sum + p.amount, 0)
+      finalTotal: payments.reduce((sum, p) => sum + p.amount, 0),
     };
   }, [payments, price]);
 
@@ -139,13 +139,14 @@ export default function PriceCalculator() {
     [validatePaymentAmount]
   );
   return (
-    <Card className="w-full">
+    <Card className="w-full mt-2">
       <CardContent className="pt-6 space-y-4">
         {/* Price Input */}
         <div className="flex items-center pb-6 border-b mb-10">
           <Label htmlFor="price" className="w-96 flex items-center gap-x-2">
-            <DollarSign size={16} className="hidden sm:block"/>
-            Precio de Contabilium</Label>
+            <DollarSign size={16} className="hidden sm:block" />
+            Precio de Contabilium
+          </Label>
           <Input
             id="price"
             value={numberFormatter.format(price)}
@@ -156,7 +157,6 @@ export default function PriceCalculator() {
             className="w-full ml-2 text-right"
           />
         </div>
-        
 
         {/* Payment Methods */}
         <div className="space-y-4">
@@ -276,14 +276,15 @@ export default function PriceCalculator() {
 
           <div className="text-amber-600 justify-between flex">
             <span>
-              Restante {payments[payments.length - 1]?.method !== "6" && (
-              <span className="text-gray-500 text-sm">
-                {" "}
-                (descuento incluido)
-              </span>
-            )}
+              Restante{" "}
+              {payments[payments.length - 1]?.method !== "6" && (
+                <span className="text-gray-500 text-sm">
+                  {" "}
+                  (descuento incluido)
+                </span>
+              )}
             </span>
-            
+
             {currencyFormatter.format(paymentTotals.remaining)}
           </div>
 
