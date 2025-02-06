@@ -21,6 +21,7 @@ export type BalanceResponse = {
   };
   transactions: Transaction[];
   totalBalance: number;
+  initialBalance: number;
 };
 
 type OperationWithDetails = {
@@ -71,10 +72,22 @@ export default async function handler(
 
     if (carrierError) throw carrierError;
 
-    // Fetch operations with date filter
+    // Calculate initial balance (before 30-day window)
+    const { data: initialBalanceData, error: initialBalanceError } =
+      await supabase.rpc("calculate_carrier_balance_before_date", {
+        p_carrier_id: parseInt(id),
+        p_date: filterDate,
+      });
+
+    if (initialBalanceError) throw initialBalanceError;
+
+    const initialBalance = initialBalanceData || 0;
+
+    // Fetch operations within 30-day window
     const { data: operations, error: operationsError } = await supabase
       .from("delivery_operations")
-      .select(`
+      .select(
+        `
         id,
         operation_date,
         cost,
@@ -90,14 +103,15 @@ export default async function handler(
             name
           )
         )
-      `)
+      `
+      )
       .eq("carrier_id", id)
       .gte("operation_date", filterDate)
       .order("operation_date");
 
     if (operationsError) throw operationsError;
 
-    // Fetch payments with date filter
+    // Fetch payments within 30-day window
     const { data: payments, error: paymentsError } = await supabase
       .from("carrier_payments")
       .select("*")
@@ -108,15 +122,19 @@ export default async function handler(
     if (paymentsError) throw paymentsError;
 
     // Process operations to transactions
-    const operationTransactions = (operations as unknown as OperationWithDetails[])
-      .filter(op => op.operation_type === 'delivery') // Only include delivery operations, not cancellations
+    const operationTransactions = (
+      operations as unknown as OperationWithDetails[]
+    )
+      .filter((op) => op.operation_type === "delivery")
       .map((op) => ({
         date: op.operation_date,
         concept: op.deliveries
           ? op.deliveries.type === "store_movement"
             ? "Movimiento de Mercadería"
             : op.deliveries.type === "supplier_pickup"
-            ? `Retiro en ${op.deliveries.suppliers?.name || "Proveedor sin nombre"}`
+            ? `Retiro en ${
+                op.deliveries.suppliers?.name || "Proveedor sin nombre"
+              }`
             : op.deliveries.invoice_number
             ? `${op.deliveries.invoice_number} - ${
                 op.deliveries.customers?.name || "Cliente sin nombre"
@@ -128,7 +146,7 @@ export default async function handler(
         type: "delivery" as const,
         delivery_id: op.deliveries?.id,
         delivery_type: op.deliveries?.type as DeliveryType,
-        balance: 0
+        balance: 0,
       }));
 
     // Combine all transactions
@@ -136,16 +154,16 @@ export default async function handler(
       ...operationTransactions,
       ...payments.map((p) => ({
         date: p.payment_date,
-        concept: `Pago - ${p.payment_method}${p.notes ? ` - ${p.notes}` : ''}`,
+        concept: `Pago - ${p.payment_method}${p.notes ? ` - ${p.notes}` : ""}`,
         debit: 0,
         credit: p.amount,
         type: "payment" as const,
-        balance: 0
-      }))
+        balance: 0,
+      })),
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Calculate running balance
-    let runningBalance = 0;
+    // Calculate running balance starting from initialBalance
+    let runningBalance = initialBalance;
     transactions.forEach((t) => {
       runningBalance = runningBalance + t.debit - t.credit;
       t.balance = runningBalance;
@@ -154,7 +172,8 @@ export default async function handler(
     const response: BalanceResponse = {
       carrier,
       transactions,
-      totalBalance: runningBalance
+      initialBalance,
+      totalBalance: runningBalance,
     };
 
     return res.status(200).json(response);

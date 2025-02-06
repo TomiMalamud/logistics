@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -14,7 +14,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import type { BalanceResponse } from "@/pages/api/carriers/[id]/balance";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -37,7 +37,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
     isLoading: true,
     error: null,
     data: null,
-    isUpdating: false
+    isUpdating: false,
   });
 
   const [deliveryDialog, setDeliveryDialog] = useState<{
@@ -49,7 +49,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
     isOpen: false,
     isLoading: false,
     error: null,
-    data: null
+    data: null,
   });
 
   const fetchData = useCallback(async () => {
@@ -65,7 +65,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
       console.error("Error fetching data:", err);
       setState((prev) => ({
         ...prev,
-        error: err instanceof Error ? err.message : "An error occurred"
+        error: err instanceof Error ? err.message : "An error occurred",
       }));
     } finally {
       setState((prev) => ({ ...prev, isLoading: false }));
@@ -77,7 +77,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
       ...prev,
       isOpen: true,
       isLoading: true,
-      error: null
+      error: null,
     }));
 
     try {
@@ -90,7 +90,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
       console.error("Error fetching delivery:", err);
       setDeliveryDialog((prev) => ({
         ...prev,
-        error: err instanceof Error ? err.message : "An error occurred"
+        error: err instanceof Error ? err.message : "An error occurred",
       }));
     } finally {
       setDeliveryDialog((prev) => ({ ...prev, isLoading: false }));
@@ -103,7 +103,7 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
         ...prev,
         isOpen: false,
         data: null,
-        error: null
+        error: null,
       }));
     }
   };
@@ -148,6 +148,18 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
         </CardHeader>
 
         <CardContent>
+          <div className="mb-4 p-3 bg-muted rounded-md">
+            <span className="font-medium">Saldo anterior: </span>
+            <span
+              className={
+                state.data.initialBalance > 0
+                  ? "text-red-600"
+                  : "text-green-600"
+              }
+            >
+              {formatCurrency(state.data.initialBalance)}
+            </span>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
