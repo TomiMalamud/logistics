@@ -575,12 +575,14 @@ export default function StateDialog({
                       </Button>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      No se puede marcar como entregado hasta que se registre el
-                      pago
-                    </p>
-                  </TooltipContent>
+                  {disabled && (
+                    <TooltipContent>
+                      <p>
+                        No se puede marcar como entregado hasta que se registre
+                        el pago
+                      </p>
+                    </TooltipContent>
+                  )}
                 </Tooltip>
               </TooltipProvider>
 
