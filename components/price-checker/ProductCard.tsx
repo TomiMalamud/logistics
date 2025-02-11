@@ -5,7 +5,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "../ui/card";
 import FinancingOptions from "./FinancingOptions";
 import { CASH_DISCOUNT } from "@/lib/utils/constants";
@@ -16,11 +16,11 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const calculateDiscountPrice = (price: number) =>
-    Math.floor(price * (1 - CASH_DISCOUNT / 100));  
+    Math.floor(price * (1 - CASH_DISCOUNT / 100));
 
   return (
     <Card className="transition mb-2">
-      <CardHeader className="pb-4">
+      <CardHeader className="py-4">
         <CardTitle className="capitalize">
           {product.Nombre.toLowerCase()}
         </CardTitle>

@@ -1,15 +1,15 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
 import Layout from "@/components/Layout";
+import HelpDialog from "@/components/price-checker/HelpDialog";
 import { ProductCard } from "@/components/price-checker/ProductCard";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts } from "@/hooks/useProducts";
-import { Calculator, Search } from "lucide-react";
+import { Calculator, Info, Search } from "lucide-react";
 import Link from "next/link";
-import HelpDialog from "@/components/price-checker/HelpDialog";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 export default function PriceChecker() {
   const [search, setSearch] = useState("");
@@ -119,6 +119,17 @@ export default function PriceChecker() {
           data?.erp.map((product) => (
             <ProductCard key={product.Codigo} product={product} />
           ))}
+        {data && (
+          <Alert className="bg-blue-50">
+            <AlertTitle className="flex items-center gap-x-2 mb-2">
+              <Info size={16} color="#222" /> ¿No encontraste el producto?
+            </AlertTitle>
+            <AlertDescription className="text-stone-800">
+              Probá con otra referencia o siendo más específico. Ejemplo: Si
+              buscás el President de 190x140x28, buscá &quot;190x140x28&quot;
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </Layout>
   );
