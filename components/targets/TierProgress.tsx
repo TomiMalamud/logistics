@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { PeriodOption } from "@/hooks/useSalesData";
 
 const getTierTargets = (employeeId: string | undefined) => {
   if (!employeeId || employeeId === "all") {
@@ -78,13 +79,20 @@ const getTierTargets = (employeeId: string | undefined) => {
 
 const getCurrentTier = (
   sales: number,
-  tiers: ReturnType<typeof getTierTargets>
+  tiers: ReturnType<typeof getTierTargets>,
+  period: PeriodOption
 ) => {
   if (sales >= tiers.xxl.target) return tiers.xxl;
   if (sales >= tiers.full.target) return tiers.full;
   if (sales >= tiers.despegue.target) return tiers.despegue;
   if (sales >= tiers.base.target) return tiers.base;
-  return { ...tiers.base, name: "Objetivo base no alcanzado (todavía 😉)" };
+  return {
+    ...tiers.base,
+    name:
+      period === "last-month"
+        ? "Objetivo no alcanzado 😔"
+        : "Objetivo no alcanzado (todavía 😉)",
+  };
 };
 
 const getNextTierTarget = (
@@ -144,12 +152,16 @@ interface TierProgressProps {
   totalSales: number;
   isLoading: boolean;
   employeeId?: string;
+  period: PeriodOption;
+  projectedSales?: number;
 }
 
 const TierProgress: React.FC<TierProgressProps> = ({
   totalSales,
   isLoading,
   employeeId,
+  period,
+  projectedSales,
 }) => {
   if (isLoading) {
     return (
@@ -168,7 +180,7 @@ const TierProgress: React.FC<TierProgressProps> = ({
   }
 
   const tiers = getTierTargets(employeeId);
-  const currentTier = getCurrentTier(totalSales, tiers);
+  const currentTier = getCurrentTier(totalSales, tiers, period);
   const nextTierTarget = getNextTierTarget(totalSales, tiers);
   const progressBarColor = getProgressBarColor(totalSales, tiers);
 
@@ -177,12 +189,24 @@ const TierProgress: React.FC<TierProgressProps> = ({
     100
   );
 
+  const showProjection = period === "this-month" && projectedSales != null;
+  const projectedProgress = showProjection
+    ? Math.min((projectedSales / tiers.xxl.target) * 100, 100)
+    : 0;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Progreso hacia el objetivo</CardTitle>
         <CardDescription className="text-muted-foreground">
-          Ventas del mes: ${(totalSales / 1000000).toFixed(2)}M
+          <div className="flex flex-col gap-1">
+            <div>Ventas del mes: ${(totalSales / 1000000).toFixed(2)}M</div>
+            {showProjection && (
+              <div className="text-purple-600">
+                Proyección: ${(projectedSales! / 1000000).toFixed(2)}M
+              </div>
+            )}
+          </div>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -209,11 +233,20 @@ const TierProgress: React.FC<TierProgressProps> = ({
 
           <div className="space-y-2">
             <div className="relative mb-12">
-              <Progress
-                value={progressToNextTier}
-                className="h-2 w-full"
-                indicatorClassName={progressBarColor}
-              />
+              <div className="relative">
+                <Progress
+                  value={progressToNextTier}
+                  className="h-2 w-full"
+                  indicatorClassName={progressBarColor}
+                />
+                {showProjection && (
+                  <Progress
+                    value={projectedProgress}
+                    className="h-2 w-full absolute top-0 opacity-30"
+                    indicatorClassName={progressBarColor}
+                  />
+                )}
+              </div>
 
               <div className="mt-4">
                 <Checkpoint

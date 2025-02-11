@@ -5,7 +5,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -14,7 +14,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { PeriodOption, useSalesData } from "@/hooks/useSalesData";
 import type { Profile } from "@/types/types";
@@ -40,7 +40,7 @@ interface SalesDashboardProps {
 export default function SalesDashboard({ profile }: SalesDashboardProps) {
   const periodOptions = [
     { value: "this-month", label: "Este mes" },
-    { value: "last-month", label: "Mes pasado" }
+    { value: "last-month", label: "Mes pasado" },
   ] as const;
 
   const [selectedPeriod, setSelectedPeriod] =
@@ -118,9 +118,11 @@ export default function SalesDashboard({ profile }: SalesDashboardProps) {
       </div>
 
       <TierProgress
-        totalSales={data?.totalSales}
+        totalSales={data?.totalSales ?? 0}
         isLoading={isLoading}
         employeeId={selectedVendedor}
+        period={selectedPeriod}
+        projectedSales={data?.projectedSales}
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
