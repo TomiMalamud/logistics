@@ -182,3 +182,36 @@ export interface Carrier {
   is_reliable: boolean;
   avg_cost?: number;
 }
+
+export type ManufacturingStatus =
+  | "pending"
+  | "completed"
+  | "paid"
+  | "cancelled";
+
+export interface BaseManufacturingOrder {
+  id: number;
+  product_name: string;
+  extras: string | null;
+  needs_packaging: boolean;
+  status: ManufacturingStatus;
+  notes: string | null;
+  delivery_id: number;
+  completed_at: string | null;
+}
+
+export interface ManufacturingOrder {
+  id: number;
+  orderDate: Date;
+  expectedDate: Date;
+  customerName: string;
+  productName: string;
+  deliveryId: number;
+  extras: string | null;
+  needsPackaging: boolean;
+  status: ManufacturingStatus;
+  notes: string | null;
+  createdAt: Date;
+  createdBy: string;
+  completedAt: Date | null;
+}

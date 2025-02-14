@@ -5,7 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,7 +15,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,7 +28,7 @@ import {
   Factory,
   Home,
   Search,
-  Store
+  Store,
 } from "lucide-react";
 import { GetServerSidePropsContext } from "next";
 import Link from "next/link";
@@ -57,11 +57,13 @@ const DEFAULT_FILTERS = {
   page: "1",
   search: "",
   scheduledDate: "all",
-  type: "all"
+  type: "all",
 };
 
 export default function Index({ profile }: IndexProps) {
   const router = useRouter();
+  const [pendingDeliveries, setPendingDeliveries] = useState<any[]>([]);
+  const [isInitialPendingLoad, setIsInitialPendingLoad] = useState(true);
 
   // Get current filters from URL or use defaults
   const currentFilters = useMemo(
@@ -71,7 +73,7 @@ export default function Index({ profile }: IndexProps) {
       search: (router.query.search as string) ?? DEFAULT_FILTERS.search,
       scheduledDate:
         (router.query.scheduledDate as string) ?? DEFAULT_FILTERS.scheduledDate,
-      type: (router.query.type as string) ?? DEFAULT_FILTERS.type
+      type: (router.query.type as string) ?? DEFAULT_FILTERS.type,
     }),
     [router.query]
   );
@@ -82,7 +84,7 @@ export default function Index({ profile }: IndexProps) {
       const updatedQuery = {
         ...router.query,
         ...newFilters,
-        page: newFilters.state ? "1" : router.query.page // Reset page when changing filters
+        page: newFilters.state ? "1" : router.query.page, // Reset page when changing filters
       };
 
       // Remove default values from URL
@@ -95,7 +97,7 @@ export default function Index({ profile }: IndexProps) {
       router.push(
         {
           pathname: router.pathname,
-          query: updatedQuery
+          query: updatedQuery,
         },
         undefined,
         { shallow: true }
@@ -108,6 +110,10 @@ export default function Index({ profile }: IndexProps) {
   const handleTabChange = useCallback(
     (value: string) => {
       updateFilters({ state: value });
+      // Reset pending deliveries when changing state
+      if (value !== "pending") {
+        setPendingDeliveries([]);
+      }
     },
     [updateFilters]
   );
@@ -131,7 +137,7 @@ export default function Index({ profile }: IndexProps) {
         delete query.search;
       }
       router.push({ pathname: router.pathname, query }, undefined, {
-        shallow: true
+        shallow: true,
       });
     },
     [router]
@@ -165,9 +171,21 @@ export default function Index({ profile }: IndexProps) {
   // Build API URL for SWR
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams();
-    Object.entries(currentFilters).forEach(([key, value]) => {
-      if (value) params.append(key, value);
-    });
+
+    // For pending state, only include non-search filters in the API URL
+    if (currentFilters.state === "pending") {
+      Object.entries(currentFilters).forEach(([key, value]) => {
+        if (key !== "search" && value) {
+          params.append(key, value);
+        }
+      });
+    } else {
+      // For other states, include all filters
+      Object.entries(currentFilters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+    }
+
     return `/api/deliveries?${params.toString()}`;
   }, [currentFilters]);
 
@@ -177,9 +195,58 @@ export default function Index({ profile }: IndexProps) {
     fetcher,
     {
       keepPreviousData: true,
-      revalidateOnFocus: false
+      revalidateOnFocus: false,
+      onSuccess: (data) => {
+        // Store pending deliveries for client-side filtering
+        if (currentFilters.state === "pending" && isInitialPendingLoad) {
+          setPendingDeliveries(data.feed);
+          setIsInitialPendingLoad(false);
+        }
+      },
     }
   );
+
+  // Filter pending deliveries client-side
+  const filteredData = useMemo(() => {
+    if (currentFilters.state !== "pending" || !pendingDeliveries.length) {
+      return data;
+    }
+
+    const searchTerm = currentFilters.search.toLowerCase();
+    if (!searchTerm) {
+      return {
+        ...data,
+        feed: pendingDeliveries,
+      };
+    }
+
+    const filtered = pendingDeliveries.filter((delivery) => {
+      // Search in customer name
+      const customerName = delivery.customers?.name?.toLowerCase() || "";
+      // Search in customer address
+      const customerAddress = delivery.customers?.address?.toLowerCase() || "";
+      // Search in supplier name
+      const supplierName = delivery.suppliers?.name?.toLowerCase() || "";
+      // Search in store names for store movements
+      const storeNames =
+        delivery.type === "store_movement"
+          ? `${delivery.origin_store} ${delivery.dest_store}`.toLowerCase()
+          : "";
+
+      return (
+        customerName.includes(searchTerm) ||
+        customerAddress.includes(searchTerm) ||
+        supplierName.includes(searchTerm) ||
+        storeNames.includes(searchTerm)
+      );
+    });
+
+    return {
+      ...data,
+      feed: filtered,
+      totalItems: filtered.length,
+    };
+  }, [currentFilters.state, currentFilters.search, pendingDeliveries, data]);
 
   // Create a function to determine if we should show the placeholder
   const shouldShowPlaceholder = useMemo(() => {
@@ -189,6 +256,7 @@ export default function Index({ profile }: IndexProps) {
     const isInitialLoading = !data && isLoading;
     const isFilteringOrSearching =
       isValidating &&
+      currentFilters.state !== "pending" && // Only show loading for server-side search
       (searchInput !== currentFilters.search || // Search changed
         router.query.state !== currentFilters.state || // State changed
         router.query.scheduledDate !== currentFilters.scheduledDate); // Date filter changed
@@ -200,7 +268,7 @@ export default function Index({ profile }: IndexProps) {
     isValidating,
     searchInput,
     currentFilters,
-    router.query
+    router.query,
   ]);
   const handleDeliveryTypeChange = useCallback(
     (value: string) => {
@@ -375,7 +443,7 @@ export default function Index({ profile }: IndexProps) {
       handleDeliveryTypeChange,
       handleBlur,
       handleChange,
-      handleKeyDown
+      handleKeyDown,
     ]
   );
 
@@ -405,7 +473,7 @@ export default function Index({ profile }: IndexProps) {
           </div>
         ))
       ) : (
-        <DeliveryList data={data} searchUrl={apiUrl} />
+        <DeliveryList data={filteredData} searchUrl={apiUrl} />
       )}
     </Layout>
   );
@@ -417,15 +485,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // Use getUser instead of checking session
   const {
     data: { user },
-    error
+    error,
   } = await supabase.auth.getUser();
 
   if (error || !user) {
     return {
       redirect: {
         destination: "/login",
-        permanent: false
-      }
+        permanent: false,
+      },
     };
   }
 
@@ -441,15 +509,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return {
       props: {
         user,
-        profile: null
-      }
+        profile: null,
+      },
     };
   }
 
   return {
     props: {
       user,
-      profile: profile || null // Ensure we always return null if no profile
-    }
+      profile: profile || null, // Ensure we always return null if no profile
+    },
   };
 }

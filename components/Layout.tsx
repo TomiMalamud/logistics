@@ -58,6 +58,12 @@ const Layout = ({
         roles: ["admin", "sales"],
       },
       {
+        path: "/manufacturing",
+        label: "Camas con Cajones",
+        showOnMobile: true,
+        roles: ["admin", "sales"],
+      },
+      {
         path: "/price-checker",
         label: "Precios",
         showOnMobile: true,
