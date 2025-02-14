@@ -1,26 +1,34 @@
 import handler from "@/pages/api/deliveries/create/pickup";
 import { createMocks } from "node-mocks-http";
 
+// Mock delivery service
+const mockCreateDeliveryItems = jest.fn();
+jest.mock("@/services/deliveries", () => ({
+  createDeliveryService: () => ({
+    createDeliveryItems: mockCreateDeliveryItems,
+  }),
+}));
+
 // Mock Supabase client
+const mockSupabaseChain = {
+  from: jest.fn().mockReturnThis(),
+  select: jest.fn().mockReturnThis(),
+  insert: jest.fn().mockReturnThis(),
+  update: jest.fn().mockReturnThis(),
+  eq: jest.fn().mockReturnThis(),
+  single: jest.fn(),
+};
+
 const mockSupabaseAuth = {
   auth: {
     getUser: jest.fn(),
   },
-  from: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  single: jest.fn(),
+  ...mockSupabaseChain,
 };
 
 jest.mock("@/lib/utils/supabase/api", () => ({
   __esModule: true,
   default: jest.fn(() => mockSupabaseAuth),
-}));
-
-// Mock delivery service
-jest.mock("@/services/deliveries", () => ({
-  createDeliveryService: () => ({}),
 }));
 
 describe("/api/deliveries/create/pickup", () => {
@@ -39,6 +47,11 @@ describe("/api/deliveries/create/pickup", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Setup mock chain methods
+    Object.entries(mockSupabaseChain).forEach(([key, value]) => {
+      mockSupabaseAuth[key] = value;
+    });
+
     // Default auth response
     mockSupabaseAuth.auth.getUser.mockResolvedValue({
       data: { user: { id: "test-user-id" } },
@@ -46,10 +59,9 @@ describe("/api/deliveries/create/pickup", () => {
     });
 
     // Default supplier validation response
-    mockSupabaseAuth.single.mockResolvedValueOnce({
-      data: { id: 1 },
-      error: null,
-    });
+    mockSupabaseAuth.single
+      .mockResolvedValueOnce({ data: { id: 1 }, error: null }) // Supplier check
+      .mockResolvedValueOnce({ data: { id: 1 }, error: null }); // Delivery creation
   });
 
   describe("Request method validation", () => {
@@ -140,13 +152,7 @@ describe("/api/deliveries/create/pickup", () => {
 
   describe("Pickup delivery creation", () => {
     beforeEach(() => {
-      // Mock successful delivery creation
-      mockSupabaseAuth.single
-        .mockResolvedValueOnce({ data: { id: 1 }, error: null }) // Supplier validation
-        .mockResolvedValueOnce({
-          data: { id: 1, type: "supplier_pickup" },
-          error: null,
-        }); // Delivery creation
+      mockCreateDeliveryItems.mockResolvedValue(undefined);
     });
 
     it("should create pickup delivery with correct data", async () => {
@@ -178,15 +184,15 @@ describe("/api/deliveries/create/pickup", () => {
 
       await handler(req, res);
 
-      expect(mockSupabaseAuth.from).toHaveBeenCalledWith("delivery_items");
-      expect(mockSupabaseAuth.insert).toHaveBeenCalledWith([
-        expect.objectContaining({
-          delivery_id: 1,
-          product_sku: "TEST123",
-          quantity: 2,
-          pending_quantity: 2,
-        }),
-      ]);
+      expect(mockCreateDeliveryItems).toHaveBeenCalledWith(
+        1,
+        expect.arrayContaining([
+          expect.objectContaining({
+            product_sku: "TEST123",
+            quantity: 2,
+          }),
+        ])
+      );
     });
 
     it("should handle optional scheduled_date", async () => {
@@ -210,21 +216,41 @@ describe("/api/deliveries/create/pickup", () => {
   });
 
   describe("Error handling", () => {
+    beforeEach(() => {
+      // Reset all mocks
+      jest.clearAllMocks();
+
+      // Reset auth mock to successful state
+      mockSupabaseAuth.auth.getUser.mockResolvedValue({
+        data: { user: { id: "test-user-id" } },
+        error: null,
+      });
+
+      // Setup base chain methods
+      Object.entries(mockSupabaseChain).forEach(([key, value]) => {
+        mockSupabaseAuth[key] = value;
+      });
+    });
+
     it("should handle delivery creation errors", async () => {
+      // Mock supplier check success
+      mockSupabaseAuth.from.mockReturnThis();
+      mockSupabaseAuth.select.mockReturnThis();
+      mockSupabaseAuth.eq.mockReturnThis();
       mockSupabaseAuth.single.mockResolvedValueOnce({
         data: { id: 1 },
         error: null,
-      }); // Supplier validation
+      }); // Supplier check
 
-      // Mock the delivery creation to fail
-      mockSupabaseAuth.insert.mockImplementationOnce(() => ({
-        select: () => ({
-          single: () => ({
-            data: null,
-            error: new Error("Failed to create delivery"),
-          }),
+      // Mock delivery creation failure
+      const mockDeliveryChain = {
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: "Failed to create delivery" },
         }),
-      }));
+      };
+      mockSupabaseAuth.insert.mockReturnValue(mockDeliveryChain);
 
       const { req, res } = createMocks({
         method: "POST",
@@ -240,15 +266,26 @@ describe("/api/deliveries/create/pickup", () => {
     });
 
     it("should handle delivery items creation errors", async () => {
-      mockSupabaseAuth.single
-        .mockResolvedValueOnce({ data: { id: 1 }, error: null }) // Supplier validation
-        .mockResolvedValueOnce({ data: { id: 1 }, error: null }); // Delivery creation
+      // Mock supplier check success
+      mockSupabaseAuth.from.mockReturnThis();
+      mockSupabaseAuth.select.mockReturnThis();
+      mockSupabaseAuth.eq.mockReturnThis();
+      mockSupabaseAuth.single.mockResolvedValueOnce({
+        data: { id: 1 },
+        error: null,
+      }); // Supplier check
 
-      mockSupabaseAuth.insert
-        .mockImplementationOnce(() => mockSupabaseAuth) // First insert (delivery) succeeds
-        .mockResolvedValueOnce({
-          error: new Error("Failed to create delivery items"),
-        }); // Second insert (items) fails
+      // Mock successful delivery creation
+      const mockDeliveryChain = {
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { id: 1 }, error: null }),
+      };
+      mockSupabaseAuth.insert.mockReturnValue(mockDeliveryChain);
+
+      // Mock delivery items creation error
+      mockCreateDeliveryItems.mockRejectedValueOnce(
+        new Error("Failed to create delivery items")
+      );
 
       const { req, res } = createMocks({
         method: "POST",
@@ -259,7 +296,7 @@ describe("/api/deliveries/create/pickup", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Error creating delivery items: Failed to create delivery items",
+        error: "Failed to create delivery items",
       });
     });
   });

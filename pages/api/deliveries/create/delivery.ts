@@ -61,54 +61,60 @@ const syncWithPerfit = async (email: string, name: string): Promise<void> => {
 };
 
 const findOrUpdateCustomer = async (supabase, customerData) => {
-  // First try to find the customer by DNI
-  const { data: existingCustomer } = await supabase
-    .from("customers")
-    .select("id")
-    .eq("dni", customerData.dni)
-    .maybeSingle();
-
-  if (existingCustomer) {
-    // Update customer information if they exist
-    const { data: updatedCustomer, error: updateError } = await supabase
+  try {
+    // First try to find the customer by DNI
+    const { data: existingCustomer } = await supabase
       .from("customers")
-      .update({
-        name: customerData.name,
-        address: customerData.address,
-        phone: customerData.phone,
-        email: customerData.email,
-      })
-      .eq("id", existingCustomer.id)
+      .select("id")
+      .eq("dni", customerData.dni)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      // Update customer information if they exist
+      const { data: updatedCustomer, error: updateError } = await supabase
+        .from("customers")
+        .update({
+          name: customerData.name,
+          address: customerData.address,
+          phone: customerData.phone,
+          email: customerData.email,
+        })
+        .eq("id", existingCustomer.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw new Error(`Failed to update customer: ${updateError.message}`);
+      }
+
+      return updatedCustomer.id;
+    }
+
+    // Create new customer if they don't exist
+    const { data: newCustomer, error: createError } = await supabase
+      .from("customers")
+      .insert([
+        {
+          name: customerData.name,
+          address: customerData.address,
+          phone: customerData.phone,
+          email: customerData.email,
+          dni: customerData.dni,
+        },
+      ])
       .select()
       .single();
 
-    if (updateError) {
-      throw new Error(`Failed to update customer: ${updateError.message}`);
+    if (createError || !newCustomer) {
+      throw new Error(
+        `Failed to create customer: ${createError?.message || "Unknown error"}`
+      );
     }
 
-    return updatedCustomer.id;
+    return newCustomer.id;
+  } catch (error) {
+    throw error; // Re-throw the error to be caught by the handler
   }
-
-  // Create new customer if they don't exist
-  const { data: newCustomer, error: createError } = await supabase
-    .from("customers")
-    .insert([
-      {
-        name: customerData.name,
-        address: customerData.address,
-        phone: customerData.phone,
-        email: customerData.email,
-        dni: customerData.dni,
-      },
-    ])
-    .select()
-    .single();
-
-  if (createError) {
-    throw new Error(`Failed to create customer: ${createError.message}`);
-  }
-
-  return newCustomer.id;
 };
 
 export default async function handler(
@@ -191,21 +197,15 @@ export default async function handler(
       throw new Error(deliveryError?.message || "Failed to create delivery");
     }
 
-    // Create delivery items
-    const deliveryItems = products.map((product) => ({
-      delivery_id: delivery.id,
-      product_sku: product.sku,
-      quantity: product.quantity,
-      pending_quantity: product.quantity,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from("delivery_items")
-      .insert(deliveryItems);
-
-    if (itemsError) {
-      throw new Error(`Error creating delivery items: ${itemsError.message}`);
-    }
+    // Create delivery items using the service helper
+    await deliveryService.createDeliveryItems(
+      delivery.id,
+      products.map((p) => ({
+        product_sku: p.sku,
+        quantity: p.quantity,
+        name: p.name,
+      }))
+    );
 
     // Add note if provided
     if (notes?.trim()) {

@@ -1,5 +1,6 @@
 import { getStore } from "@/lib/utils/constants";
 import createClient from "@/lib/utils/supabase/api";
+import { createDeliveryService } from "@/services/deliveries";
 import { Product } from "@/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -94,21 +95,16 @@ export default async function handler(
       throw new Error(deliveryError?.message || "Failed to create delivery");
     }
 
-    // Create delivery items
-    const deliveryItems = products.map((product) => ({
-      delivery_id: delivery.id,
-      product_sku: product.sku,
-      quantity: product.quantity,
-      pending_quantity: product.quantity,
-    }));
+    const deliveryService = createDeliveryService(supabase);
 
-    const { error: itemsError } = await supabase
-      .from("delivery_items")
-      .insert(deliveryItems);
-
-    if (itemsError) {
-      throw new Error(`Error creating delivery items: ${itemsError.message}`);
-    }
+    // Create delivery items using the service helper
+    await deliveryService.createDeliveryItems(
+      delivery.id,
+      products.map((p) => ({
+        product_sku: p.sku,
+        quantity: p.quantity,
+      }))
+    );
 
     return res.status(200).json({
       message: "Store movement created successfully",

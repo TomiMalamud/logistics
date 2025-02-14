@@ -1,4 +1,4 @@
-// lib/services/delivery.ts
+// lib/services/deliveries.ts
 import {
   Delivery,
   DeliveryState,
@@ -68,6 +68,70 @@ const TYPE_ORDER: Record<DeliveryType, number> = {
 } as const;
 
 const createDeliveryService = (supabase: SupabaseClient) => {
+  const ensureProductsExist = async (
+    products: Array<{ sku: string; name?: string }>
+  ) => {
+    // Get all products that don't exist in the database
+    const { data: existingProducts, error: lookupError } = await supabase
+      .from("products")
+      .select("sku")
+      .in(
+        "sku",
+        products.map((p) => p.sku)
+      );
+
+    if (lookupError) {
+      throw new Error(`Error looking up products: ${lookupError.message}`);
+    }
+
+    const existingSkus = new Set(existingProducts?.map((p) => p.sku) || []);
+    const productsToCreate = products
+      .filter((p) => !existingSkus.has(p.sku) && p.name)
+      .map((p) => ({
+        sku: p.sku,
+        name: p.name,
+      }));
+
+    if (productsToCreate.length > 0) {
+      const { error: insertError } = await supabase
+        .from("products")
+        .insert(productsToCreate);
+
+      if (insertError) {
+        throw new Error(`Error creating products: ${insertError.message}`);
+      }
+    }
+  };
+
+  const createDeliveryItems = async (
+    deliveryId: number,
+    items: Array<{ product_sku: string; quantity: number; name?: string }>
+  ) => {
+    // First ensure all products exist
+    await ensureProductsExist(
+      items.map((item) => ({
+        sku: item.product_sku,
+        name: item.name,
+      }))
+    );
+
+    // Create delivery items
+    const deliveryItems = items.map((item) => ({
+      delivery_id: deliveryId,
+      product_sku: item.product_sku,
+      quantity: item.quantity,
+      pending_quantity: item.quantity,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("delivery_items")
+      .insert(deliveryItems);
+
+    if (itemsError) {
+      throw new Error(`Error creating delivery items: ${itemsError.message}`);
+    }
+  };
+
   const validateItems = async (deliveryId: number, items: DeliveryItem[]) => {
     const { data, error } = await supabase
       .from("delivery_items")
@@ -544,6 +608,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     searchCustomers,
     createNote,
     listOperations,
+    createDeliveryItems,
   };
 };
 

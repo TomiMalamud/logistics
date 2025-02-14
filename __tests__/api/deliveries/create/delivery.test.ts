@@ -8,14 +8,49 @@ jest.mock("@/lib/perfit", () => ({
 }));
 
 jest.mock("title-case", () => ({
-  titleCase: jest.fn((str) => str), // Simple mock that returns the input string
+  titleCase: jest.fn((str) => str),
+}));
+
+// Mock delivery service functions
+const mockCreateDeliveryItems = jest.fn();
+const mockCreateNote = jest.fn();
+
+jest.mock("@/services/deliveries", () => ({
+  createDeliveryService: () => ({
+    createDeliveryItems: mockCreateDeliveryItems,
+    createNote: mockCreateNote,
+  }),
 }));
 
 // Mock Supabase client
+const mockSupabaseFrom = jest.fn().mockReturnThis();
+const mockSupabaseSelect = jest.fn().mockReturnThis();
+const mockSupabaseInsert = jest.fn().mockReturnThis();
+const mockSupabaseUpdate = jest.fn().mockReturnThis();
+const mockSupabaseEq = jest.fn().mockReturnThis();
+const mockSupabaseSingle = jest.fn();
+const mockSupabaseMaybeSingle = jest.fn();
+
 const mockSupabaseAuth = {
   auth: {
     getUser: jest.fn(),
   },
+  from: mockSupabaseFrom,
+  select: mockSupabaseSelect,
+  insert: mockSupabaseInsert,
+  update: mockSupabaseUpdate,
+  eq: mockSupabaseEq,
+  single: mockSupabaseSingle,
+  maybeSingle: mockSupabaseMaybeSingle,
+};
+
+jest.mock("@/lib/utils/supabase/api", () => ({
+  __esModule: true,
+  default: jest.fn(() => mockSupabaseAuth),
+}));
+
+// At the top of the file, after the mock declarations
+const mockSupabaseChain = {
   from: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
   insert: jest.fn().mockReturnThis(),
@@ -24,20 +59,6 @@ const mockSupabaseAuth = {
   single: jest.fn(),
   maybeSingle: jest.fn(),
 };
-
-jest.mock("@/lib/utils/supabase/api", () => ({
-  __esModule: true,
-  default: jest.fn(() => mockSupabaseAuth),
-}));
-
-// Mock delivery service
-const mockCreateNote = jest.fn();
-
-jest.mock("@/services/deliveries", () => ({
-  createDeliveryService: () => ({
-    createNote: mockCreateNote,
-  }),
-}));
 
 describe("/api/deliveries/create/delivery", () => {
   const validDeliveryRequest = {
@@ -63,9 +84,31 @@ describe("/api/deliveries/create/delivery", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Reset all mock implementations
+    mockSupabaseFrom.mockReturnThis();
+    mockSupabaseSelect.mockReturnThis();
+    mockSupabaseInsert.mockReturnThis();
+    mockSupabaseUpdate.mockReturnThis();
+    mockSupabaseEq.mockReturnThis();
+
     // Default auth response
     mockSupabaseAuth.auth.getUser.mockResolvedValue({
       data: { user: { id: "test-user-id" } },
+      error: null,
+    });
+
+    // Default customer check response
+    mockSupabaseMaybeSingle.mockResolvedValue({ data: null });
+
+    // Default customer creation response
+    mockSupabaseSingle.mockResolvedValueOnce({
+      data: { id: 1 },
+      error: null,
+    });
+
+    // Default delivery creation response
+    mockSupabaseSingle.mockResolvedValueOnce({
+      data: { id: 1 },
       error: null,
     });
   });
@@ -193,8 +236,8 @@ describe("/api/deliveries/create/delivery", () => {
       await handler(req, res);
 
       expect(res._getStatusCode()).toBe(200);
-      expect(mockSupabaseAuth.from).toHaveBeenCalledWith("deliveries");
-      expect(mockSupabaseAuth.insert).toHaveBeenCalledWith([
+      expect(mockSupabaseFrom).toHaveBeenCalledWith("deliveries");
+      expect(mockSupabaseInsert).toHaveBeenCalledWith([
         expect.objectContaining({
           order_date: validDeliveryRequest.order_date,
           customer_id: 1,
@@ -212,15 +255,16 @@ describe("/api/deliveries/create/delivery", () => {
 
       await handler(req, res);
 
-      expect(mockSupabaseAuth.from).toHaveBeenCalledWith("delivery_items");
-      expect(mockSupabaseAuth.insert).toHaveBeenCalledWith([
-        expect.objectContaining({
-          delivery_id: 1,
-          product_sku: "TEST123",
-          quantity: 1,
-          pending_quantity: 1,
-        }),
-      ]);
+      expect(mockCreateDeliveryItems).toHaveBeenCalledWith(
+        1,
+        expect.arrayContaining([
+          expect.objectContaining({
+            product_sku: "TEST123",
+            quantity: 1,
+            name: "Test Product",
+          }),
+        ])
+      );
     });
 
     it("should create note if provided", async () => {
@@ -244,11 +288,31 @@ describe("/api/deliveries/create/delivery", () => {
   });
 
   describe("Error handling", () => {
+    beforeEach(() => {
+      // Reset all mocks
+      jest.clearAllMocks();
+
+      // Reset auth mock to successful state
+      mockSupabaseAuth.auth.getUser.mockResolvedValue({
+        data: { user: { id: "test-user-id" } },
+        error: null,
+      });
+
+      // Setup base chain methods
+      Object.assign(mockSupabaseAuth, mockSupabaseChain);
+    });
+
     it("should handle customer creation errors", async () => {
+      // Mock customer lookup
       mockSupabaseAuth.maybeSingle.mockResolvedValueOnce({ data: null });
+
+      // Mock customer creation error
+      mockSupabaseAuth.from.mockReturnThis();
+      mockSupabaseAuth.select.mockReturnThis();
+      mockSupabaseAuth.insert.mockReturnThis();
       mockSupabaseAuth.single.mockResolvedValueOnce({
         data: null,
-        error: new Error("Database error"),
+        error: { message: "Database error" },
       });
 
       const { req, res } = createMocks({
@@ -265,13 +329,14 @@ describe("/api/deliveries/create/delivery", () => {
     });
 
     it("should handle delivery creation errors", async () => {
-      mockSupabaseAuth.maybeSingle.mockResolvedValueOnce({ data: { id: 1 } });
+      // Mock successful customer lookup and creation
+      mockSupabaseAuth.maybeSingle.mockResolvedValueOnce({ data: null });
       mockSupabaseAuth.single
-        .mockResolvedValueOnce({ data: { id: 1 }, error: null })
+        .mockResolvedValueOnce({ data: { id: 1 }, error: null }) // Customer creation success
         .mockResolvedValueOnce({
           data: null,
-          error: new Error("Failed to create delivery"),
-        });
+          error: { message: "Failed to create delivery" },
+        }); // Delivery creation error
 
       const { req, res } = createMocks({
         method: "POST",

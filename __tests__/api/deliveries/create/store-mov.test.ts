@@ -13,15 +13,28 @@ jest.mock("@/lib/utils/constants", () => ({
   },
 }));
 
+// Mock delivery service
+const mockCreateDeliveryItems = jest.fn();
+jest.mock("@/services/deliveries", () => ({
+  createDeliveryService: () => ({
+    createDeliveryItems: mockCreateDeliveryItems,
+  }),
+}));
+
 // Mock Supabase client
+const mockSupabaseChain = {
+  from: jest.fn().mockReturnThis(),
+  select: jest.fn().mockReturnThis(),
+  insert: jest.fn().mockReturnThis(),
+  eq: jest.fn().mockReturnThis(),
+  single: jest.fn(),
+};
+
 const mockSupabaseAuth = {
   auth: {
     getUser: jest.fn(),
   },
-  from: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  single: jest.fn(),
+  ...mockSupabaseChain,
 };
 
 jest.mock("@/lib/utils/supabase/api", () => ({
@@ -47,6 +60,11 @@ describe("/api/deliveries/create/store-mov", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Setup mock chain methods
+    Object.entries(mockSupabaseChain).forEach(([key, value]) => {
+      mockSupabaseAuth[key] = value;
+    });
+
     // Default auth response
     mockSupabaseAuth.auth.getUser.mockResolvedValue({
       data: { user: { id: "test-user-id" } },
@@ -54,14 +72,17 @@ describe("/api/deliveries/create/store-mov", () => {
     });
 
     // Default delivery creation response
-    mockSupabaseAuth.insert.mockImplementation(() => ({
-      select: () => ({
-        single: () => ({
-          data: { id: 1, type: "store_movement" },
-          error: null,
-        }),
+    const mockDeliveryChain = {
+      select: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: { id: 1, type: "store_movement" },
+        error: null,
       }),
-    }));
+    };
+    mockSupabaseAuth.insert.mockReturnValue(mockDeliveryChain);
+
+    // Default delivery items creation response
+    mockCreateDeliveryItems.mockResolvedValue(undefined);
   });
 
   describe("Request method validation", () => {
@@ -197,15 +218,15 @@ describe("/api/deliveries/create/store-mov", () => {
 
       await handler(req, res);
 
-      expect(mockSupabaseAuth.from).toHaveBeenCalledWith("delivery_items");
-      expect(mockSupabaseAuth.insert).toHaveBeenCalledWith([
-        expect.objectContaining({
-          delivery_id: 1,
-          product_sku: "TEST123",
-          quantity: 2,
-          pending_quantity: 2,
-        }),
-      ]);
+      expect(mockCreateDeliveryItems).toHaveBeenCalledWith(
+        1,
+        expect.arrayContaining([
+          expect.objectContaining({
+            product_sku: "TEST123",
+            quantity: 2,
+          }),
+        ])
+      );
     });
 
     it("should handle optional scheduled_date", async () => {
@@ -230,14 +251,15 @@ describe("/api/deliveries/create/store-mov", () => {
 
   describe("Error handling", () => {
     it("should handle delivery creation errors", async () => {
-      mockSupabaseAuth.insert.mockImplementationOnce(() => ({
-        select: () => ({
-          single: () => ({
-            data: null,
-            error: new Error("Failed to create delivery"),
-          }),
+      // Mock delivery creation failure
+      const mockDeliveryChain = {
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: "Failed to create delivery" },
         }),
-      }));
+      };
+      mockSupabaseAuth.insert.mockReturnValue(mockDeliveryChain);
 
       const { req, res } = createMocks({
         method: "POST",
@@ -253,20 +275,20 @@ describe("/api/deliveries/create/store-mov", () => {
     });
 
     it("should handle delivery items creation errors", async () => {
-      // First insert (delivery) succeeds
-      mockSupabaseAuth.insert
-        .mockImplementationOnce(() => ({
-          select: () => ({
-            single: () => ({
-              data: { id: 1 },
-              error: null,
-            }),
-          }),
-        }))
-        // Second insert (items) fails
-        .mockImplementationOnce(() => ({
-          error: new Error("Failed to create delivery items"),
-        }));
+      // Mock successful delivery creation
+      const mockDeliveryChain = {
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: { id: 1 },
+          error: null,
+        }),
+      };
+      mockSupabaseAuth.insert.mockReturnValue(mockDeliveryChain);
+
+      // Mock delivery items creation error
+      mockCreateDeliveryItems.mockRejectedValueOnce(
+        new Error("Failed to create delivery items")
+      );
 
       const { req, res } = createMocks({
         method: "POST",
@@ -277,7 +299,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Error creating delivery items: Failed to create delivery items",
+        error: "Failed to create delivery items",
       });
     });
   });
