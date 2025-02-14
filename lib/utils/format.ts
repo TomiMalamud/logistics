@@ -1,7 +1,9 @@
 import parsePhoneNumberFromString from "libphonenumber-js";
 
-export const sanitizePhoneNumber = (phone: string): string =>
-  phone.replace(/[^0-9]/g, "");
+export const sanitizePhoneNumber = (phone: string): string => {
+  const withoutPrefix = phone.replace(/^(\+54|54)/, "");
+  return withoutPrefix.replace(/[^0-9]/g, "");
+};
 
 export const validatePhoneNumber = (phone: string): boolean =>
   /^\d{10}$/.test(phone);

@@ -224,11 +224,13 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
     }
     setLoading(true);
     try {
-      const transformedItems = invoiceItems.map((item) => ({
-        name: item.Concepto,
-        sku: item.Codigo,
-        quantity: item.Cantidad,
-      }));
+      const transformedItems = invoiceItems
+        .filter((item) => item.Codigo?.trim())
+        .map((item) => ({
+          name: item.Concepto,
+          sku: item.Codigo,
+          quantity: item.Cantidad,
+        }));
 
       const body = {
         ...formData,

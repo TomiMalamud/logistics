@@ -37,7 +37,7 @@ export default async function handler(
   try {
     const invoice = await getComprobanteById(invoiceId);
     const inventoryId = invoice.Inventario.toString();
-    
+
     // Validate if this is a known inventory location
     if (!getStore(inventoryId)) {
       console.warn(`Unknown inventory location: ${inventoryId}`);
@@ -46,11 +46,13 @@ export default async function handler(
     return res.status(200).json({
       inventoryId,
       balance: invoice.Saldo,
-      items: invoice.Items.map((item) => ({
-        Codigo: item.Codigo,
-        Cantidad: item.Cantidad,
-        Concepto: item.Concepto
-      }))
+      items: invoice.Items.filter((item) => item.Codigo?.trim()).map(
+        (item) => ({
+          Codigo: item.Codigo,
+          Cantidad: item.Cantidad,
+          Concepto: item.Concepto,
+        })
+      ),
     });
   } catch (error: any) {
     console.error("Error fetching invoice:", error);

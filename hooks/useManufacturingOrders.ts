@@ -48,7 +48,7 @@ async function fetchManufacturingOrders() {
       )
     `
     )
-    .order("created_at", { ascending: false });
+    .order("deliveries(order_date)", { ascending: true });
 
   if (error) throw error;
 

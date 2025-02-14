@@ -272,7 +272,7 @@ const ManufacturingOrdersList = () => {
         <TableBody>
           {filteredOrders.map((order) => (
             <TableRow key={order.id}>
-              <TableCell>
+              <TableCell className="font-bold">
                 {getTimeStatus(
                   getBusinessDaysElapsed(
                     order.orderDate,
@@ -302,6 +302,7 @@ const ManufacturingOrdersList = () => {
               </TableCell>
               <TableCell>{order.extras || "-"}</TableCell>
               <TableCell>{order.needsPackaging ? "Sí" : "No"}</TableCell>
+
               <TableCell className="max-w-xs truncate">{order.notes}</TableCell>
               <TableCell>
                 <DropdownMenu>
