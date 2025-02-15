@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -40,9 +41,12 @@ import {
   Loader2,
   MoreHorizontal,
   Package,
+  Pencil,
   X,
+  MessageSquare,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
+import { formatLongDate } from "@/lib/utils/format";
 
 const supabase = createClient();
 
@@ -87,6 +91,15 @@ const ManufacturingOrdersList = () => {
     error: null,
     data: null,
   });
+  const [notesDialog, setNotesDialog] = useState<{
+    isOpen: boolean;
+    orderId: number | null;
+    notes: string;
+  }>({
+    isOpen: false,
+    orderId: null,
+    notes: "",
+  });
 
   const updateStatus = useMutation({
     mutationFn: async ({
@@ -109,6 +122,27 @@ const ManufacturingOrdersList = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["manufacturing-orders"] });
+    },
+  });
+
+  const updateNotes = useMutation({
+    mutationFn: async ({
+      orderId,
+      notes,
+    }: {
+      orderId: number;
+      notes: string;
+    }) => {
+      const { error } = await supabase
+        .from("manufacturing_orders")
+        .update({ notes })
+        .eq("id", orderId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["manufacturing-orders"] });
+      setNotesDialog((prev) => ({ ...prev, isOpen: false }));
     },
   });
 
@@ -192,6 +226,36 @@ const ManufacturingOrdersList = () => {
     });
   }, [orders, search, statusFilter]);
 
+  const sendPendingOrders = () => {
+    if (!orders) return;
+
+    const pendingOrders = orders.filter((order) => order.status === "pending");
+    const message = `*${pendingOrders.length} PEDIDOS PENDIENTES*
+------------------${pendingOrders
+      .map((order, index) => {
+        const daysElapsed = getBusinessDaysElapsed(
+          order.orderDate,
+          order.status,
+          order.completedAt
+        );
+        const isLate = daysElapsed > 15;
+        return `
+${index + 1}. ${order.customerName}
+${order.productName}${order.extras ? ` + ${order.extras}` : ""}
+Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
+          isLate ? " *ATRASADA*" : ""
+        }${order.needsPackaging ? "\nVa con embalaje" : ""}${
+          order.notes ? `\n${order.notes}` : ""
+        }`;
+      })
+      .join("\n------------------\n")}`;
+
+    window.open(
+      `https://wa.me/5493541665257?text=${encodeURIComponent(message.trim())}`,
+      "_blank"
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -225,6 +289,15 @@ const ManufacturingOrdersList = () => {
             <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           </div>
         </div>
+        <Button
+          variant="outline"
+          onClick={sendPendingOrders}
+          className="gap-2"
+          disabled={!orders?.some((order) => order.status === "pending")}
+        >
+          <MessageSquare className="h-4 w-4" />
+          Enviar Pedidos Pendientes
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="min-w-[140px]">
@@ -316,6 +389,18 @@ const ManufacturingOrdersList = () => {
                       <Package className="mr-2 h-4 w-4" />
                       Ver Entrega
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setNotesDialog({
+                          isOpen: true,
+                          orderId: order.id,
+                          notes: order.notes || "",
+                        });
+                      }}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar Notas
+                    </DropdownMenuItem>
                     {order.status === "pending" && (
                       <DropdownMenuItem
                         onClick={() => {
@@ -392,6 +477,58 @@ const ManufacturingOrdersList = () => {
           {!deliveryDialog.isLoading &&
             !deliveryDialog.error &&
             deliveryDialog.data && <Delivery delivery={deliveryDialog.data} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={notesDialog.isOpen}
+        onOpenChange={(open) => {
+          if (!open) setNotesDialog((prev) => ({ ...prev, isOpen: false }));
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Notas</DialogTitle>
+            <DialogDescription>
+              Modificá las notas del pedido.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={notesDialog.notes}
+              onChange={(e) =>
+                setNotesDialog((prev) => ({ ...prev, notes: e.target.value }))
+              }
+              placeholder="Notas del pedido..."
+              className="min-h-[100px]"
+            />
+          </div>
+          <div className="flex justify-end gap-4">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setNotesDialog((prev) => ({ ...prev, isOpen: false }))
+              }
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (notesDialog.orderId) {
+                  updateNotes.mutate({
+                    orderId: notesDialog.orderId,
+                    notes: notesDialog.notes,
+                  });
+                }
+              }}
+              disabled={updateNotes.isPending}
+            >
+              {updateNotes.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Guardar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

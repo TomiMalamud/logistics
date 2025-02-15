@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrency, formatDate, formatLongDate } from "@/lib/utils/format";
+import { formatCurrency, formatLongDate } from "@/lib/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { PaymentForm } from "./PaymentForm";

@@ -7,7 +7,8 @@ interface CreatePaymentRequest {
   payment_method: "cash" | "bank_transfer";
   notes?: string;
   created_by: string;
-  order_ids: number[];
+  order_ids?: number[];
+  is_advance_payment?: boolean;
 }
 
 const validateRequest = (body: CreatePaymentRequest): void => {
@@ -16,7 +17,6 @@ const validateRequest = (body: CreatePaymentRequest): void => {
     "payment_date",
     "payment_method",
     "created_by",
-    "order_ids",
   ];
   const missingFields = requiredFields.filter((field) => !body[field]);
 
@@ -32,8 +32,12 @@ const validateRequest = (body: CreatePaymentRequest): void => {
     throw new Error("Invalid payment method");
   }
 
-  if (body.order_ids.length === 0) {
-    throw new Error("At least one order must be selected");
+  // Only validate order_ids if it's not an advance payment
+  if (
+    !body.is_advance_payment &&
+    (!body.order_ids || body.order_ids.length === 0)
+  ) {
+    throw new Error("At least one order must be selected for regular payments");
   }
 };
 
@@ -68,9 +72,10 @@ export default async function handler(
       notes,
       created_by,
       order_ids,
+      is_advance_payment,
     } = body;
 
-    // Start a transaction
+    // Create payment
     const { data: payment, error: paymentError } = await supabase
       .from("manufacturing_payments")
       .insert([
@@ -80,6 +85,7 @@ export default async function handler(
           payment_method,
           notes,
           created_by,
+          is_advance_payment: !!is_advance_payment,
         },
       ])
       .select()
@@ -89,18 +95,20 @@ export default async function handler(
       throw new Error(paymentError?.message || "Failed to create payment");
     }
 
-    // Update orders status to paid
-    const { error: updateError } = await supabase
-      .from("manufacturing_orders")
-      .update({
-        status: "paid",
-        paid_at: new Date().toISOString(),
-        payment_id: payment.id,
-      })
-      .in("id", order_ids);
+    // Only update orders if this is not an advance payment and order_ids are provided
+    if (!is_advance_payment && order_ids && order_ids.length > 0) {
+      const { error: updateError } = await supabase
+        .from("manufacturing_orders")
+        .update({
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          payment_id: payment.id,
+        })
+        .in("id", order_ids);
 
-    if (updateError) {
-      throw new Error(updateError?.message || "Failed to update orders");
+      if (updateError) {
+        throw new Error(updateError?.message || "Failed to update orders");
+      }
     }
 
     return res.status(200).json({

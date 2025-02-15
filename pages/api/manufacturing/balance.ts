@@ -136,7 +136,9 @@ export default async function handler(
         date: p.payment_date,
         concept: `Pago - ${
           p.payment_method === "cash" ? "Efectivo" : "Transferencia"
-        }${p.notes ? ` - ${p.notes}` : ""}`,
+        }${p.notes ? ` - ${p.notes}` : ""}${
+          p.is_advance_payment ? " (Pago a cuenta)" : ""
+        }`,
         debit: 0,
         credit: p.amount,
         type: "payment" as const,
