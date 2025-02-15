@@ -6,19 +6,19 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { useProducts } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown, Loader, Search, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { titleCase } from "title-case";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -38,6 +38,7 @@ interface FormFieldProps {
 interface ProductListProps {
   products: ProductItem[];
   onChange: (products: ProductItem[]) => void;
+  onCurrentProductChange?: (product: ProductItem) => void;
 }
 
 const FormField = ({ label, children, error }: FormFieldProps) => (
@@ -48,7 +49,11 @@ const FormField = ({ label, children, error }: FormFieldProps) => (
   </div>
 );
 
-export const ProductList = ({ products, onChange }: ProductListProps) => {
+export const ProductList = ({
+  products,
+  onChange,
+  onCurrentProductChange,
+}: ProductListProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [includeERP, setIncludeERP] = useState(false);
@@ -56,15 +61,20 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
 
   const { data, isLoading } = useProducts({
     query: search,
-    includeERP
+    includeERP,
   });
 
   const [currentProduct, setCurrentProduct] = useState<ProductItem>({
     id: "",
     sku: "",
     name: "",
-    quantity: 1
+    quantity: 1,
   });
+
+  // Notify parent component when currentProduct changes
+  useEffect(() => {
+    onCurrentProductChange?.(currentProduct);
+  }, [currentProduct, onCurrentProductChange]);
 
   const debouncedSearch = useDebouncedCallback(
     (value: string) => setSearch(value),
@@ -83,7 +93,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
         ...prev,
         id: product.sku,
         sku: product.sku,
-        name: titleCase(product.name.toLowerCase())
+        name: titleCase(product.name.toLowerCase()),
       }));
     }
     // If it's an ERP product (has uppercase properties)
@@ -92,7 +102,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
         ...prev,
         id: product.Id || product.Codigo, // Some ERP responses might use different fields
         sku: product.Codigo,
-        name: titleCase(product.Nombre.toLowerCase())
+        name: titleCase(product.Nombre.toLowerCase()),
       }));
     }
     setOpen(false);
@@ -194,7 +204,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
                                 onSelect={() =>
                                   handleProductSelect({
                                     sku: product.Codigo,
-                                    name: product.Nombre
+                                    name: product.Nombre,
                                   })
                                 }
                               >
@@ -231,7 +241,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
               onChange={(e) =>
                 setCurrentProduct((prev) => ({
                   ...prev,
-                  quantity: parseInt(e.target.value) || 1
+                  quantity: parseInt(e.target.value) || 1,
                 }))
               }
               required
@@ -239,7 +249,7 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
           </FormField>
         </div>
       </div>
-      <div className="flex items-center mt-2">
+      <div className="flex items-center gap-2 mt-2">
         <Button
           type="button"
           variant="secondary"
@@ -248,6 +258,17 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
         >
           Agregar
         </Button>
+        {currentProduct.id && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() =>
+              setCurrentProduct({ id: "", sku: "", name: "", quantity: 1 })
+            }
+          >
+            Cancelar
+          </Button>
+        )}
       </div>
 
       {products.length > 0 && (
@@ -261,7 +282,9 @@ export const ProductList = ({ products, onChange }: ProductListProps) => {
               )}
             >
               <div className="space-x-2 flex-1 items-center">
-                <span className="mx-2 text-sm font-bold">{product.quantity}</span>
+                <span className="mx-2 text-sm font-bold">
+                  {product.quantity}
+                </span>
                 <span className="text-sm text-gray-900">{product.name}</span>
                 <span className="text-sm text-gray-500">{product.sku}</span>
               </div>

@@ -44,6 +44,14 @@ import { useRouter } from "next/router";
 import React from "react";
 import { titleCase } from "title-case";
 import { Skeleton } from "../ui/skeleton";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { ProductItem } from "@/components/ProductList";
+import { Database } from "@/supabase/types/supabase";
+
+type Store = Database["public"]["Enums"]["store"];
+type DeliveryType = Database["public"]["Enums"]["delivery_type"];
 
 interface DeliveryFormProps {
   user: User;
@@ -71,6 +79,64 @@ function CustomerInfoSkeleton() {
   );
 }
 
+interface DeliveryFormValues {
+  invoice_id: number;
+  address: string;
+  phone: string;
+  email: string | null;
+  emailBypassReason?: string;
+  scheduled_date?: string;
+  notes?: string;
+  dni: string | null;
+  products: ProductItem[];
+  store_id: Store;
+  type: DeliveryType;
+}
+
+const deliveryFormSchema = z
+  .object({
+    invoice_id: z.number({
+      required_error: "Seleccioná una factura",
+    }),
+    address: z.string().min(1, "La dirección es requerida"),
+    phone: z.string().refine((val) => validatePhoneNumber(val), {
+      message: "Sin 0 ni 15, sin espacios ni guiones",
+    }),
+    email: z.string().email("Email inválido").nullable(),
+    emailBypassReason: z.string().optional(),
+    scheduled_date: z.string().optional(),
+    notes: z.string().optional(),
+    dni: z.string().nullable(),
+    products: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          name: z.string().min(1),
+          sku: z.string().min(1),
+          quantity: z.number().min(1),
+        })
+      )
+      .optional(),
+    store_id: z.enum(["60835", "24471", "31312", "70749"] as const),
+    type: z.enum([
+      "supplier_pickup",
+      "home_delivery",
+      "store_movement",
+    ] as const),
+  })
+  .refine(
+    (data) => {
+      if (!data.email && !data.emailBypassReason) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "El email es requerido o se debe indicar por qué no lo tenemos",
+      path: ["email"],
+    }
+  );
+
 export default function DeliveryForm({ user }: DeliveryFormProps) {
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
@@ -81,25 +147,25 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
     React.useState<Comprobante | null>(null);
   const [invoiceItems, setInvoiceItems] = React.useState([]);
   const [storeId, setStoreId] = React.useState<string | null>(null);
-  const [formData, setFormData] = React.useState({
-    address: "",
-    phone: "",
-    dni: "",
-    email: null as string | null,
-    emailBypassReason: "",
-    scheduled_date: "",
-    notes: "",
-  });
-
-  // UI state
   const [invoices, setInvoices] = React.useState<Comprobante[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [validationErrors, setValidationErrors] = React.useState({
-    phone: "",
-    address: "",
-    email: "",
-  });
   const [loadingDetails, setLoadingDetails] = React.useState(false);
+
+  const form = useForm<DeliveryFormValues>({
+    resolver: zodResolver(deliveryFormSchema),
+    defaultValues: {
+      address: "",
+      phone: "",
+      email: null,
+      emailBypassReason: "",
+      scheduled_date: "",
+      notes: "",
+      dni: null,
+      products: [],
+      store_id: "60835",
+      type: "home_delivery",
+    },
+  });
 
   // Load invoices on mount
   React.useEffect(() => {
@@ -144,10 +210,11 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
         itemsRes.json(),
       ]);
 
-      // Update form with customer data
+      // Update form with customer data and invoice ID
       const sanitizedPhone = sanitizePhoneNumber(customer.Telefono || "");
-      setFormData((prev) => ({
-        ...prev,
+      form.reset({
+        ...form.getValues(), // Preserve existing values including defaults
+        invoice_id: selectedInv.Id,
         address: [
           customer.Domicilio,
           customer.Ciudad,
@@ -159,7 +226,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
         phone: sanitizedPhone,
         email: customer.Email || null,
         dni: customer.NroDoc || null,
-      }));
+      });
 
       setInvoiceItems(itemsData.items || []);
       setStoreId(itemsData.inventoryId);
@@ -179,49 +246,29 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
   // Validation functions
   const validatePhone = (phone: string) => {
     if (!phone) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        phone: "El teléfono es requerido",
-      }));
+      form.setError("phone", {
+        type: "manual",
+        message: "El teléfono es requerido",
+      });
       return false;
     }
     if (!validatePhoneNumber(phone)) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        phone: "Sin 0 ni 15, sin espacios ni guiones",
-      }));
+      form.setError("phone", {
+        type: "manual",
+        message: "Sin 0 ni 15, sin espacios ni guiones",
+      });
       return false;
     }
-    setValidationErrors((prev) => ({ ...prev, phone: "" }));
+    form.clearErrors("phone");
     return true;
   };
 
-  const validateForm = () => {
-    const errors = {
-      address: !formData.address.trim() ? "La dirección es requerida" : "",
-      phone: "",
-      email:
-        !formData.email && !formData.emailBypassReason
-          ? "El email es requerido o se debe indicar por qué no lo tenemos"
-          : "",
-    };
-
-    const phoneValid = validatePhone(formData.phone);
-    errors.phone = validationErrors.phone;
-
-    setValidationErrors(errors);
-    return !Object.values(errors).some(Boolean) && phoneValid;
-  };
-
-  // Form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedInvoice || !validateForm() || !storeId) {
-      if (!storeId) {
-        setError("No se pudo determinar el depósito de origen");
-      }
+  const handleSubmit = async (values: DeliveryFormValues) => {
+    if (!selectedInvoice || !storeId) {
+      setError("No se pudo determinar el depósito de origen");
       return;
     }
+
     setLoading(true);
     try {
       const transformedItems = invoiceItems
@@ -233,8 +280,8 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
         }));
 
       const body = {
-        ...formData,
-        phone: sanitizePhoneNumber(formData.phone),
+        ...values,
+        phone: sanitizePhoneNumber(values.phone),
         order_date: new Date(selectedInvoice.FechaAlta)
           .toISOString()
           .split("T")[0],
@@ -244,7 +291,6 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
         created_by: user.id,
         products: transformedItems,
         store_id: storeId,
-        dni: formData.dni,
       };
 
       const response = await fetch("/api/deliveries/create/delivery", {
@@ -275,7 +321,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
         <CardTitle>Nueva entrega</CardTitle>
       </CardHeader>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={form.handleSubmit(handleSubmit)}>
         <CardContent className="space-y-6">
           {/* Invoice Selection */}
           <div className="space-y-2">
@@ -307,10 +353,8 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
                 <CustomerInfoSkeleton />
               ) : (
                 <CustomerInfoCard
-                  formData={formData}
-                  setFormData={setFormData}
-                  validationErrors={validationErrors}
-                  setValidationErrors={setValidationErrors}
+                  form={form}
+                  validationErrors={form.formState.errors}
                 />
               )}
 
@@ -355,12 +399,9 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
                   <Input
                     type="date"
                     name="scheduled_date"
-                    value={formData.scheduled_date}
+                    value={form.watch("scheduled_date")}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        scheduled_date: e.target.value,
-                      }))
+                      form.setValue("scheduled_date", e.target.value)
                     }
                     className="mt-1"
                   />
@@ -370,13 +411,8 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
                   <Label>Notas</Label>
                   <Input
                     name="notes"
-                    value={formData.notes}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        notes: e.target.value,
-                      }))
-                    }
+                    value={form.watch("notes")}
+                    onChange={(e) => form.setValue("notes", e.target.value)}
                     placeholder="Agregar notas y entre qué calles está"
                     className="mt-1"
                   />
@@ -411,17 +447,19 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
   );
 }
 
+interface CustomerInfoCardProps {
+  form: ReturnType<typeof useForm<DeliveryFormValues>>;
+  validationErrors: Record<string, { message?: string }>;
+}
+
 // Customer Info Card Component
-function CustomerInfoCard({
-  formData,
-  setFormData,
-  validationErrors,
-  setValidationErrors,
-}) {
+function CustomerInfoCard({ form, validationErrors }: CustomerInfoCardProps) {
   const [isEmailDialogOpen, setIsEmailDialogOpen] = React.useState(false);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = React.useState(false);
   const [bypassReason, setBypassReason] = React.useState("");
-  const [editedAddress, setEditedAddress] = React.useState(formData.address);
+  const [editedAddress, setEditedAddress] = React.useState(
+    form.watch("address")
+  );
 
   return (
     <Card className="bg-gray-50 border-gray-200">
@@ -436,8 +474,8 @@ function CustomerInfoCard({
                   validationErrors.address && "text-red-500"
                 }`}
               >
-                {formData.address
-                  ? titleCase(formData.address.toLowerCase())
+                {form.watch("address")
+                  ? titleCase(form.watch("address").toLowerCase())
                   : "Dirección requerida"}
               </span>
             </div>
@@ -447,8 +485,8 @@ function CustomerInfoCard({
               isOpen={isAddressDialogOpen}
               setIsOpen={setIsAddressDialogOpen}
               onSave={(address) => {
-                setFormData((prev) => ({ ...prev, address }));
-                setValidationErrors((prev) => ({ ...prev, address: "" }));
+                form.setValue("address", address);
+                form.clearErrors("address");
               }}
             />
           </div>
@@ -461,7 +499,7 @@ function CustomerInfoCard({
                 validationErrors.phone && "text-red-500"
               }`}
             >
-              {formData.phone || "Teléfono requerido"}
+              {form.watch("phone") || "Teléfono requerido"}
             </span>
           </div>
 
@@ -474,23 +512,20 @@ function CustomerInfoCard({
                   validationErrors.email && "text-red-500"
                 }`}
               >
-                {formData.email ||
-                  formData.emailBypassReason ||
+                {form.watch("email") ||
+                  form.watch("emailBypassReason") ||
                   "Email requerido"}
               </span>
             </div>
-            {!formData.email && !formData.emailBypassReason && (
+            {!form.watch("email") && !form.watch("emailBypassReason") && (
               <EmailBypassDialog
                 isOpen={isEmailDialogOpen}
                 setIsOpen={setIsEmailDialogOpen}
                 reason={bypassReason}
                 setReason={setBypassReason}
                 onSave={(reason) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    emailBypassReason: reason,
-                  }));
-                  setValidationErrors((prev) => ({ ...prev, email: "" }));
+                  form.setValue("emailBypassReason", reason);
+                  form.clearErrors("email");
                 }}
               />
             )}
@@ -503,7 +538,11 @@ function CustomerInfoCard({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error en los datos del cliente</AlertTitle>
             <AlertDescription>
-              {Object.values(validationErrors).filter(Boolean).join(". ")}
+              {Object.values(validationErrors)
+                .filter(Boolean)
+                .map((error) => error.message)
+                .filter(Boolean)
+                .join(". ")}
             </AlertDescription>
           </Alert>
         )}

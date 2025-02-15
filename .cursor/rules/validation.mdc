@@ -1,0 +1,7 @@
+---
+description: useful for handling forms validations.
+globs: *.ts, *.tsx
+---
+- Always use zod for validation
+- Refer to [types.ts](mdc:types/types.ts) and [supabase.ts](mdc:supabase/types/supabase.ts) for types.
+- Always validate after a submit button is clicked, not before. 

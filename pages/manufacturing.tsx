@@ -14,7 +14,7 @@ interface Props {
 
 export default function ManufacturingPage({ user }: Props) {
   return (
-    <Layout>
+    <Layout title="Camas con Cajones">
       <div className="space-y-8">
         <Balance user={user} />
         <Card className="w-full">
