@@ -289,9 +289,7 @@ const ManufacturingOrdersList = () => {
                   : "-"}
               </TableCell>
               <TableCell>{order.customerName}</TableCell>
-              <TableCell>
-                {order.productName.replace("CAMA CON CAJONES ", "").trim()}
-              </TableCell>
+              <TableCell>{order.productName}</TableCell>
               <TableCell>
                 <Badge
                   className={statusConfig[order.status].color}

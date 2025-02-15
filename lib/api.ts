@@ -5,7 +5,7 @@ import {
   Concepto,
   Customer,
   Comprobante,
-  SearchComprobanteResponse
+  SearchComprobanteResponse,
 } from "@/types/api";
 
 const API_URL_BASE = process.env.NEXT_PUBLIC_API_URL_BASE as string;
@@ -18,7 +18,7 @@ let tokenCache: {
   expires_at: number | null;
 } = {
   access_token: null,
-  expires_at: null
+  expires_at: null,
 };
 
 /**
@@ -28,13 +28,13 @@ const fetchAccessToken = async (): Promise<TokenResponse> => {
   const response = await fetch(`${API_URL_BASE}/token`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
       grant_type: "client_credentials",
       client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET
-    })
+      client_secret: CLIENT_SECRET,
+    }),
   });
 
   if (!response.ok) {
@@ -91,8 +91,8 @@ const _searchInvoices = async (
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   });
 
   if (!response.ok) {
@@ -153,19 +153,15 @@ export const searchComprobantes = async (
   fechaHasta?: string
 ): Promise<SearchComprobanteResponse> => {
   // Use provided dates or defaults
-  const startDate = fechaDesde || new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
-  const endDate = fechaHasta || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
+  const startDate =
+    fechaDesde ||
+    new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const endDate =
+    fechaHasta ||
+    new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   try {
-    const allItems = await fetchAllComprobantes(
-      startDate,
-      endDate,
-      filtro
-    );
+    const allItems = await fetchAllComprobantes(startDate, endDate, filtro);
 
     // Sort the accumulated items by FechaAlta descending (most recent first)
     const sortedItems = allItems.sort((a, b) => {
@@ -177,18 +173,14 @@ export const searchComprobantes = async (
     return {
       Items: sortedItems,
       TotalItems: sortedItems.length,
-      TotalPage: 1
+      TotalPage: 1,
     };
   } catch (error: any) {
     if (error.message.includes("401")) {
       // Reset token cache and retry
       tokenCache = { access_token: null, expires_at: null };
       try {
-        const allItems = await fetchAllComprobantes(
-          startDate,
-          endDate,
-          filtro
-        );
+        const allItems = await fetchAllComprobantes(startDate, endDate, filtro);
 
         const sortedItems = allItems.sort((a, b) => {
           const dateA = new Date(a.FechaAlta).getTime();
@@ -199,7 +191,7 @@ export const searchComprobantes = async (
         return {
           Items: sortedItems,
           TotalItems: sortedItems.length,
-          TotalPage: 1
+          TotalPage: 1,
         };
       } catch (retryError: any) {
         throw retryError;
@@ -220,8 +212,8 @@ export const getClientById = async (id: number): Promise<Customer> => {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   });
 
   if (!response.ok) {
@@ -249,8 +241,8 @@ export const getComprobanteById = async (id: number): Promise<Comprobante> => {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   });
 
   if (!response.ok) {
@@ -306,8 +298,8 @@ export const searchProducts = async (
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     });
 
     // Log detailed error information
@@ -317,7 +309,7 @@ export const searchProducts = async (
         status: response.status,
         statusText: response.statusText,
         body: errorText,
-        url: url.toString()
+        url: url.toString(),
       });
 
       let errorMessage: string;
@@ -339,7 +331,7 @@ export const searchProducts = async (
     return {
       Items: activeProducts,
       TotalItems: data.TotalItems || 0,
-      TotalPage: data.TotalPage || 1
+      TotalPage: data.TotalPage || 1,
     };
   } catch (error: any) {
     if (error instanceof APIError) {
@@ -372,48 +364,117 @@ interface InventoryMovement {
 /**
  * Creates an internal inventory movement in the ERP system
  */
-export const createInventoryMovement = async (movement: InventoryMovement): Promise<void> => {
+export const createInventoryMovement = async (
+  movement: InventoryMovement
+): Promise<void> => {
   const token = await getAccessToken();
-  
+
   const url = new URL(`${API_URL_BASE}/api/inventarios/movimientoInterno`);
-  url.searchParams.append('idDepositoOrigen', movement.idDepositoOrigen);
-  url.searchParams.append('idDepositoDestino', movement.idDepositoDestino);
-  url.searchParams.append('codigo', movement.codigo);
-  url.searchParams.append('cantidad', movement.cantidad.toString());
+  url.searchParams.append("idDepositoOrigen", movement.idDepositoOrigen);
+  url.searchParams.append("idDepositoDestino", movement.idDepositoDestino);
+  url.searchParams.append("codigo", movement.codigo);
+  url.searchParams.append("cantidad", movement.cantidad.toString());
 
   try {
     const response = await fetch(url.toString(), {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Inventory Movement Error:', {
+      console.error("Inventory Movement Error:", {
         status: response.status,
         statusText: response.statusText,
-        body: errorText
+        body: errorText,
       });
 
-      throw new APIError(`Error creating inventory movement: ${errorText}`, response.status);
+      throw new APIError(
+        `Error creating inventory movement: ${errorText}`,
+        response.status
+      );
     }
   } catch (error: any) {
     if (error instanceof APIError) throw error;
 
     // Handle unauthorized errors by refreshing token
-    if (error.message?.includes('401') || error.status === 401) {
+    if (error.message?.includes("401") || error.status === 401) {
       tokenCache = { access_token: null, expires_at: null };
       try {
         return await createInventoryMovement(movement);
       } catch (retryError) {
-        console.error('Retry failed:', retryError);
-        throw new APIError('Authentication failed', 401);
+        console.error("Retry failed:", retryError);
+        throw new APIError("Authentication failed", 401);
       }
     }
 
-    throw new APIError(error.message || 'Error creating inventory movement');
+    throw new APIError(error.message || "Error creating inventory movement");
+  }
+};
+
+interface ProductCost {
+  CostoInterno: number;
+  Nombre: string;
+}
+
+/**
+ * Fetches a product's internal cost by its SKU
+ */
+export const getProductCostBySku = async (
+  sku: string
+): Promise<ProductCost> => {
+  if (!API_URL_BASE || !CLIENT_ID || !CLIENT_SECRET) {
+    throw new APIError("API configuration missing");
+  }
+
+  const token = await getAccessToken();
+
+  const url = new URL(`${API_URL_BASE}/api/conceptos/getByCodigo`);
+  url.searchParams.append("codigo", sku);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API Error Response:", {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText,
+        url: url.toString(),
+      });
+
+      throw new APIError("Error fetching product cost", response.status);
+    }
+
+    const data = await response.json();
+    return {
+      CostoInterno: data.CostoInterno || 0,
+      Nombre: data.Nombre,
+    };
+  } catch (error: any) {
+    if (error instanceof APIError) throw error;
+
+    // Handle unauthorized errors by refreshing token
+    if (error.message?.includes("401") || error.status === 401) {
+      tokenCache = { access_token: null, expires_at: null };
+      try {
+        return await getProductCostBySku(sku);
+      } catch (retryError) {
+        console.error("Retry failed:", retryError);
+        throw new APIError("Authentication failed", 401);
+      }
+    }
+
+    throw new APIError(error.message || "Error fetching product cost");
   }
 };

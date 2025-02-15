@@ -50,6 +50,7 @@ import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useToast } from "@/hooks/use-toast";
 
 interface Delivery {
   id: number;
@@ -136,6 +137,7 @@ export function CreateOrderForm({ user, onSuccess }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -172,14 +174,23 @@ export function CreateOrderForm({ user, onSuccess }: Props) {
         },
         body: JSON.stringify({
           delivery_id: parseInt(values.deliveryId),
-          product_name:
+          product_name: (
             deliveryItems?.find(
               (item) => item.product_sku === values.productSku
-            )?.products?.name || "",
+            )?.products?.name || ""
+          )
+            .replace("CAMA CON CAJONES ", "")
+            .trim(),
+          product_sku: values.productSku,
+          extra_product_sku: values.extraProductSku || null,
           extras: values.extraProductSku
-            ? deliveryItems?.find(
-                (item) => item.product_sku === values.extraProductSku
-              )?.products?.name || ""
+            ? (
+                deliveryItems?.find(
+                  (item) => item.product_sku === values.extraProductSku
+                )?.products?.name || ""
+              )
+                .replace("CAMA CON CAJONES ", "")
+                .trim()
             : null,
           needs_packaging: values.needsPackaging,
           notes: values.notes,
@@ -192,11 +203,30 @@ export function CreateOrderForm({ user, onSuccess }: Props) {
         throw new Error(error.error || "Failed to create manufacturing order");
       }
 
-      return response.json();
+      const data = await response.json();
+      if (data.price) {
+        toast({
+          title: "Pedido creado",
+          description: `Costo del pedido: ${new Intl.NumberFormat("es-AR", {
+            style: "currency",
+            currency: "ARS",
+          }).format(data.price)}`,
+        });
+      } else {
+        toast({
+          title: "Pedido creado",
+          description: "No se pudo obtener el costo del pedido",
+          variant: "destructive",
+        });
+      }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["manufacturer-balance"] });
       form.reset();
+      setDialogOpen(false);
       onSuccess?.();
     },
   });
@@ -230,7 +260,7 @@ export function CreateOrderForm({ user, onSuccess }: Props) {
         <DialogHeader>
           <DialogTitle>Nuevo Pedido</DialogTitle>
           <DialogDescription>
-            Nueva cama con cajones para Maxi
+            Nueva cama con cajones para Maxi. Si son 2 unidades, creá 2 pedidos.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

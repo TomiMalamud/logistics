@@ -22,6 +22,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "./ui/navigation-menu";
+import { Toaster } from "@/components/ui/toaster";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -194,6 +195,7 @@ const Layout = ({
       <main className="p-4 md:p-8 mx-auto max-w-7xl min-h-screen">
         {children}
       </main>
+      <Toaster />
     </>
   );
 };

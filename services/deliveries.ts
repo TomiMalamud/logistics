@@ -85,20 +85,43 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     }
 
     const existingSkus = new Set(existingProducts?.map((p) => p.sku) || []);
-    const productsToCreate = products
-      .filter((p) => !existingSkus.has(p.sku) && p.name)
-      .map((p) => ({
-        sku: p.sku,
-        name: p.name,
+    const missingSkus = products
+      .filter((p) => !existingSkus.has(p.sku))
+      .map((p) => p.sku);
+
+    if (missingSkus.length > 0) {
+      // If we have missing products, fetch them from ERP
+      const { searchProducts } = await import("@/lib/api");
+      const erpProducts = await searchProducts();
+
+      const productsToUpsert = erpProducts.Items.filter(
+        (product) =>
+          missingSkus.includes(product.Codigo) && product.Estado === "Activo"
+      ).map((product) => ({
+        sku: product.Codigo,
+        name: product.Nombre,
       }));
 
-    if (productsToCreate.length > 0) {
-      const { error: insertError } = await supabase
-        .from("products")
-        .insert(productsToCreate);
+      if (productsToUpsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from("products")
+          .upsert(productsToUpsert);
 
-      if (insertError) {
-        throw new Error(`Error creating products: ${insertError.message}`);
+        if (insertError) {
+          throw new Error(`Error creating products: ${insertError.message}`);
+        }
+      }
+
+      // Check if any required products are inactive or not found in ERP
+      const syncedSkus = new Set(productsToUpsert.map((p) => p.sku));
+      const unavailableSkus = missingSkus.filter((sku) => !syncedSkus.has(sku));
+
+      if (unavailableSkus.length > 0) {
+        throw new Error(
+          `Some products are not available in ERP or are inactive: ${unavailableSkus.join(
+            ", "
+          )}`
+        );
       }
     }
   };

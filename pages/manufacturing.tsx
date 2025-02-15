@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import { Balance } from "@/components/manufacturing/Balance";
 import { CreateOrderForm } from "@/components/manufacturing/CreateOrderForm";
 import ManufacturingOrdersList from "@/components/manufacturing/Table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ export default function ManufacturingPage({ user }: Props) {
   return (
     <Layout>
       <div className="space-y-8">
+        <Balance user={user} />
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Camas con Cajones</CardTitle>
