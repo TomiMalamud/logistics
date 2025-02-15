@@ -38,24 +38,26 @@ async function fetchManufacturingOrders() {
       completed_at,
       notes,
       delivery_id,
-      deliveries!inner (
+      deliveries (
         id,
         customer_id,
         order_date,
-        customers!inner (
+        customers (
           name
         )
       )
     `
     )
-    .order("deliveries(order_date)", { ascending: true });
+    .order("created_at", { ascending: true });
 
   if (error) throw error;
 
   return (orders as unknown as ManufacturingOrderRow[]).map((order) => ({
     id: order.id,
-    orderDate: new Date(order.deliveries.order_date),
-    customerName: order.deliveries.customers.name,
+    orderDate: order.deliveries?.order_date
+      ? new Date(order.deliveries.order_date)
+      : new Date(order.created_at),
+    customerName: order.deliveries?.customers?.name,
     productName: order.product_name,
     deliveryId: order.delivery_id,
     needsPackaging: order.needs_packaging,

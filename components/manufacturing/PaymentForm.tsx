@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -11,11 +12,11 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,7 +34,6 @@ import { Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface Props {
   user: {

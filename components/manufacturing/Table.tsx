@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -27,7 +26,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { useManufacturingOrders } from "@/hooks/useManufacturingOrders";
+import { formatDate } from "@/lib/utils/format";
 import { createClient } from "@/lib/utils/supabase/component";
 import { ManufacturingStatus } from "@/types/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,14 +40,13 @@ import {
   DollarSign,
   Filter,
   Loader2,
+  MessageSquare,
   MoreHorizontal,
   Package,
   Pencil,
   X,
-  MessageSquare,
 } from "lucide-react";
 import React, { useState } from "react";
-import { formatLongDate } from "@/lib/utils/format";
 
 const supabase = createClient();
 
@@ -152,12 +152,90 @@ const ManufacturingOrdersList = () => {
     status: ManufacturingStatus,
     completedAt: Date | null
   ) => {
+    const normalizeDate = (date: Date) => {
+      // Ensure we're working with UTC dates to avoid timezone issues
+      const normalized = new Date(
+        date.toISOString().split("T")[0] + "T00:00:00.000Z"
+      );
+      // If it's a weekend, move to the last business day
+      const day = normalized.getUTCDay();
+      if (day === 6) {
+        // Saturday
+        normalized.setUTCDate(normalized.getUTCDate() - 1);
+      } else if (day === 0) {
+        // Sunday
+        normalized.setUTCDate(normalized.getUTCDate() - 2);
+      }
+      return normalized;
+    };
+
     if (status === "pending") {
-      return differenceInBusinessDays(new Date(), orderDate);
+      const today = normalizeDate(new Date());
+      const start = normalizeDate(orderDate);
+      return differenceInBusinessDays(today, start);
     }
     // For completed/paid/cancelled orders, show days it took to complete
-    return differenceInBusinessDays(completedAt || new Date(), orderDate);
+    return differenceInBusinessDays(
+      normalizeDate(completedAt || new Date()),
+      normalizeDate(orderDate)
+    );
   };
+
+  // Test function to debug business days calculation
+  const testBusinessDays = () => {
+    const testCases = [
+      {
+        start: "2025-02-04",
+        end: "2025-02-15",
+        expected: 8,
+      },
+    ];
+
+    testCases.forEach(({ start, end, expected }) => {
+      const startDate = new Date(start + "T00:00:00.000Z");
+      const endDate = new Date(end + "T00:00:00.000Z");
+
+      // If end date is a weekend, adjust to last business day
+      const endDay = endDate.getUTCDay();
+      const adjustedEndDate = new Date(endDate);
+      if (endDay === 6) {
+        // Saturday
+        adjustedEndDate.setUTCDate(adjustedEndDate.getUTCDate() - 1);
+      } else if (endDay === 0) {
+        // Sunday
+        adjustedEndDate.setUTCDate(adjustedEndDate.getUTCDate() - 2);
+      }
+
+      const result = differenceInBusinessDays(adjustedEndDate, startDate);
+
+      console.log(`Test case: ${start} to ${end}`);
+      console.log(`Expected: ${expected} business days`);
+      console.log(`Result: ${result} business days`);
+      console.log(
+        `Adjusted end date: ${adjustedEndDate.toISOString().split("T")[0]}`
+      );
+
+      // Log all business days in between for verification
+      const allDates = [];
+      let currentDate = new Date(startDate);
+      while (currentDate <= adjustedEndDate) {
+        if (currentDate.getUTCDay() !== 0 && currentDate.getUTCDay() !== 6) {
+          allDates.push(new Date(currentDate).toISOString().split("T")[0]);
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      console.log("Business days:", allDates);
+      console.log("Total business days found:", allDates.length);
+      console.log("-------------------");
+    });
+  };
+
+  // Run the test
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      testBusinessDays();
+    }
+  }, []);
 
   // Format relative time remaining
   const getTimeStatus = (daysElapsed: number, status: ManufacturingStatus) => {
@@ -215,7 +293,8 @@ const ManufacturingOrdersList = () => {
 
     return orders.filter((order) => {
       const matchesSearch =
-        order.customerName.toLowerCase().includes(search.toLowerCase()) ||
+        order.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+        false ||
         order.productName.toLowerCase().includes(search.toLowerCase()) ||
         order.notes?.toLowerCase().includes(search.toLowerCase());
 
@@ -240,7 +319,7 @@ const ManufacturingOrdersList = () => {
         );
         const isLate = daysElapsed > 15;
         return `
-${index + 1}. ${order.customerName}
+${index + 1}. ${order.customerName || "Sin cliente"}
 ${order.productName}${order.extras ? ` + ${order.extras}` : ""}
 Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
           isLate ? " *ATRASADA*" : ""
@@ -355,13 +434,17 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
                   order.status
                 )}
               </TableCell>
-              <TableCell>{format(order.orderDate, "dd/MM")}</TableCell>
+              <TableCell>
+                {formatDate(
+                  order.orderDate.toISOString().split("T")[0]
+                ).replace("/2025", "")}
+              </TableCell>
               <TableCell>
                 {order.completedAt
                   ? format(new Date(order.completedAt), "dd/MM")
                   : "-"}
               </TableCell>
-              <TableCell>{order.customerName}</TableCell>
+              <TableCell>{order.customerName || "Sin cliente"}</TableCell>
               <TableCell>{order.productName}</TableCell>
               <TableCell>
                 <Badge
@@ -383,12 +466,14 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => fetchDelivery(order.deliveryId)}
-                    >
-                      <Package className="mr-2 h-4 w-4" />
-                      Ver Entrega
-                    </DropdownMenuItem>
+                    {order.deliveryId && (
+                      <DropdownMenuItem
+                        onClick={() => fetchDelivery(order.deliveryId)}
+                      >
+                        <Package className="mr-2 h-4 w-4" />
+                        Ver Entrega
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       onClick={() => {
                         setNotesDialog({
