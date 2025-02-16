@@ -197,10 +197,12 @@ export default function Index({ profile }: IndexProps) {
       keepPreviousData: true,
       revalidateOnFocus: false,
       onSuccess: (data) => {
-        // Store pending deliveries for client-side filtering
-        if (currentFilters.state === "pending" && isInitialPendingLoad) {
+        // Update pending deliveries whenever data changes in pending state
+        if (currentFilters.state === "pending") {
           setPendingDeliveries(data.feed);
-          setIsInitialPendingLoad(false);
+          if (isInitialPendingLoad) {
+            setIsInitialPendingLoad(false);
+          }
         }
       },
     }

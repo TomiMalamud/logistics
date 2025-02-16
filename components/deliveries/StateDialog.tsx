@@ -47,10 +47,10 @@ import {
 } from "../ui/tooltip";
 
 interface FormData {
+  delivery_type: DeliveredType;
   delivery_cost?: number;
   carrier_id?: number;
-  pickup_store?: string;
-  delivery_type: DeliveredType;
+  pickup_store?: string | null;
   items: {
     product_sku: string;
     quantity: number;
@@ -421,13 +421,24 @@ export default function StateDialog({
         carrier_id: selectedCarrierId,
       }),
       ...(deliveryType === "pickup" && {
-        pickup_store: selectedStoreId,
+        pickup_store: selectedStoreId || null,
       }),
     };
 
     try {
       setLoadingStates((prev) => ({ ...prev, form: true }));
       await onConfirm(formData);
+
+      // Reset form state
+      setSelectedItems({});
+      setDeliveryType(undefined);
+      setDeliveryCost("");
+      setSelectedCarrierId(undefined);
+      setSelectedStore(undefined);
+      setError(null);
+      setIsDirty(false);
+
+      // Close dialog after successful update
       setOpen(false);
     } catch (error) {
       setError(

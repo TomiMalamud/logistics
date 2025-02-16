@@ -3,7 +3,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
@@ -15,7 +15,7 @@ export default function NotesDialog({
   setNewNote,
   isAddingNote,
   onAddNote,
-  formatNoteDate
+  formatNoteDate,
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -26,12 +26,12 @@ export default function NotesDialog({
         <div className="space-y-4">
           <div className="max-h-64 overflow-y-auto">
             <ul className="list-disc list-inside space-y-2">
-              {notes.map((note, index) => (
+              {notes?.map((note, index) => (
                 <li
                   className="text-sm text-slate-600 leading-6 lowercase"
-                  key={note.id || index}
+                  key={note?.id || index}
                 >
-                  {note.text} | {formatNoteDate(note.created_at || "")}
+                  {note?.text || ""} | {formatNoteDate(note?.created_at || "")}
                 </li>
               ))}
             </ul>

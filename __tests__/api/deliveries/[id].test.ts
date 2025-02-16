@@ -120,10 +120,7 @@ describe("/api/deliveries/[id]", () => {
   });
 
   describe("PUT requests", () => {
-    const validStore = {
-      id: "60835" as StoreEnum,
-      label: "Test Store",
-    };
+    const validStore = "60835" as StoreEnum;
 
     const validItems = [
       {
@@ -240,6 +237,13 @@ describe("/api/deliveries/[id]", () => {
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
         error: "Either provide a pickup store or carrier for delivery",
+        details: [
+          {
+            code: "custom",
+            message: "Either provide a pickup store or carrier for delivery",
+            path: [],
+          },
+        ],
       });
     });
 
@@ -263,6 +267,13 @@ describe("/api/deliveries/[id]", () => {
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
         error: "Delivery cost is required when carrier is provided",
+        details: [
+          {
+            code: "custom",
+            message: "Delivery cost is required when carrier is provided",
+            path: [],
+          },
+        ],
       });
     });
 
@@ -285,6 +296,7 @@ describe("/api/deliveries/[id]", () => {
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
         error: "Invalid state transition",
+        details: "Cannot transition from delivered to pending",
       });
     });
 

@@ -36,9 +36,18 @@ const updateDeliverySchema = z
     delivery_cost: z
       .number()
       .positive("Delivery cost must be positive")
+      .nullable()
       .optional(),
-    carrier_id: z.number().positive("Carrier ID must be positive").optional(),
-    pickup_store: storeSchema.optional(),
+    carrier_id: z
+      .number()
+      .positive("Carrier ID must be positive")
+      .nullable()
+      .optional(),
+    pickup_store: z
+      .enum(["60835", "24471", "31312", "70749"] as const)
+      .transform((val) => val as Database["public"]["Enums"]["store"])
+      .nullable()
+      .optional(),
     items: z.array(itemSchema).optional(),
   })
   .strict()
@@ -107,9 +116,10 @@ export default async function handler(
   if (req.method === "PUT") {
     const updateResult = updateDeliverySchema.safeParse(req.body);
     if (!updateResult.success) {
-      return res
-        .status(400)
-        .json({ error: updateResult.error.issues[0].message });
+      return res.status(400).json({
+        error: updateResult.error.issues[0].message,
+        details: updateResult.error.issues,
+      });
     }
 
     const {
@@ -127,7 +137,14 @@ export default async function handler(
 
       // Validate items if present
       if (items?.length) {
-        await deliveryService.validateItems(id, items as DeliveryItem[]);
+        try {
+          await deliveryService.validateItems(id, items as DeliveryItem[]);
+        } catch (error: any) {
+          return res.status(400).json({
+            error: "Item validation failed",
+            details: error.message,
+          });
+        }
       }
 
       // Handle state changes and operations
@@ -146,7 +163,7 @@ export default async function handler(
                 state === "cancelled" ? "cancellation" : "delivery",
               carrierId: carrier_id,
               deliveryCost: delivery_cost,
-              pickupStore: pickup_store as Store,
+              pickupStore: pickup_store as unknown as Store,
               items: items as DeliveryItem[],
             });
 
@@ -155,16 +172,16 @@ export default async function handler(
               finalState = "pending";
             }
           } catch (error: any) {
-            if (error.message.includes("pickup_store or both carrier")) {
-              return res.status(400).json({
-                error:
-                  "Invalid delivery operation: Either provide a pickup store or both carrier and cost",
-              });
-            }
-            throw error;
+            return res.status(400).json({
+              error: "Operation recording failed",
+              details: error.message,
+            });
           }
         } else {
-          return res.status(400).json({ error: "Invalid state transition" });
+          return res.status(400).json({
+            error: "Invalid state transition",
+            details: `Cannot transition from ${delivery.state} to ${state}`,
+          });
         }
       }
 

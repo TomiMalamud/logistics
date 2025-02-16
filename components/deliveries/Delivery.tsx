@@ -31,7 +31,7 @@ import {
   Store,
   X,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import { DeliveryOperation, DeliveryProps, Profile } from "types/types";
 import { Button } from "../ui/button";
 import Balance from "./Balance";
@@ -81,6 +81,11 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     addNote,
     updateScheduledDate,
   } = useDelivery({ delivery: normalizedDelivery, fetchURL });
+
+  // Update local state when delivery prop changes
+  useEffect(() => {
+    setState(delivery.state);
+  }, [delivery.state, setState]);
 
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
@@ -462,11 +467,11 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       )}
       {/* Notes Section */}
       <div className="border-t pt-4">
-        {notes.length > 0 ? (
+        {notes && notes.length > 0 ? (
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">
-              {notes[notes.length - 1].text.toLowerCase()} |{" "}
-              {formatNoteDate(notes[notes.length - 1].created_at || "")}
+              {notes[notes.length - 1]?.text?.toLowerCase() || ""} |{" "}
+              {formatNoteDate(notes[notes.length - 1]?.created_at || "")}
             </p>
             {notes.length > 1 && (
               <Button
