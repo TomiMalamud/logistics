@@ -39,7 +39,14 @@ import { getStore } from "@/lib/utils/constants";
 import { sanitizePhoneNumber, validatePhoneNumber } from "@/lib/utils/format";
 import type { Comprobante } from "@/types/api";
 import type { User } from "@supabase/supabase-js";
-import { AlertCircle, Edit2, Mail, MapPin, Phone } from "lucide-react";
+import {
+  AlertCircle,
+  Edit2,
+  Mail,
+  MapPin,
+  Phone,
+  ArrowRight,
+} from "lucide-react";
 import { useRouter } from "next/router";
 import React from "react";
 import { titleCase } from "title-case";
@@ -231,6 +238,17 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
       setInvoiceItems(itemsData.items || []);
       setStoreId(itemsData.inventoryId);
       validatePhone(sanitizedPhone);
+
+      // Check for Cama con Cajones
+      if (
+        itemsData.items?.some((item) =>
+          item.Concepto?.toLowerCase().includes("cama con cajones")
+        )
+      ) {
+        setError(
+          "Este pedido contiene una Cama con Cajones. Después de guardar la entrega, vas a ir directo a la página de Camas con Cajones."
+        );
+      }
     } catch (error) {
       console.error(error);
       setError("Error loading invoice details");
@@ -304,7 +322,18 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
         throw new Error(errorData.error || "Error creating delivery");
       }
 
-      router.push("/");
+      const { delivery } = await response.json();
+
+      // Check if we need to create a manufacturing order
+      const hasBedWithDrawers = invoiceItems.some((item) =>
+        item.Concepto?.toLowerCase().includes("cama con cajones")
+      );
+
+      if (hasBedWithDrawers && delivery?.id) {
+        router.push(`/manufacturing?delivery_id=${delivery.id}`);
+      } else {
+        router.push("/");
+      }
     } catch (error) {
       console.error(error);
       setError(
@@ -434,11 +463,19 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
             {loading ? "Guardando..." : "Guardar"}
           </Button>
         </CardFooter>
-
         {error && (
-          <Alert variant="destructive" className="mt-4 mx-6 mb-6">
+          <Alert
+            variant={
+              error.includes("Cama con Cajones") ? "default" : "destructive"
+            }
+            className="mx-auto w-[95%] mb-8"
+          >
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>
+              {error.includes("Cama con Cajones")
+                ? "Acción requerida"
+                : "Error"}
+            </AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}

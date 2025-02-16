@@ -80,6 +80,7 @@ interface Props {
     id: string;
   };
   onSuccess?: () => void;
+  defaultDeliveryId?: string;
 }
 
 const supabase = createClient();
@@ -162,7 +163,7 @@ const useDeliveries = () => {
   });
 };
 
-export function CreateOrderForm({ user, onSuccess }: Props) {
+export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -171,8 +172,16 @@ export function CreateOrderForm({ user, onSuccess }: Props) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       needsPackaging: false,
+      deliveryId: defaultDeliveryId,
     },
   });
+
+  // Open dialog if defaultDeliveryId is provided
+  React.useEffect(() => {
+    if (defaultDeliveryId) {
+      setDialogOpen(true);
+    }
+  }, [defaultDeliveryId]);
 
   const { data: deliveries, isLoading: isLoadingDeliveries } = useDeliveries();
   const { data: deliveryItems, isLoading: isLoadingItems } = useDeliveryItems(

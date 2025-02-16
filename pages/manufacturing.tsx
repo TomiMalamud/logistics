@@ -5,6 +5,7 @@ import ManufacturingOrdersList from "@/components/manufacturing/Table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/utils/supabase/server-props";
 import { GetServerSidePropsContext } from "next";
+import { useRouter } from "next/router";
 
 interface Props {
   user: {
@@ -13,6 +14,9 @@ interface Props {
 }
 
 export default function ManufacturingPage({ user }: Props) {
+  const router = useRouter();
+  const { delivery_id } = router.query;
+
   return (
     <Layout title="Camas con Cajones">
       <div className="space-y-8">
@@ -20,7 +24,10 @@ export default function ManufacturingPage({ user }: Props) {
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Camas con Cajones</CardTitle>
-            <CreateOrderForm user={user} />
+            <CreateOrderForm
+              user={user}
+              defaultDeliveryId={delivery_id ? String(delivery_id) : undefined}
+            />
           </CardHeader>
           <CardContent>
             <ManufacturingOrdersList />
