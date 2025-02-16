@@ -10,29 +10,31 @@ const productSchema = z.object({
 // Home delivery schema
 export const homeDeliverySchema = z
   .object({
-    order_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-    products: z.array(productSchema).min(1, "At least one product is required"),
+    order_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido"),
+    products: z.array(productSchema).min(1, "Elegí al menos un producto"),
     invoice_number: z.string().optional(),
     invoice_id: z.string().optional(),
-    name: z.string().min(1, "Name is required"),
-    address: z.string().min(1, "Address is required"),
-    phone: z.string().min(1, "Phone is required"),
-    dni: z.string().min(1, "DNI is required"),
+    name: z.string().min(1, "Nombre es requerido"),
+    address: z.string().min(1, "Dirección es requerida"),
+    phone: z.string().min(1, "Teléfono es requerido"),
+    dni: z.string().min(1, "DNI es requerido"),
     scheduled_date: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido")
       .optional(),
     notes: z.string().optional(),
-    created_by: z.string().min(1, "Created by is required"),
-    email: z.string().email("Invalid email").nullable(),
+    created_by: z.string().min(1, "Creado por es requerido"),
+    email: z.string().email("Email inválido").nullable(),
     emailBypassReason: z.string().optional(),
     store_id: z.enum(["60835", "24471", "31312", "70749"] as const, {
-      errorMap: () => ({ message: "Invalid store ID" }),
+      errorMap: () => ({ message: "ID de tienda inválido" }),
     }),
   })
   .refine(
     (data) => data.email || data.emailBypassReason,
-    "Either email or email bypass reason must be provided"
+    "Debe proporcionar un email o una razón de bypass"
   );
 
 // Pickup delivery schema
@@ -40,38 +42,40 @@ export const pickupDeliverySchema = z.object({
   products: z
     .array(
       z.object({
-        sku: z.string().min(1, "SKU is required"),
-        quantity: z.number().positive("Quantity must be positive"),
+        sku: z.string().min(1, "SKU es requerido"),
+        quantity: z.number().positive("La cantidad debe ser positiva"),
       })
     )
-    .min(1, "At least one product is required"),
-  supplier_id: z.number().positive("Supplier ID is required"),
+    .min(1, "Al menos un producto es requerido"),
+  supplier_id: z.number().positive("ID de proveedor es requerido"),
   scheduled_date: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido")
     .optional(),
-  created_by: z.string().min(1, "Created by is required"),
+  created_by: z.string().min(1, "Creado por es requerido"),
 });
 
 // Store movement schema
 export const storeMovementSchema = z
   .object({
     origin_store: z.enum(["60835", "24471", "31312", "70749"] as const, {
-      errorMap: () => ({ message: "Invalid origin store" }),
+      errorMap: () => ({ message: "Tienda de origen inválida" }),
     }),
     dest_store: z.enum(["60835", "24471", "31312", "70749"] as const, {
-      errorMap: () => ({ message: "Invalid destination store" }),
+      errorMap: () => ({ message: "Tienda de destino inválida" }),
     }),
-    products: z.array(productSchema).min(1, "At least one product is required"),
+    products: z
+      .array(productSchema)
+      .min(1, "Al menos un producto es requerido"),
     scheduled_date: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido")
       .optional(),
-    created_by: z.string().min(1, "Created by is required"),
+    created_by: z.string().min(1, "Creado por es requerido"),
   })
   .refine(
     (data) => data.origin_store !== data.dest_store,
-    "Origin and destination stores must be different"
+    "Las tiendas de origen y destino deben ser diferentes"
   );
 
 // Types inferred from the schemas
@@ -84,19 +88,19 @@ export const calendarQuerySchema = z
   .object({
     startDate: z
       .string({
-        required_error: "Invalid start date format",
+        required_error: "Formato de fecha de inicio inválido",
       })
       .regex(
         /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}.\d{3}Z)?$/,
-        "Invalid start date format"
+        "Formato de fecha de inicio inválido"
       ),
     endDate: z
       .string({
-        required_error: "Invalid end date format",
+        required_error: "Formato de fecha de fin inválido",
       })
       .regex(
         /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}.\d{3}Z)?$/,
-        "Invalid end date format"
+        "Formato de fecha de fin inválido"
       ),
   })
   .refine(
@@ -106,7 +110,7 @@ export const calendarQuerySchema = z
       return start <= end;
     },
     {
-      message: "Start date must be before or equal to end date",
+      message: "La fecha de inicio debe ser anterior o igual a la fecha de fin",
       path: ["startDate"],
     }
   );
