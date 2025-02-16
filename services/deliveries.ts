@@ -493,15 +493,33 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     }
 
     // Process items only for deliveries
+    let allItemsDelivered = false;
     if (operationType === "delivery" && items?.length) {
-      return await processItems({
+      allItemsDelivered = await processItems({
         operationId: operation.id,
         deliveryId,
         items,
       });
+
+      // Update delivery state if all items are delivered
+      if (allItemsDelivered) {
+        const { error: updateError } = await supabase
+          .from("deliveries")
+          .update({ state: "delivered" })
+          .eq("id", deliveryId);
+
+        if (updateError) {
+          throw new Error(
+            `Error updating delivery state: ${updateError.message}`
+          );
+        }
+      }
     }
 
-    return false;
+    return {
+      ...operation,
+      allItemsDelivered,
+    };
   };
 
   const getDelivery = async (id: number) => {

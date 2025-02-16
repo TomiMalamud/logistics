@@ -65,7 +65,7 @@ describe("/api/deliveries/calendar", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Invalid start date format",
+        error: "Formato de fecha de inicio inválido",
       });
     });
 
@@ -79,7 +79,7 @@ describe("/api/deliveries/calendar", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Invalid start date format",
+        error: "Formato de fecha de inicio inválido",
       });
     });
 
@@ -92,7 +92,7 @@ describe("/api/deliveries/calendar", () => {
       await handler(req, res);
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Start date must be before or equal to end date",
+        error: "La fecha de inicio debe ser anterior o igual a la fecha de fin",
       });
     });
 

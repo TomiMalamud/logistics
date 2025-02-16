@@ -37,10 +37,9 @@ import {
   Check,
   CheckCircle,
   ChevronDown,
-  DollarSign,
   Filter,
   Loader2,
-  MessageSquare,
+  MessageCircle,
   MoreHorizontal,
   Package,
   Pencil,
@@ -59,13 +58,9 @@ const statusConfig: Record<
     color: "bg-yellow-100 text-yellow-800",
     label: "Pendiente",
   },
-  completed: {
+  finished: {
     color: "bg-green-100 text-green-800",
     label: "Terminada",
-  },
-  paid: {
-    color: "bg-blue-100 text-blue-800",
-    label: "Pagada",
   },
   cancelled: {
     color: "bg-red-100 text-red-800",
@@ -113,8 +108,7 @@ const ManufacturingOrdersList = () => {
         .from("manufacturing_orders")
         .update({
           status,
-          completed_at:
-            status === "completed" ? new Date().toISOString() : null,
+          finished_at: status === "finished" ? new Date().toISOString() : null,
         })
         .eq("id", orderId);
 
@@ -150,7 +144,7 @@ const ManufacturingOrdersList = () => {
   const getBusinessDaysElapsed = (
     orderDate: Date,
     status: ManufacturingStatus,
-    completedAt: Date | null
+    finishedAt: Date | null
   ) => {
     const normalizeDate = (date: Date) => {
       // Ensure we're working with UTC dates to avoid timezone issues
@@ -174,9 +168,9 @@ const ManufacturingOrdersList = () => {
       const start = normalizeDate(orderDate);
       return differenceInBusinessDays(today, start);
     }
-    // For completed/paid/cancelled orders, show days it took to complete
+    // For finished/cancelled orders, show days it took to complete
     return differenceInBusinessDays(
-      normalizeDate(completedAt || new Date()),
+      normalizeDate(finishedAt || new Date()),
       normalizeDate(orderDate)
     );
   };
@@ -248,7 +242,7 @@ const ManufacturingOrdersList = () => {
       return <span className="text-gray-600">{daysElapsed}</span>;
     }
 
-    // For completed/paid/cancelled orders, show total days it took
+    // For finished/cancelled orders, show total days it took
     return <span className="text-gray-600">{daysElapsed}</span>;
   };
 
@@ -315,7 +309,7 @@ const ManufacturingOrdersList = () => {
         const daysElapsed = getBusinessDaysElapsed(
           order.orderDate,
           order.status,
-          order.completedAt
+          order.finishedAt
         );
         const isLate = daysElapsed > 15;
         return `
@@ -371,10 +365,10 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
         <Button
           variant="outline"
           onClick={sendPendingOrders}
-          className="gap-2"
+          className="gap-2 bg-[#25d366] font-normal hover:bg-[#25d366]/90"
           disabled={!orders?.some((order) => order.status === "pending")}
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageCircle className="h-4 w-4" />
           Enviar Pedidos Pendientes
         </Button>
         <DropdownMenu>
@@ -429,7 +423,7 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
                   getBusinessDaysElapsed(
                     order.orderDate,
                     order.status,
-                    order.completedAt
+                    order.finishedAt
                   ),
                   order.status
                 )}
@@ -440,8 +434,8 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
                 ).replace("/2025", "")}
               </TableCell>
               <TableCell>
-                {order.completedAt
-                  ? format(new Date(order.completedAt), "dd/MM")
+                {order.finishedAt
+                  ? format(new Date(order.finishedAt), "dd/MM")
                   : "-"}
               </TableCell>
               <TableCell>{order.customerName || "Sin cliente"}</TableCell>
@@ -491,25 +485,12 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
                         onClick={() => {
                           updateStatus.mutate({
                             orderId: order.id,
-                            status: "completed",
+                            status: "finished",
                           });
                         }}
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Marcar como terminada
-                      </DropdownMenuItem>
-                    )}
-                    {order.status === "completed" && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          updateStatus.mutate({
-                            orderId: order.id,
-                            status: "paid",
-                          });
-                        }}
-                      >
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        Marcar como pagada
                       </DropdownMenuItem>
                     )}
                     {order.status !== "cancelled" && (

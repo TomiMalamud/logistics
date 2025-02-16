@@ -7,31 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-          extensions?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       carrier_payments: {
@@ -316,46 +291,43 @@ export type Database = {
       };
       manufacturing_orders: {
         Row: {
-          completed_at: string | null;
+          finished_at: string | null;
           created_at: string;
           created_by: string;
-          delivery_id: number;
+          delivery_id: number | null;
           extras: string | null;
           id: number;
+          is_custom_order: boolean | null;
           needs_packaging: boolean;
           notes: string | null;
-          paid_at: string | null;
-          payment_id: number | null;
           price: number | null;
           product_name: string;
           status: Database["public"]["Enums"]["manufacturing_status"];
         };
         Insert: {
-          completed_at?: string | null;
+          finished_at?: string | null;
           created_at?: string;
           created_by: string;
-          delivery_id: number;
+          delivery_id?: number | null;
           extras?: string | null;
           id?: number;
+          is_custom_order?: boolean | null;
           needs_packaging?: boolean;
           notes?: string | null;
-          paid_at?: string | null;
-          payment_id?: number | null;
           price?: number | null;
           product_name: string;
           status?: Database["public"]["Enums"]["manufacturing_status"];
         };
         Update: {
-          completed_at?: string | null;
+          finished_at?: string | null;
           created_at?: string;
           created_by?: string;
-          delivery_id?: number;
+          delivery_id?: number | null;
           extras?: string | null;
           id?: number;
+          is_custom_order?: boolean | null;
           needs_packaging?: boolean;
           notes?: string | null;
-          paid_at?: string | null;
-          payment_id?: number | null;
           price?: number | null;
           product_name?: string;
           status?: Database["public"]["Enums"]["manufacturing_status"];
@@ -374,13 +346,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "deliveries";
             referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "manufacturing_orders_payment_id_fkey";
-            columns: ["payment_id"];
-            isOneToOne: false;
-            referencedRelation: "manufacturing_payments";
-            referencedColumns: ["id"];
           }
         ];
       };
@@ -390,7 +355,6 @@ export type Database = {
           created_at: string;
           created_by: string;
           id: number;
-          is_advance_payment: boolean;
           notes: string | null;
           payment_date: string;
           payment_method: string;
@@ -400,7 +364,6 @@ export type Database = {
           created_at?: string;
           created_by: string;
           id?: number;
-          is_advance_payment?: boolean;
           notes?: string | null;
           payment_date?: string;
           payment_method: string;
@@ -410,7 +373,6 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           id?: number;
-          is_advance_payment?: boolean;
           notes?: string | null;
           payment_date?: string;
           payment_method?: string;
@@ -570,12 +532,7 @@ export type Database = {
       carrier_type: "local" | "national";
       delivery_state: "pending" | "delivered" | "cancelled";
       delivery_type: "supplier_pickup" | "home_delivery" | "store_movement";
-      manufacturing_status:
-        | "pending"
-        | "paid"
-        | "completed"
-        | "returned"
-        | "cancelled";
+      manufacturing_status: "pending" | "finished" | "cancelled";
       store: "60835" | "24471" | "31312" | "70749";
       user_role: "admin" | "operations" | "sales";
     };

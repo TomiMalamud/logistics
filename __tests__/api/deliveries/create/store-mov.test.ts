@@ -129,7 +129,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Invalid origin store",
+        error: "Tienda de origen inválida",
       });
     });
 
@@ -145,7 +145,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "At least one product is required",
+        error: "Al menos un producto es requerido",
       });
     });
 
@@ -183,7 +183,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Invalid origin store",
+        error: "Tienda de origen inválida",
       });
     });
   });

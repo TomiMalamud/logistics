@@ -183,11 +183,7 @@ export interface Carrier {
   avg_cost?: number;
 }
 
-export type ManufacturingStatus =
-  | "pending"
-  | "completed"
-  | "paid"
-  | "cancelled";
+export type ManufacturingStatus = "pending" | "finished" | "cancelled";
 
 export interface BaseManufacturingOrder {
   id: number;
@@ -197,7 +193,7 @@ export interface BaseManufacturingOrder {
   status: ManufacturingStatus;
   notes: string | null;
   delivery_id: number;
-  completed_at: string | null;
+  finished_at: string | null;
 }
 
 export interface ManufacturingOrder {
@@ -213,5 +209,5 @@ export interface ManufacturingOrder {
   notes: string | null;
   createdAt: Date;
   createdBy: string;
-  completedAt: Date | null;
+  finishedAt: Date | null;
 }

@@ -108,7 +108,7 @@ describe("/api/deliveries/create/pickup", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "At least one product is required",
+        error: "Al menos un producto es requerido",
       });
     });
 

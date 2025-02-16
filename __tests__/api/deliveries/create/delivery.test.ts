@@ -172,7 +172,7 @@ describe("/api/deliveries/create/delivery", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Either email or email bypass reason must be provided",
+        error: "Debe proporcionar un email o una razón de bypass",
       });
     });
   });

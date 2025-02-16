@@ -7,7 +7,7 @@ const supabase = createClient();
 interface ManufacturingOrderRow extends BaseManufacturingOrder {
   created_at: string;
   created_by: string;
-  completed_at: string;
+  finished_at: string;
   deliveries: {
     id: number;
     customer_id: number;
@@ -35,7 +35,7 @@ async function fetchManufacturingOrders() {
       extras,
       status,
       needs_packaging,
-      completed_at,
+      finished_at,
       notes,
       delivery_id,
       deliveries (
@@ -66,7 +66,7 @@ async function fetchManufacturingOrders() {
     notes: order.notes,
     createdAt: new Date(order.created_at),
     createdBy: order.created_by,
-    completedAt: order.completed_at ? new Date(order.completed_at) : null,
+    finishedAt: order.finished_at ? new Date(order.finished_at) : null,
   })) as ManufacturingOrder[];
 }
 

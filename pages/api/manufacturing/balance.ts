@@ -16,16 +16,16 @@ export type BalanceResponse = {
   transactions: Transaction[];
   totalBalance: number;
   initialBalance: number;
-  totalPending: number;
 };
 
 type OrderWithDetails = {
   id: number;
-  completed_at: string;
+  finished_at: string;
   product_name: string;
   extras: string | null;
   status: ManufacturingStatus;
   price: number;
+  notes: string | null;
   deliveries: {
     id: number;
     invoice_number: string | null;
@@ -50,43 +50,49 @@ export default async function handler(
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const filterDate = thirtyDaysAgo.toISOString().split("T")[0];
 
-    // Get total pending (all completed but not paid orders)
-    const { data: pendingData, error: pendingError } = await supabase
+    // Get total finished orders before filter date (for initial balance)
+    const { data: finishedData, error: finishedError } = await supabase
       .from("manufacturing_orders")
       .select("price")
-      .eq("status", "completed");
+      .eq("status", "finished")
+      .lt("finished_at", filterDate);
 
-    if (pendingError) throw pendingError;
+    if (finishedError) throw finishedError;
 
-    // Get total paid before filter date (for initial balance)
-    const { data: paidData, error: paidError } = await supabase
-      .from("manufacturing_orders")
-      .select("price")
-      .eq("status", "paid")
-      .lt("completed_at", filterDate);
+    // Get total payments before filter date (for initial balance)
+    const { data: previousPayments, error: previousPaymentsError } =
+      await supabase
+        .from("manufacturing_payments")
+        .select("amount")
+        .lt("payment_date", filterDate);
 
-    if (paidError) throw paidError;
+    if (previousPaymentsError) throw previousPaymentsError;
 
-    const total_pending = pendingData.reduce(
+    const totalFinishedBefore = finishedData.reduce(
       (sum, order) => sum + (order.price || 0),
       0
     );
-    const initialBalance = paidData.reduce(
-      (sum, order) => sum + (order.price || 0),
+
+    const totalPaymentsBefore = previousPayments.reduce(
+      (sum, payment) => sum + payment.amount,
       0
     );
 
-    // Fetch all completed orders and paid orders within 30-day window
+    // Initial balance is finished orders minus payments before filter date
+    const initialBalance = totalFinishedBefore - totalPaymentsBefore;
+
+    // Fetch all finished orders within 30-day window
     const { data: orders, error: ordersError } = await supabase
       .from("manufacturing_orders")
       .select(
         `
         id,
-        completed_at,
+        finished_at,
         product_name,
         extras,
         status,
         price,
+        notes,
         deliveries (
           id,
           invoice_number,
@@ -96,10 +102,9 @@ export default async function handler(
         )
       `
       )
-      .or(
-        `status.eq.completed,and(status.eq.paid,completed_at.gte.${filterDate})`
-      )
-      .order("completed_at");
+      .eq("status", "finished")
+      .gte("finished_at", filterDate)
+      .order("finished_at");
 
     if (ordersError) throw ordersError;
 
@@ -115,12 +120,16 @@ export default async function handler(
     // Process orders to transactions
     const orderTransactions = (orders as unknown as OrderWithDetails[]).map(
       (order) => ({
-        date: order.completed_at,
+        date: order.finished_at,
         concept: `${order.product_name}${
           order.extras ? ` + ${order.extras}` : ""
-        } - ${order.deliveries.customers.name}${
-          !order.price ? " (Pendiente de precio)" : ""
-        }`,
+        }${
+          order.deliveries?.customers?.name
+            ? ` - ${order.deliveries.customers.name}`
+            : ` (Pedido personalizado) ${
+                order.notes ? ` - ${order.notes}` : ""
+              }`
+        }${!order.price ? " (Pendiente de precio)" : ""}`,
         debit: order.price || 0,
         credit: 0,
         type: "order" as const,
@@ -136,9 +145,7 @@ export default async function handler(
         date: p.payment_date,
         concept: `Pago - ${
           p.payment_method === "cash" ? "Efectivo" : "Transferencia"
-        }${p.notes ? ` - ${p.notes}` : ""}${
-          p.is_advance_payment ? " (Pago a cuenta)" : ""
-        }`,
+        }${p.notes ? ` - ${p.notes}` : ""}`,
         debit: 0,
         credit: p.amount,
         type: "payment" as const,
@@ -157,7 +164,6 @@ export default async function handler(
       transactions,
       initialBalance,
       totalBalance: runningBalance,
-      totalPending: total_pending,
     };
 
     return res.status(200).json(response);

@@ -1,11 +1,13 @@
 import Layout from "@/components/Layout";
-import { Balance } from "@/components/manufacturing/Balance";
-import { CreateOrderForm } from "@/components/manufacturing/CreateOrderForm";
 import ManufacturingOrdersList from "@/components/manufacturing/Table";
+import { CreateOrderForm } from "@/components/manufacturing/CreateOrderForm";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/utils/supabase/server-props";
 import { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
+import { Wallet } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   user: {
@@ -20,10 +22,21 @@ export default function ManufacturingPage({ user }: Props) {
   return (
     <Layout title="Camas con Cajones">
       <div className="space-y-8">
-        <Balance user={user} />
         <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Camas con Cajones</CardTitle>
+            <div className="flex items-center gap-4">
+              <CardTitle>Camas con Cajones</CardTitle>
+              <Button
+                variant="link"
+                asChild
+                className="gap-2 text-blue-500 hover:text-blue-700 hover:underline"
+              >
+                <Link href="/manufacturing/balance">
+                  <Wallet className="h-4 w-4" />
+                  Ver Cuenta Corriente
+                </Link>
+              </Button>
+            </div>
             <CreateOrderForm
               user={user}
               defaultDeliveryId={delivery_id ? String(delivery_id) : undefined}

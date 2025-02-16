@@ -7,8 +7,6 @@ interface CreatePaymentRequest {
   payment_method: "cash" | "bank_transfer";
   notes?: string;
   created_by: string;
-  order_ids?: number[];
-  is_advance_payment?: boolean;
 }
 
 const validateRequest = (body: CreatePaymentRequest): void => {
@@ -30,14 +28,6 @@ const validateRequest = (body: CreatePaymentRequest): void => {
 
   if (!["cash", "bank_transfer"].includes(body.payment_method)) {
     throw new Error("Invalid payment method");
-  }
-
-  // Only validate order_ids if it's not an advance payment
-  if (
-    !body.is_advance_payment &&
-    (!body.order_ids || body.order_ids.length === 0)
-  ) {
-    throw new Error("At least one order must be selected for regular payments");
   }
 };
 
@@ -65,15 +55,7 @@ export default async function handler(
     const body = req.body as CreatePaymentRequest;
     validateRequest(body);
 
-    const {
-      amount,
-      payment_date,
-      payment_method,
-      notes,
-      created_by,
-      order_ids,
-      is_advance_payment,
-    } = body;
+    const { amount, payment_date, payment_method, notes, created_by } = body;
 
     // Create payment
     const { data: payment, error: paymentError } = await supabase
@@ -85,7 +67,6 @@ export default async function handler(
           payment_method,
           notes,
           created_by,
-          is_advance_payment: !!is_advance_payment,
         },
       ])
       .select()
@@ -93,22 +74,6 @@ export default async function handler(
 
     if (paymentError || !payment) {
       throw new Error(paymentError?.message || "Failed to create payment");
-    }
-
-    // Only update orders if this is not an advance payment and order_ids are provided
-    if (!is_advance_payment && order_ids && order_ids.length > 0) {
-      const { error: updateError } = await supabase
-        .from("manufacturing_orders")
-        .update({
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          payment_id: payment.id,
-        })
-        .in("id", order_ids);
-
-      if (updateError) {
-        throw new Error(updateError?.message || "Failed to update orders");
-      }
     }
 
     return res.status(200).json({

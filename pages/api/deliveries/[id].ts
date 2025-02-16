@@ -135,6 +135,16 @@ export default async function handler(
       // Fetch current delivery state
       const delivery = await deliveryService.getDelivery(id);
 
+      // Only allow cancellation state changes
+      if (state && state !== delivery.state) {
+        if (state !== "cancelled") {
+          return res.status(400).json({
+            error: "Invalid state transition",
+            details: "State can only be changed to cancelled",
+          });
+        }
+      }
+
       // Validate items if present
       if (items?.length) {
         try {
@@ -148,39 +158,44 @@ export default async function handler(
       }
 
       // Handle state changes and operations
-      let finalState = state;
-      if (state && state !== delivery.state) {
-        // Only allow pending -> delivered or any -> cancelled transitions
-        if (
-          (delivery.state === "pending" && state === "delivered") ||
-          (state === "cancelled" && delivery.state !== "cancelled")
-        ) {
-          try {
-            const isFullyDelivered = await deliveryService.recordOperation({
-              deliveryId: id,
-              userId: user.id,
-              operationType:
-                state === "cancelled" ? "cancellation" : "delivery",
-              carrierId: carrier_id,
-              deliveryCost: delivery_cost,
-              pickupStore: pickup_store as unknown as Store,
-              items: items as DeliveryItem[],
-            });
+      let finalState = delivery.state; // Start with current state
+      let allItemsDelivered = false;
 
-            // Only set state to delivered if all items are delivered
-            if (state === "delivered" && !isFullyDelivered) {
-              finalState = "pending";
-            }
-          } catch (error: any) {
-            return res.status(400).json({
-              error: "Operation recording failed",
-              details: error.message,
-            });
-          }
-        } else {
+      // Process delivery operation if items are present
+      if (items?.length) {
+        try {
+          const result = await deliveryService.recordOperation({
+            deliveryId: id,
+            userId: user.id,
+            operationType: "delivery",
+            carrierId: carrier_id,
+            deliveryCost: delivery_cost,
+            pickupStore: pickup_store as unknown as Store,
+            items: items as DeliveryItem[],
+          });
+
+          // Set state based on whether all items are delivered
+          allItemsDelivered = result.allItemsDelivered;
+          finalState = allItemsDelivered ? "delivered" : "pending";
+        } catch (error: any) {
           return res.status(400).json({
-            error: "Invalid state transition",
-            details: `Cannot transition from ${delivery.state} to ${state}`,
+            error: "Operation recording failed",
+            details: error.message,
+          });
+        }
+      } else if (state === "cancelled") {
+        // Handle cancellation
+        try {
+          await deliveryService.recordOperation({
+            deliveryId: id,
+            userId: user.id,
+            operationType: "cancellation",
+          });
+          finalState = "cancelled";
+        } catch (error: any) {
+          return res.status(400).json({
+            error: "Operation recording failed",
+            details: error.message,
           });
         }
       }
@@ -197,7 +212,10 @@ export default async function handler(
         await deliveryService.handleNotifications(delivery);
       }
 
-      return res.status(200).json({ message: "Delivery updated successfully" });
+      return res.status(200).json({
+        message: "Delivery updated successfully",
+        allItemsDelivered,
+      });
     } catch (error: any) {
       console.error("Error updating delivery:", error);
       return res.status(400).json({ error: error.message });

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency, formatLongDate } from "@/lib/utils/format";
 import { useQuery } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PaymentForm } from "./PaymentForm";
 
 interface Props {
@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function Balance({ user }: Props) {
-  const { data, isLoading, error, refetch, isRefetching } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["manufacturer-balance"],
     queryFn: async () => {
       const response = await fetch("/api/manufacturing/balance");
@@ -53,54 +53,38 @@ export function Balance({ user }: Props) {
     );
   }
 
-  const { transactions, totalBalance, initialBalance, totalPending } = data;
+  const { transactions, totalBalance, initialBalance } = data;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div>
-          <CardTitle>Estado de Cuenta - Fabricante</CardTitle>
+          <CardTitle>Cuenta Corriente - Stilo Propio</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Mostrando últimos 30 días
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => refetch()}
-            disabled={isRefetching}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isRefetching ? "animate-spin" : ""}`}
-            />
-          </Button>
-          <PaymentForm
-            user={user}
-            onSuccess={() => refetch()}
-            trigger={<Button>Nuevo Pago</Button>}
-          />
-        </div>
+        <PaymentForm
+          user={user}
+          onSuccess={() => refetch()}
+          trigger={
+            <Button>
+              <Plus className="h-4 w-4" />
+              Nuevo Pago
+            </Button>
+          }
+        />
       </CardHeader>
 
       <CardContent>
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="p-3 bg-muted rounded-md">
-            <div className="text-sm text-muted-foreground">Saldo anterior</div>
-            <div
-              className={initialBalance > 0 ? "text-red-600" : "text-green-600"}
-            >
-              {formatCurrency(initialBalance)}
-            </div>
-          </div>
-          <div className="p-3 bg-muted rounded-md">
-            <div className="text-sm text-muted-foreground">
-              Pendiente de pago
-            </div>
-            <div className="text-red-600">{formatCurrency(totalPending)}</div>
-          </div>
+        <div className="text-sm text-muted-foreground mb-4 text-right">
+          Saldo anterior:{" "}
+          <span
+            className={initialBalance > 0 ? "text-red-600" : "text-green-600"}
+          >
+            {formatCurrency(initialBalance)}
+          </span>
         </div>
-
         <Table>
           <TableHeader>
             <TableRow>

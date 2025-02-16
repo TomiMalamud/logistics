@@ -136,15 +136,15 @@ describe("/api/deliveries/[id]", () => {
         state: "pending" as DeliveryStateEnum,
       });
 
-      mockRecordOperation.mockResolvedValue(true);
+      mockRecordOperation.mockResolvedValue({ allItemsDelivered: true });
 
       const { req, res } = createMocks({
         method: "PUT",
         query: { id: "1" },
         body: {
-          state: "delivered",
           carrier_id: 1,
           delivery_cost: 1000,
+          items: validItems,
         },
       });
 
@@ -165,13 +165,12 @@ describe("/api/deliveries/[id]", () => {
         state: "pending" as DeliveryStateEnum,
       });
 
-      mockRecordOperation.mockResolvedValue(true);
+      mockRecordOperation.mockResolvedValue({ allItemsDelivered: true });
 
       const { req, res } = createMocks({
         method: "PUT",
         query: { id: "1" },
         body: {
-          state: "delivered",
           pickup_store: validStore,
           items: validItems,
         },
@@ -194,13 +193,12 @@ describe("/api/deliveries/[id]", () => {
         state: "pending" as DeliveryStateEnum,
       });
 
-      mockRecordOperation.mockResolvedValue(false);
+      mockRecordOperation.mockResolvedValue({ allItemsDelivered: false });
 
       const { req, res } = createMocks({
         method: "PUT",
         query: { id: "1" },
         body: {
-          state: "delivered",
           carrier_id: 1,
           delivery_cost: 1000,
           items: validItems,
@@ -296,7 +294,7 @@ describe("/api/deliveries/[id]", () => {
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
         error: "Invalid state transition",
-        details: "Cannot transition from delivered to pending",
+        details: "State can only be changed to cancelled",
       });
     });
 

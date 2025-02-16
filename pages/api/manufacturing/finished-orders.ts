@@ -16,7 +16,7 @@ export default async function handler(
       .select(
         `
         id,
-        completed_at,
+        finished_at,
         product_name,
         extras,
         price,
@@ -27,14 +27,14 @@ export default async function handler(
         )
       `
       )
-      .eq("status", "completed")
-      .order("completed_at", { ascending: false });
+      .eq("status", "finished")
+      .order("finished_at", { ascending: false });
 
     if (error) throw error;
 
     return res.status(200).json(orders);
   } catch (error) {
-    console.error("Error fetching completed orders:", error);
+    console.error("Error fetching finished orders:", error);
     return res.status(500).json({
       error:
         error instanceof Error ? error.message : "An unexpected error occurred",
