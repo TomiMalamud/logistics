@@ -1,6 +1,9 @@
 import { createMocks } from "node-mocks-http";
 import balanceHandler from "@/pages/api/carriers/[id]/balance";
 import { supabase } from "@/lib/supabase";
+import { Database } from "@/supabase/types/supabase";
+
+type DeliveryTypeEnum = Database["public"]["Enums"]["delivery_type"];
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
@@ -24,18 +27,15 @@ describe("Carrier Balance API", () => {
     expect(res._getStatusCode()).toBe(405);
   });
 
-  it("returns 400 for invalid carrier ID", async () => {
+  it("returns 400 for missing carrier ID", async () => {
     const { req, res } = createMocks({
       method: "GET",
-      query: {
-        id: [],
-      },
+      query: {},
     });
 
     await balanceHandler(req, res);
-
     expect(res._getStatusCode()).toBe(400);
-    expect(JSON.parse(res._getData())).toEqual({ error: "Invalid carrier ID" });
+    expect(JSON.parse(res._getData())).toEqual({ error: "Required" });
   });
 
   it("returns carrier balance data successfully", async () => {
@@ -50,7 +50,7 @@ describe("Carrier Balance API", () => {
         deliveries: {
           id: 1,
           invoice_number: "INV001",
-          type: "delivery",
+          type: "home_delivery" as DeliveryTypeEnum,
           customers: { name: "Test Customer" },
           suppliers: null,
         },
@@ -65,20 +65,8 @@ describe("Carrier Balance API", () => {
       },
     ];
 
-    // Mock supabase responses with proper Promise handling
-    (supabase.from as jest.Mock).mockImplementation((table) => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      single: jest.fn().mockReturnThis(),
-      then: jest.fn(),
-    }));
-
-    // Set up specific mock responses for each table
-    const fromMock = supabase.from as jest.Mock;
-
-    fromMock.mockImplementation((table) => {
+    // Mock supabase responses
+    (supabase.from as jest.Mock).mockImplementation((table) => {
       if (table === "carriers") {
         return {
           select: jest.fn().mockReturnThis(),
@@ -137,15 +125,26 @@ describe("Carrier Balance API", () => {
       transactions: expect.arrayContaining([
         expect.objectContaining({
           date: mockOperations[0].operation_date,
+          concept: expect.stringContaining("INV001"),
           debit: mockOperations[0].cost,
+          credit: 0,
+          type: "delivery",
+          delivery_id: mockOperations[0].deliveries.id,
+          delivery_type: mockOperations[0].deliveries.type,
+          balance: expect.any(Number),
         }),
         expect.objectContaining({
           date: mockPayments[0].payment_date,
+          concept: expect.stringContaining("Pago"),
+          debit: 0,
           credit: mockPayments[0].amount,
+          type: "payment",
+          balance: expect.any(Number),
         }),
       ]),
+      totalBalance: expect.any(Number),
     });
-  }, 10000); // Increase timeout to 10 seconds
+  });
 
   it("handles supabase error", async () => {
     (supabase.from as jest.Mock).mockImplementation(() => ({

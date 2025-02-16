@@ -2,25 +2,7 @@
 import createClient from "@/lib/utils/supabase/api";
 import { createDeliveryService } from "@/services/deliveries";
 import { NextApiRequest, NextApiResponse } from "next";
-
-interface PickupRequest {
-  products: Array<{
-    sku: string;
-    quantity: number;
-  }>;
-  supplier_id: number;
-  scheduled_date?: string;
-  created_by: string;
-}
-
-const validateRequest = (body: PickupRequest): void => {
-  if (!body.products?.length) {
-    throw new Error("Products array is required and cannot be empty");
-  }
-  if (!body.supplier_id) {
-    throw new Error("Supplier ID is required");
-  }
-};
+import { pickupDeliverySchema } from "@/lib/validation/deliveries";
 
 export default async function handler(
   req: NextApiRequest,
@@ -44,10 +26,16 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const body = req.body as PickupRequest;
-    validateRequest(body);
+    // Validate request body using Zod
+    const validationResult = pickupDeliverySchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: validationResult.error.errors[0].message,
+      });
+    }
 
-    const { products, supplier_id, scheduled_date, created_by } = body;
+    const { products, supplier_id, scheduled_date, created_by } =
+      validationResult.data;
 
     // Validate supplier exists
     const { data: supplierExists, error: supplierError } = await supabase

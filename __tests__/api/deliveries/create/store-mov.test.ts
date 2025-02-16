@@ -129,7 +129,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Origin and destination stores are required",
+        error: "Invalid origin store",
       });
     });
 
@@ -145,7 +145,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Products array is required and cannot be empty",
+        error: "At least one product is required",
       });
     });
 
@@ -164,7 +164,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Invalid product format",
+        error: "Required",
       });
     });
 
@@ -183,7 +183,7 @@ describe("/api/deliveries/create/store-mov", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Invalid store IDs",
+        error: "Invalid origin store",
       });
     });
   });

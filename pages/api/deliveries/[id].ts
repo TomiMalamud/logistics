@@ -1,21 +1,73 @@
 // pages/api/deliveries/[id].ts
 import createClient from "@/lib/utils/supabase/api";
 import { createDeliveryService } from "@/services/deliveries";
-import { DeliveryState, Store } from "@/types/types";
+import { DeliveryState } from "@/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
+import { z } from "zod";
+import { Database } from "@/supabase/types/supabase";
 
-interface UpdateDeliveryBody {
-  state?: DeliveryState;
-  scheduled_date?: string;
-  delivery_cost?: number;
-  carrier_id?: number;
-  pickup_store?: Store;
-  items?: {
-    product_sku: string;
-    quantity: number;
-    store_id: string;
-  }[];
-}
+type StoreEnum = Database["public"]["Enums"]["store"];
+type DeliveryStateEnum = Database["public"]["Enums"]["delivery_state"];
+
+const querySchema = z.object({
+  id: z.string().regex(/^\d+$/, "Invalid delivery ID"),
+});
+
+// This matches the service's DeliveryItem interface
+const itemSchema = z
+  .object({
+    product_sku: z.string().min(1, "Product SKU is required"),
+    quantity: z.number().positive("Quantity must be positive"),
+    store_id: z.enum(["60835", "24471", "31312", "70749"] as const),
+  })
+  .strict();
+
+const storeSchema = z
+  .object({
+    id: z.enum(["60835", "24471", "31312", "70749"] as const),
+    label: z.string().min(1, "Store label is required"),
+  })
+  .strict();
+
+const updateDeliverySchema = z
+  .object({
+    state: z.enum(["pending", "delivered", "cancelled"] as const).optional(),
+    scheduled_date: z.string().optional(),
+    delivery_cost: z
+      .number()
+      .positive("Delivery cost must be positive")
+      .optional(),
+    carrier_id: z.number().positive("Carrier ID must be positive").optional(),
+    pickup_store: storeSchema.optional(),
+    items: z.array(itemSchema).optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.state === "delivered" && !data.carrier_id && !data.pickup_store) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Either provide a pickup store or carrier for delivery",
+      });
+    }
+    if (data.carrier_id && !data.delivery_cost) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Delivery cost is required when carrier is provided",
+      });
+    }
+  });
+
+// Type assertions to ensure our Zod schemas match the database types
+type UpdateDeliveryInput = z.infer<typeof updateDeliverySchema>;
+type DeliveryItem = {
+  product_sku: string;
+  quantity: number;
+  store_id: StoreEnum;
+};
+type Store = {
+  id: StoreEnum;
+  label: string;
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -31,11 +83,12 @@ export default async function handler(
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const id = Number(req.query.id);
-  if (isNaN(id)) {
-    return res.status(400).json({ error: "Invalid delivery ID" });
+  const queryResult = querySchema.safeParse(req.query);
+  if (!queryResult.success) {
+    return res.status(400).json({ error: queryResult.error.issues[0].message });
   }
 
+  const id = Number(queryResult.data.id);
   const deliveryService = createDeliveryService(supabase);
 
   if (req.method === "GET") {
@@ -52,6 +105,13 @@ export default async function handler(
   }
 
   if (req.method === "PUT") {
+    const updateResult = updateDeliverySchema.safeParse(req.body);
+    if (!updateResult.success) {
+      return res
+        .status(400)
+        .json({ error: updateResult.error.issues[0].message });
+    }
+
     const {
       state,
       scheduled_date,
@@ -59,7 +119,7 @@ export default async function handler(
       carrier_id,
       pickup_store,
       items,
-    } = req.body as UpdateDeliveryBody;
+    } = updateResult.data;
 
     try {
       // Fetch current delivery state
@@ -67,7 +127,7 @@ export default async function handler(
 
       // Validate items if present
       if (items?.length) {
-        await deliveryService.validateItems(id, items);
+        await deliveryService.validateItems(id, items as DeliveryItem[]);
       }
 
       // Handle state changes and operations
@@ -86,8 +146,8 @@ export default async function handler(
                 state === "cancelled" ? "cancellation" : "delivery",
               carrierId: carrier_id,
               deliveryCost: delivery_cost,
-              pickupStore: pickup_store,
-              items,
+              pickupStore: pickup_store as Store,
+              items: items as DeliveryItem[],
             });
 
             // Only set state to delivered if all items are delivered

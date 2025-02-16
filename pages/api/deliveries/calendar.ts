@@ -1,5 +1,6 @@
 // pages/api/deliveries/calendar.ts
 import createClient from "@/lib/utils/supabase/api";
+import { calendarQuerySchema } from "@/lib/validation/deliveries";
 import { createDeliveryService } from "@/services/deliveries";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -107,24 +108,11 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { startDate, endDate } = req.query;
-
-  if (
-    !startDate ||
-    !endDate ||
-    Array.isArray(startDate) ||
-    Array.isArray(endDate)
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Valid start and end dates are required" });
-  }
-
   try {
     const supabase = createClient(req, res);
     const deliveryService = createDeliveryService(supabase);
 
-    // Authenticate user
+    // Authenticate user first
     const {
       data: { user },
       error: authError,
@@ -132,6 +120,16 @@ export default async function handler(
     if (authError || !user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+
+    // Then validate query parameters
+    const validationResult = calendarQuerySchema.safeParse(req.query);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: validationResult.error.errors[0].message,
+      });
+    }
+
+    const { startDate, endDate } = validationResult.data;
 
     // Get pending deliveries with scheduled dates
     const { data: scheduled, error: scheduledError } =

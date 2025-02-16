@@ -1,43 +1,46 @@
 import { getProductCostBySku } from "@/lib/api";
 import createClient from "@/lib/utils/supabase/api";
 import { NextApiRequest, NextApiResponse } from "next";
+import { z } from "zod";
+import { Database } from "@/supabase/types/supabase";
 
-interface CreateManufacturingOrderRequest {
-  delivery_id?: number;
-  product_name: string;
-  product_sku?: string;
-  extra_product_sku?: string | null;
-  extras: string | null;
-  needs_packaging: boolean;
-  notes: string | null;
-  created_by: string;
-  is_custom_order?: boolean;
-  price?: number;
-}
+type ManufacturingStatus = Database["public"]["Enums"]["manufacturing_status"];
 
-const validateRequest = (body: CreateManufacturingOrderRequest): void => {
-  const requiredFields = ["product_name", "created_by"];
-  const missingFields = requiredFields.filter((field) => !body[field]);
-
-  if (missingFields.length > 0) {
-    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
-  }
-
-  // Validate that either it's a custom order with price or has required delivery fields
-  if (body.is_custom_order) {
-    if (!body.price || body.price <= 0) {
-      throw new Error(
-        "Price is required and must be greater than 0 for custom orders"
-      );
+const manufacturingOrderSchema = z
+  .object({
+    delivery_id: z.number().optional(),
+    product_name: z.string().min(1, "Product name is required"),
+    product_sku: z.string().optional(),
+    extra_product_sku: z.string().nullable().optional(),
+    extras: z.string().nullable(),
+    needs_packaging: z.boolean().default(false),
+    notes: z.string().nullable(),
+    created_by: z.string().min(1, "Created by is required"),
+    is_custom_order: z.boolean().optional(),
+    price: z.number().optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.is_custom_order) {
+      if (!data.price || data.price <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Price is required and must be greater than 0 for custom orders",
+        });
+      }
+    } else if (!data.delivery_id || !data.product_sku) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "delivery_id and product_sku are required for non-custom orders",
+      });
     }
-  } else {
-    if (!body.delivery_id || !body.product_sku) {
-      throw new Error(
-        "delivery_id and product_sku are required for non-custom orders"
-      );
-    }
-  }
-};
+  });
+
+type CreateManufacturingOrderRequest = z.infer<typeof manufacturingOrderSchema>;
+type ManufacturingOrderInsert =
+  Database["public"]["Tables"]["manufacturing_orders"]["Insert"];
 
 export default async function handler(
   req: NextApiRequest,
@@ -60,8 +63,10 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const body = req.body as CreateManufacturingOrderRequest;
-    validateRequest(body);
+    const result = manufacturingOrderSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error.issues[0].message });
+    }
 
     const {
       delivery_id,
@@ -74,7 +79,7 @@ export default async function handler(
       created_by,
       is_custom_order,
       price,
-    } = body;
+    } = result.data;
 
     // Only validate delivery if it's not a custom order
     if (!is_custom_order && delivery_id) {

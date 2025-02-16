@@ -65,22 +65,55 @@ describe("/api/deliveries/calendar", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Valid start and end dates are required",
+        error: "Invalid start date format",
       });
     });
 
-    it("should return 400 when dates are invalid arrays", async () => {
+    it("should return 400 when dates are invalid format", async () => {
       const { req, res } = createMocks({
         method: "GET",
-        query: { startDate: ["2024-01-01"], endDate: "2024-01-31" },
+        query: { startDate: "2024/01/01", endDate: "2024-01-31" },
       });
 
       await handler(req, res);
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error: "Valid start and end dates are required",
+        error: "Invalid start date format",
       });
+    });
+
+    it("should return 400 when end date is before start date", async () => {
+      const { req, res } = createMocks({
+        method: "GET",
+        query: { startDate: "2024-01-31", endDate: "2024-01-01" },
+      });
+
+      await handler(req, res);
+      expect(res._getStatusCode()).toBe(400);
+      expect(JSON.parse(res._getData())).toEqual({
+        error: "Start date must be before or equal to end date",
+      });
+    });
+
+    it("should accept valid dates", async () => {
+      mockSupabaseAuth.auth.getUser.mockResolvedValueOnce({
+        data: { user: { id: "test-user-id" } },
+        error: null,
+      });
+      mockListDeliveries
+        .mockResolvedValueOnce({ data: [], error: null })
+        .mockResolvedValueOnce({ data: [], count: 0 });
+      mockListOperations.mockResolvedValue({ data: [] });
+
+      const { req, res } = createMocks({
+        method: "GET",
+        query: { startDate: "2024-01-01", endDate: "2024-01-31" },
+      });
+
+      await handler(req, res);
+
+      expect(res._getStatusCode()).toBe(200);
     });
   });
 

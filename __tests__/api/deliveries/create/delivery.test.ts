@@ -161,8 +161,7 @@ describe("/api/deliveries/create/delivery", () => {
     });
 
     it("should require either email or email bypass reason", async () => {
-      const requestWithoutEmail = { ...validDeliveryRequest };
-      delete requestWithoutEmail.email;
+      const requestWithoutEmail = { ...validDeliveryRequest, email: null };
 
       const { req, res } = createMocks({
         method: "POST",

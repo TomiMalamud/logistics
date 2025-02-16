@@ -1,28 +1,46 @@
 // pages/api/carriers/[id]/balance.ts
 import { supabase } from "@/lib/supabase";
-import { DeliveryType } from "@/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
+import { z } from "zod";
+import { Database } from "@/supabase/types/supabase";
 
-export type Transaction = {
-  date: string;
-  concept: string;
-  debit: number;
-  credit: number;
-  balance: number;
-  type: "delivery" | "payment";
-  delivery_id?: number;
-  delivery_type?: DeliveryType;
-};
+type DeliveryTypeEnum = Database["public"]["Enums"]["delivery_type"];
 
-export type BalanceResponse = {
-  carrier: {
-    id: number;
-    name: string;
-  };
-  transactions: Transaction[];
-  totalBalance: number;
-  initialBalance: number;
-};
+const querySchema = z.object({
+  id: z.string().min(1, "Carrier ID is required"),
+});
+
+const transactionSchema = z
+  .object({
+    date: z.string(),
+    concept: z.string(),
+    debit: z.number(),
+    credit: z.number(),
+    balance: z.number(),
+    type: z.enum(["delivery", "payment"]),
+    delivery_id: z.number().optional(),
+    delivery_type: z
+      .enum(["supplier_pickup", "home_delivery", "store_movement"] as const)
+      .optional(),
+  })
+  .strict();
+
+const balanceResponseSchema = z
+  .object({
+    carrier: z
+      .object({
+        id: z.number(),
+        name: z.string(),
+      })
+      .strict(),
+    transactions: z.array(transactionSchema),
+    totalBalance: z.number(),
+    initialBalance: z.number(),
+  })
+  .strict();
+
+export type Transaction = z.infer<typeof transactionSchema>;
+export type BalanceResponse = z.infer<typeof balanceResponseSchema>;
 
 type OperationWithDetails = {
   id: number;
@@ -32,7 +50,7 @@ type OperationWithDetails = {
   deliveries: {
     id: number;
     invoice_number: string | null;
-    type: string;
+    type: DeliveryTypeEnum;
     customers: {
       name: string;
     } | null;
@@ -51,13 +69,14 @@ export default async function handler(
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  const { id } = req.query;
-
-  if (!id || Array.isArray(id)) {
-    return res.status(400).json({ error: "Invalid carrier ID" });
-  }
-
   try {
+    const result = querySchema.safeParse(req.query);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error.issues[0].message });
+    }
+
+    const { id } = result.data;
+
     // Calculate date 30 days ago
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -145,7 +164,7 @@ export default async function handler(
         credit: 0,
         type: "delivery" as const,
         delivery_id: op.deliveries?.id,
-        delivery_type: op.deliveries?.type as DeliveryType,
+        delivery_type: op.deliveries?.type,
         balance: 0,
       }));
 

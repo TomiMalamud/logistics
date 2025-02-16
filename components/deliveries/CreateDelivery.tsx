@@ -87,7 +87,7 @@ function CustomerInfoSkeleton() {
 }
 
 interface DeliveryFormValues {
-  invoice_id: number;
+  invoice_id: string;
   address: string;
   phone: string;
   email: string | null;
@@ -102,7 +102,7 @@ interface DeliveryFormValues {
 
 const deliveryFormSchema = z
   .object({
-    invoice_id: z.number({
+    invoice_id: z.string({
       required_error: "Seleccioná una factura",
     }),
     address: z.string().min(1, "La dirección es requerida"),
@@ -221,7 +221,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
       const sanitizedPhone = sanitizePhoneNumber(customer.Telefono || "");
       form.reset({
         ...form.getValues(), // Preserve existing values including defaults
-        invoice_id: selectedInv.Id,
+        invoice_id: String(selectedInv.Id),
         address: [
           customer.Domicilio,
           customer.Ciudad,
@@ -304,7 +304,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
           .toISOString()
           .split("T")[0],
         invoice_number: `${selectedInvoice.TipoFc} ${selectedInvoice.Numero}`,
-        invoice_id: selectedInvoice.Id,
+        invoice_id: String(selectedInvoice.Id),
         name: selectedInvoice.RazonSocial,
         created_by: user.id,
         products: transformedItems,

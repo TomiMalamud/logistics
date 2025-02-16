@@ -4,6 +4,7 @@ import createClient from "@/lib/utils/supabase/api";
 import { createDeliveryService } from "@/services/deliveries";
 import { NextApiRequest, NextApiResponse } from "next";
 import { titleCase } from "title-case";
+import { homeDeliverySchema } from "@/lib/validation/deliveries";
 
 interface DeliveryRequest {
   order_date: string;
@@ -139,8 +140,13 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const body = req.body as DeliveryRequest;
-    validateRequest(body);
+    // Validate request body using Zod
+    const validationResult = homeDeliverySchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: validationResult.error.errors[0].message,
+      });
+    }
 
     const {
       order_date,
@@ -157,7 +163,7 @@ export default async function handler(
       email,
       emailBypassReason,
       store_id,
-    } = body;
+    } = validationResult.data;
 
     // Sync with Perfit if email is provided
     if (email) {

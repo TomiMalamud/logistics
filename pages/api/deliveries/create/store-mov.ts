@@ -1,51 +1,7 @@
-import { getStore } from "@/lib/utils/constants";
 import createClient from "@/lib/utils/supabase/api";
 import { createDeliveryService } from "@/services/deliveries";
-import { Product } from "@/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
-
-interface StoreMovementRequest {
-  origin_store: string;
-  dest_store: string;
-  products: Array<{
-    name: string;
-    sku: string;
-    quantity: number;
-  }>;
-  scheduled_date?: string;
-  created_by: string;
-}
-
-const validateRequest = (body: StoreMovementRequest): void => {
-  if (!body.origin_store || !body.dest_store) {
-    throw new Error("Origin and destination stores are required");
-  }
-
-  if (!body.products?.length) {
-    throw new Error("Products array is required and cannot be empty");
-  }
-
-  if (!Array.isArray(body.products)) {
-    throw new Error("Products must be an array");
-  }
-
-  const isValidProduct = (p: any): p is Product =>
-    typeof p === "object" &&
-    typeof p.name === "string" &&
-    typeof p.sku === "string" &&
-    typeof p.quantity === "number";
-
-  if (!body.products.every(isValidProduct)) {
-    throw new Error("Invalid product format");
-  }
-
-  const originStore = getStore(body.origin_store);
-  const destStore = getStore(body.dest_store);
-
-  if (!originStore || !destStore) {
-    throw new Error("Invalid store IDs");
-  }
-};
+import { storeMovementSchema } from "@/lib/validation/deliveries";
 
 export default async function handler(
   req: NextApiRequest,
@@ -68,11 +24,16 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const body = req.body as StoreMovementRequest;
-    validateRequest(body);
+    // Validate request body using Zod
+    const validationResult = storeMovementSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: validationResult.error.errors[0].message,
+      });
+    }
 
     const { origin_store, dest_store, products, scheduled_date, created_by } =
-      body;
+      validationResult.data;
 
     // Create delivery record
     const { data: delivery, error: deliveryError } = await supabase

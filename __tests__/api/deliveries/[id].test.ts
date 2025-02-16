@@ -1,6 +1,9 @@
 import handler from "@/pages/api/deliveries/[id]";
 import { createMocks } from "node-mocks-http";
-import { DeliveryState } from "@/types/types";
+import { Database } from "@/supabase/types/supabase";
+
+type DeliveryStateEnum = Database["public"]["Enums"]["delivery_state"];
+type StoreEnum = Database["public"]["Enums"]["store"];
 
 // Mock dependencies
 const mockSupabaseAuth = {
@@ -63,7 +66,7 @@ describe("/api/deliveries/[id]", () => {
   });
 
   describe("Input Validation", () => {
-    it("should return 400 for invalid delivery ID", async () => {
+    it("should return 400 for non-numeric delivery ID", async () => {
       const { req, res } = createMocks({
         method: "GET",
         query: { id: "invalid" },
@@ -82,7 +85,7 @@ describe("/api/deliveries/[id]", () => {
     it("should return delivery data for valid ID", async () => {
       const mockDelivery = {
         id: 1,
-        state: "pending" as DeliveryState,
+        state: "pending" as DeliveryStateEnum,
         customer_id: 123,
       };
 
@@ -117,14 +120,25 @@ describe("/api/deliveries/[id]", () => {
   });
 
   describe("PUT requests", () => {
-    it("should update delivery state from pending to delivered", async () => {
-      // Mock the current delivery state
+    const validStore = {
+      id: "60835" as StoreEnum,
+      label: "Test Store",
+    };
+
+    const validItems = [
+      {
+        product_sku: "SKU1",
+        quantity: 1,
+        store_id: "60835" as StoreEnum,
+      },
+    ];
+
+    it("should update delivery state from pending to delivered with carrier", async () => {
       mockGetDelivery.mockResolvedValue({
         id: 1,
-        state: "pending" as DeliveryState,
+        state: "pending" as DeliveryStateEnum,
       });
 
-      // Mock successful operation recording
       mockRecordOperation.mockResolvedValue(true);
 
       const { req, res } = createMocks({
@@ -148,13 +162,41 @@ describe("/api/deliveries/[id]", () => {
       expect(mockHandleNotifications).toHaveBeenCalled();
     });
 
+    it("should update delivery state from pending to delivered with pickup store", async () => {
+      mockGetDelivery.mockResolvedValue({
+        id: 1,
+        state: "pending" as DeliveryStateEnum,
+      });
+
+      mockRecordOperation.mockResolvedValue(true);
+
+      const { req, res } = createMocks({
+        method: "PUT",
+        query: { id: "1" },
+        body: {
+          state: "delivered",
+          pickup_store: validStore,
+          items: validItems,
+        },
+      });
+
+      await handler(req, res);
+
+      expect(res._getStatusCode()).toBe(200);
+      expect(mockUpdateDelivery).toHaveBeenCalledWith({
+        id: 1,
+        state: "delivered",
+        scheduledDate: undefined,
+      });
+      expect(mockHandleNotifications).toHaveBeenCalled();
+    });
+
     it("should handle partial delivery correctly", async () => {
       mockGetDelivery.mockResolvedValue({
         id: 1,
-        state: "pending" as DeliveryState,
+        state: "pending" as DeliveryStateEnum,
       });
 
-      // Mock partial delivery (not all items delivered)
       mockRecordOperation.mockResolvedValue(false);
 
       const { req, res } = createMocks({
@@ -164,7 +206,7 @@ describe("/api/deliveries/[id]", () => {
           state: "delivered",
           carrier_id: 1,
           delivery_cost: 1000,
-          items: [{ product_sku: "SKU1", quantity: 1, store_id: "1" }],
+          items: validItems,
         },
       });
 
@@ -173,7 +215,7 @@ describe("/api/deliveries/[id]", () => {
       expect(res._getStatusCode()).toBe(200);
       expect(mockUpdateDelivery).toHaveBeenCalledWith({
         id: 1,
-        state: "pending", // Should remain pending for partial delivery
+        state: "pending",
         scheduledDate: undefined,
       });
       expect(mockHandleNotifications).not.toHaveBeenCalled();
@@ -182,21 +224,14 @@ describe("/api/deliveries/[id]", () => {
     it("should validate delivery operation parameters", async () => {
       mockGetDelivery.mockResolvedValue({
         id: 1,
-        state: "pending" as DeliveryState,
+        state: "pending" as DeliveryStateEnum,
       });
-
-      mockRecordOperation.mockRejectedValue(
-        new Error(
-          "pickup_store or both carrier_id and delivery_cost must be provided"
-        )
-      );
 
       const { req, res } = createMocks({
         method: "PUT",
         query: { id: "1" },
         body: {
           state: "delivered",
-          // Missing required carrier_id and delivery_cost
         },
       });
 
@@ -204,15 +239,37 @@ describe("/api/deliveries/[id]", () => {
 
       expect(res._getStatusCode()).toBe(400);
       expect(JSON.parse(res._getData())).toEqual({
-        error:
-          "Invalid delivery operation: Either provide a pickup store or both carrier and cost",
+        error: "Either provide a pickup store or carrier for delivery",
+      });
+    });
+
+    it("should require delivery cost when carrier is provided", async () => {
+      mockGetDelivery.mockResolvedValue({
+        id: 1,
+        state: "pending" as DeliveryStateEnum,
+      });
+
+      const { req, res } = createMocks({
+        method: "PUT",
+        query: { id: "1" },
+        body: {
+          state: "delivered",
+          carrier_id: 1,
+        },
+      });
+
+      await handler(req, res);
+
+      expect(res._getStatusCode()).toBe(400);
+      expect(JSON.parse(res._getData())).toEqual({
+        error: "Delivery cost is required when carrier is provided",
       });
     });
 
     it("should prevent invalid state transitions", async () => {
       mockGetDelivery.mockResolvedValue({
         id: 1,
-        state: "delivered" as DeliveryState,
+        state: "delivered" as DeliveryStateEnum,
       });
 
       const { req, res } = createMocks({
@@ -234,7 +291,7 @@ describe("/api/deliveries/[id]", () => {
     it("should allow cancellation from any state", async () => {
       mockGetDelivery.mockResolvedValue({
         id: 1,
-        state: "delivered" as DeliveryState,
+        state: "delivered" as DeliveryStateEnum,
       });
 
       mockRecordOperation.mockResolvedValue(true);
