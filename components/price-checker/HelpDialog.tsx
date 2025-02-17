@@ -31,7 +31,9 @@ export default function HelpDialog() {
         <div className="space-y-2 text-stone-700">
           <h3 className="text-lg font-bold">Naranja</h3>
           <ul className="list-disc list-inside space-y-1 text-md">
-            <li>SIEMPRE en la terminal de Payway de CCD</li>
+            <li>
+              <span className="font-bold">Terminal:</span> Payway de CCD
+            </li>
             <li>
               3 cuotas (Plan Z): Código{" "}
               <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
@@ -57,10 +59,12 @@ export default function HelpDialog() {
             Visa, Mastercard, Cabal bancarias
           </h3>
           <ul className="list-disc list-inside space-y-1 text-md">
-            <li>Mercado Pago Point</li>
             <li>
-              Sin códigos. Cada tarjeta indica la cantidad de cuotas
-              disponibles.
+              <span className="font-bold">Terminal:</span> Mercado Pago Point
+            </li>
+            <li>
+              <span className="font-bold">12 cuotas:</span> Aplicar descuento de
+              1 pago en crédito en el Point y el cliente paga el interés.
             </li>
             <li>
               En determinados períodos, avisados por WhatsApp, se cobra con la
