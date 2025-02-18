@@ -31,15 +31,24 @@ import { useManufacturingOrders } from "@/hooks/useManufacturingOrders";
 import { formatDate } from "@/lib/utils/format";
 import { createClient } from "@/lib/utils/supabase/component";
 import { ManufacturingStatus } from "@/types/types";
+import {
+  Document,
+  Font,
+  Page,
+  PDFDownloadLink,
+  StyleSheet,
+  Text,
+  View,
+} from "@react-pdf/renderer";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { differenceInBusinessDays, format } from "date-fns";
 import {
   Check,
   CheckCircle,
   ChevronDown,
+  FileDown,
   Filter,
   Loader2,
-  MessageCircle,
   MoreHorizontal,
   Package,
   Pencil,
@@ -66,6 +75,206 @@ const statusConfig: Record<
     color: "bg-red-100 text-red-800",
     label: "Cancelada",
   },
+};
+
+// Register a font for PDF generation
+Font.register({
+  family: "Helvetica",
+  src: "https://fonts.cdnfonts.com/s/29136/Helvetica.woff",
+});
+
+// Define PDF styles
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 30,
+    fontFamily: "Helvetica",
+  },
+  section: {
+    width: "100%",
+  },
+  table: {
+    display: "flex",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  tableRow: {
+    margin: "auto",
+    flexDirection: "row",
+  },
+  tableColHeader: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 5,
+    backgroundColor: "#f6f6f6",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  tableCol: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 5,
+    fontSize: 11,
+  },
+  delayedText: {
+    textDecoration: "underline",
+  },
+});
+
+interface OrdersPDFProps {
+  orders: Array<{
+    id: number;
+    orderDate: Date;
+    status: ManufacturingStatus;
+    finishedAt: Date | null;
+    customerName: string | null;
+    productName: string;
+    extras: string | null;
+    notes: string | null;
+    needsPackaging: boolean;
+  }>;
+}
+
+// PDF Document component
+const OrdersPDF = ({ orders }: OrdersPDFProps) => {
+  // Helper function for business days calculation within the component
+  const calculateBusinessDays = (
+    orderDate: Date,
+    status: ManufacturingStatus,
+    finishedAt: Date | null
+  ) => {
+    const normalizeDate = (date: Date) => {
+      const normalized = new Date(
+        date.toISOString().split("T")[0] + "T00:00:00.000Z"
+      );
+      const day = normalized.getUTCDay();
+      if (day === 6) {
+        normalized.setUTCDate(normalized.getUTCDate() - 1);
+      } else if (day === 0) {
+        normalized.setUTCDate(normalized.getUTCDate() - 2);
+      }
+      return normalized;
+    };
+
+    if (status === "pending") {
+      const today = normalizeDate(new Date());
+      const start = normalizeDate(orderDate);
+      return differenceInBusinessDays(today, start);
+    }
+    return differenceInBusinessDays(
+      normalizeDate(finishedAt || new Date()),
+      normalizeDate(orderDate)
+    );
+  };
+
+  const splitProductName = (productName: string) => {
+    const words = productName.split(" ");
+    const measure = words[0];
+    const color = words.slice(1).join(" ");
+    return { measure, color };
+  };
+
+  const targetDays = 15;
+
+  // Add truncateCustomerName function
+  const truncateCustomerName = (name: string | null) => {
+    if (!name) return "Sin cliente";
+    const words = name.trim().split(" ");
+    if (words.length <= 2) return name;
+    return `${words.slice(0, 2).join(" ")}...`;
+  };
+
+  return (
+    <Document>
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        <View style={styles.section}>
+          <View style={styles.table}>
+            <View style={styles.tableRow}>
+              <View style={[styles.tableColHeader, { width: "10%" }]}>
+                <Text>Días</Text>
+              </View>
+              <View style={[styles.tableColHeader, { width: "10%" }]}>
+                <Text>Fecha</Text>
+              </View>
+              <View style={[styles.tableColHeader, { width: "16%" }]}>
+                <Text>Cliente</Text>
+              </View>
+              <View style={[styles.tableColHeader, { width: "10%" }]}>
+                <Text>Medida</Text>
+              </View>
+              <View style={[styles.tableColHeader, { width: "14%" }]}>
+                <Text>Color</Text>
+              </View>
+              <View style={[styles.tableColHeader, { width: "16%" }]}>
+                <Text>Extra</Text>
+              </View>
+              <View style={[styles.tableColHeader, { width: "16%" }]}>
+                <Text>Notas</Text>
+              </View>
+              <View style={[styles.tableColHeader, { width: "8%" }]}>
+                <Text>Emb.</Text>
+              </View>
+            </View>
+            {orders.map((order) => {
+              const days = calculateBusinessDays(
+                order.orderDate,
+                order.status,
+                order.finishedAt
+              );
+              const isDelayed = days > targetDays && order.status === "pending";
+              const { measure, color } = splitProductName(order.productName);
+
+              return (
+                <View key={order.id} style={styles.tableRow}>
+                  <View style={[styles.tableCol, { width: "10%" }]}>
+                    <View>
+                      <Text>{days}</Text>
+                      {isDelayed && (
+                        <Text style={styles.delayedText}>ATRASADA</Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={[styles.tableCol, { width: "10%" }]}>
+                    <Text>
+                      {formatDate(
+                        order.orderDate.toISOString().split("T")[0]
+                      ).replace("/2025", "")}
+                    </Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "16%" }]}>
+                    <Text>{truncateCustomerName(order.customerName)}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "10%" }]}>
+                    <Text>{measure}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "14%" }]}>
+                    <Text>{color}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "16%" }]}>
+                    <Text>{order.extras || "-"}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "16%" }]}>
+                    <Text>{order.notes || "-"}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "8%" }]}>
+                    <Text>{order.needsPackaging ? "Sí" : "No"}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
 };
 
 const ManufacturingOrdersList = () => {
@@ -175,62 +384,6 @@ const ManufacturingOrdersList = () => {
     );
   };
 
-  // Test function to debug business days calculation
-  const testBusinessDays = () => {
-    const testCases = [
-      {
-        start: "2025-02-04",
-        end: "2025-02-15",
-        expected: 8,
-      },
-    ];
-
-    testCases.forEach(({ start, end, expected }) => {
-      const startDate = new Date(start + "T00:00:00.000Z");
-      const endDate = new Date(end + "T00:00:00.000Z");
-
-      // If end date is a weekend, adjust to last business day
-      const endDay = endDate.getUTCDay();
-      const adjustedEndDate = new Date(endDate);
-      if (endDay === 6) {
-        // Saturday
-        adjustedEndDate.setUTCDate(adjustedEndDate.getUTCDate() - 1);
-      } else if (endDay === 0) {
-        // Sunday
-        adjustedEndDate.setUTCDate(adjustedEndDate.getUTCDate() - 2);
-      }
-
-      const result = differenceInBusinessDays(adjustedEndDate, startDate);
-
-      console.log(`Test case: ${start} to ${end}`);
-      console.log(`Expected: ${expected} business days`);
-      console.log(`Result: ${result} business days`);
-      console.log(
-        `Adjusted end date: ${adjustedEndDate.toISOString().split("T")[0]}`
-      );
-
-      // Log all business days in between for verification
-      const allDates = [];
-      let currentDate = new Date(startDate);
-      while (currentDate <= adjustedEndDate) {
-        if (currentDate.getUTCDay() !== 0 && currentDate.getUTCDay() !== 6) {
-          allDates.push(new Date(currentDate).toISOString().split("T")[0]);
-        }
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      console.log("Business days:", allDates);
-      console.log("Total business days found:", allDates.length);
-      console.log("-------------------");
-    });
-  };
-
-  // Run the test
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      testBusinessDays();
-    }
-  }, []);
-
   // Format relative time remaining
   const getTimeStatus = (daysElapsed: number, status: ManufacturingStatus) => {
     const targetDays = 15; // 15 business days target
@@ -299,36 +452,6 @@ const ManufacturingOrdersList = () => {
     });
   }, [orders, search, statusFilter]);
 
-  const sendPendingOrders = () => {
-    if (!orders) return;
-
-    const pendingOrders = orders.filter((order) => order.status === "pending");
-    const message = `*${pendingOrders.length} PEDIDOS PENDIENTES*
-------------------${pendingOrders
-      .map((order, index) => {
-        const daysElapsed = getBusinessDaysElapsed(
-          order.orderDate,
-          order.status,
-          order.finishedAt
-        );
-        const isLate = daysElapsed > 15;
-        return `
-${index + 1}. ${order.customerName || "Sin cliente"}
-${order.productName}${order.extras ? ` + ${order.extras}` : ""}
-Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
-          isLate ? " *ATRASADA*" : ""
-        }${order.needsPackaging ? "\nVa con embalaje" : ""}${
-          order.notes ? `\n${order.notes}` : ""
-        }`;
-      })
-      .join("\n------------------\n")}`;
-
-    window.open(
-      `https://wa.me/5493541665257?text=${encodeURIComponent(message.trim())}`,
-      "_blank"
-    );
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -362,15 +485,7 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
             <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={sendPendingOrders}
-          className="gap-2 bg-[#25d366] font-normal hover:bg-[#25d366]/90"
-          disabled={!orders?.some((order) => order.status === "pending")}
-        >
-          <MessageCircle className="h-4 w-4" />
-          Enviar Pedidos Pendientes
-        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="min-w-[140px]">
@@ -398,6 +513,26 @@ Pedido: ${format(order.orderDate, "dd/MM")} (${daysElapsed} dias)${
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {filteredOrders.length > 0 && (
+          <PDFDownloadLink
+            document={<OrdersPDF orders={filteredOrders} />}
+            fileName={`Stilo Propio - ${new Date().toLocaleDateString(
+              "es-AR"
+            )}.pdf`}
+          >
+            {({ loading }) => (
+              <Button
+                variant="outline"
+                disabled={loading}
+                className="bg-red-100 hover:bg-red-200"
+              >
+                <FileDown size={16} />
+                {loading ? "Generando PDF..." : "Exportar PDF"}
+              </Button>
+            )}
+          </PDFDownloadLink>
+        )}
       </div>
 
       <Table>

@@ -388,9 +388,7 @@ export default function CarriersPage() {
                 <Badge
                   variant="default"
                   className={`${
-                    carrier.is_reliable
-                      ? "bg-green-600/90 pointer-events-none"
-                      : "bg-red-400 pointer-events-none"
+                    carrier.is_reliable ? "bg-green-600/90" : "bg-red-400"
                   }`}
                 >
                   {carrier.is_reliable ? "Confiable" : "No Confiable"}
