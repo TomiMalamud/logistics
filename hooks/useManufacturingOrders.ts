@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/utils/supabase/component";
 import { BaseManufacturingOrder, ManufacturingOrder } from "@/types/types";
 import { useQuery } from "@tanstack/react-query";
+import React from "react";
 
 const supabase = createClient();
 
@@ -17,6 +18,8 @@ interface ManufacturingOrderRow extends BaseManufacturingOrder {
     };
   };
 }
+
+const LAST_VIEWED_KEY = "last_viewed_manufacturing";
 
 async function fetchManufacturingOrders() {
   const {
@@ -70,9 +73,30 @@ async function fetchManufacturingOrders() {
   })) as ManufacturingOrder[];
 }
 
-export function useManufacturingOrders() {
-  return useQuery({
+export function useManufacturingOrders(options?: {
+  updateLastViewed?: boolean;
+}) {
+  const query = useQuery({
     queryKey: ["manufacturing-orders"],
     queryFn: fetchManufacturingOrders,
   });
+
+  // Update last viewed timestamp if requested
+  if (options?.updateLastViewed && query.data) {
+    localStorage.setItem(LAST_VIEWED_KEY, new Date().toISOString());
+  }
+
+  // Check if there are new orders
+  const hasNewOrders = React.useMemo(() => {
+    if (!query.data) return false;
+
+    const lastViewed = localStorage.getItem(LAST_VIEWED_KEY);
+    if (!lastViewed) return true;
+
+    return query.data.some(
+      (order) => new Date(order.createdAt) > new Date(lastViewed)
+    );
+  }, [query.data]);
+
+  return { ...query, hasNewOrders };
 }

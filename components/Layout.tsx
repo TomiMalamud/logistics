@@ -23,6 +23,7 @@ import {
   navigationMenuTriggerStyle,
 } from "./ui/navigation-menu";
 import { Toaster } from "@/components/ui/toaster";
+import { useManufacturingOrders } from "@/hooks/useManufacturingOrders";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -43,6 +44,9 @@ const Layout = ({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { role, loading } = useRole();
+  const { hasNewOrders } = useManufacturingOrders({
+    updateLastViewed: router.pathname === "/manufacturing",
+  });
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -123,7 +127,7 @@ const Layout = ({
           {navItems
             .filter(({ roles }) => role && roles.includes(role))
             .map(({ path, label, showOnMobile }) => (
-              <NavigationMenuItem key={path}>
+              <NavigationMenuItem key={path} className="relative">
                 <Link href={path} legacyBehavior passHref>
                   <NavigationMenuLink
                     className={`${navigationMenuTriggerStyle()} ${getNavButtonClasses(
@@ -132,6 +136,16 @@ const Layout = ({
                     )}`}
                   >
                     {label}
+                    {path === "/manufacturing" &&
+                      role === "admin" &&
+                      hasNewOrders && (
+                        <span className="absolute top-2 right-2">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                          </span>
+                        </span>
+                      )}
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
@@ -139,7 +153,7 @@ const Layout = ({
         </NavigationMenuList>
       </NavigationMenu>
     ),
-    [navItems, role, getNavButtonClasses]
+    [navItems, role, getNavButtonClasses, hasNewOrders]
   );
 
   return (
