@@ -26,6 +26,18 @@ const DisplayController = () => {
     };
   }, [showingVideo]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && showingVideo) {
+        event.preventDefault();
+        setShowingVideo(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showingVideo]);
+
   return (
     <div className="relative h-screen w-full overflow-hidden">
       {/* Controls */}
@@ -34,7 +46,7 @@ const DisplayController = () => {
           <Button
             variant="ghost"
             onClick={() => setShowingVideo(false)}
-            className="h-8 w-8 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20"
+            className="h-8 w-8 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white hover:scale-[200%] transition-transform border border-white/20"
           >
             <X className="h-4 w-4" />
           </Button>
