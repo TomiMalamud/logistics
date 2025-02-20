@@ -65,7 +65,13 @@ export default async function handler(
 
     const result = manufacturingOrderSchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ error: result.error.issues[0].message });
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
     }
 
     const {

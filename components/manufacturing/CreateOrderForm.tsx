@@ -214,12 +214,33 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
         body: JSON.stringify(values),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create manufacturing order");
+        if (data.issues) {
+          // Set form errors for each validation issue
+          data.issues.forEach((issue: { field: string; message: string }) => {
+            form.setError(issue.field as any, {
+              type: "server",
+              message: issue.message,
+            });
+          });
+
+          toast({
+            title: "Error de validación",
+            description: "Por favor revisa los campos marcados en rojo",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: data.error || "Hubo un error al crear el pedido",
+            variant: "destructive",
+          });
+        }
+        throw new Error(data.error || "Failed to create manufacturing order");
       }
 
-      const data = await response.json();
       if (data.price) {
         toast({
           title: "Pedido creado",
@@ -244,6 +265,10 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
       form.reset();
       setDialogOpen(false);
       onSuccess?.();
+    },
+    onError: () => {
+      // Keep the dialog open when there are errors
+      setDialogOpen(true);
     },
   });
 
@@ -275,7 +300,7 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
             .replace("CAMA CON CAJONES ", "")
             .trim(),
       needs_packaging: values.needsPackaging,
-      notes: values.notes,
+      notes: values.notes || null,
       created_by: user.id,
       is_custom_order: values.isCustomOrder,
       price: values.isCustomOrder ? values.customPrice : undefined,
