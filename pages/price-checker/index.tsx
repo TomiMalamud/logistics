@@ -9,9 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts } from "@/hooks/useProducts";
 import { Calculator, Info, Search } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
 export default function PriceChecker() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [queryTerm, setQueryTerm] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -27,10 +29,28 @@ export default function PriceChecker() {
     }
   }, []);
 
+  // Initialize search from URL query parameter
+  useEffect(() => {
+    const { q } = router.query;
+    if (typeof q === "string") {
+      setSearch(q);
+      setQueryTerm(q);
+    }
+  }, [router.query]);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (search.length >= 2) {
       setQueryTerm(search);
+      // Update URL with search term
+      router.push(
+        {
+          pathname: router.pathname,
+          query: { q: search },
+        },
+        undefined,
+        { shallow: true }
+      );
     }
   };
 
