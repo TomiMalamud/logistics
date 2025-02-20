@@ -177,7 +177,10 @@ const CarrierBalance: React.FC<CarrierBalanceProps> = ({ carrierId }) => {
                   <TableCell>
                     {transaction.type === "delivery" ? (
                       <button
-                        onClick={() => fetchDelivery(transaction.delivery_id)}
+                        onClick={() =>
+                          transaction.delivery_id &&
+                          fetchDelivery(transaction.delivery_id)
+                        }
                         className="underline-offset-4 hover:underline transition duration-200 underline decoration-white hover:decoration-slate-800"
                       >
                         {transaction.concept}

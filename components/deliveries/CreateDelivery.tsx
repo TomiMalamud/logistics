@@ -1,3 +1,4 @@
+import { ProductItem } from "@/components/ProductList";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,25 +38,17 @@ import {
 } from "@/components/ui/table";
 import { getStore } from "@/lib/utils/constants";
 import { sanitizePhoneNumber, validatePhoneNumber } from "@/lib/utils/format";
+import { Database } from "@/supabase/types/supabase";
 import type { Comprobante } from "@/types/api";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "@supabase/supabase-js";
-import {
-  AlertCircle,
-  Edit2,
-  Mail,
-  MapPin,
-  Phone,
-  ArrowRight,
-} from "lucide-react";
+import { AlertCircle, Edit2, Mail, MapPin, Phone } from "lucide-react";
 import { useRouter } from "next/router";
 import React from "react";
-import { titleCase } from "title-case";
-import { Skeleton } from "../ui/skeleton";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { titleCase } from "title-case";
 import * as z from "zod";
-import { ProductItem } from "@/components/ProductList";
-import { Database } from "@/supabase/types/supabase";
+import { Skeleton } from "../ui/skeleton";
 
 type Store = Database["public"]["Enums"]["store"];
 type DeliveryType = Database["public"]["Enums"]["delivery_type"];

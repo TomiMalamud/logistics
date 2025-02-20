@@ -1,40 +1,18 @@
-import { useRole } from "@/hooks/useRole";
+import { AppSidebar } from "@/components/AppSidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/toaster";
 import { createClient } from "@/lib/utils/supabase/component";
-import { User } from "lucide-react";
 import Head from "next/head";
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useCallback, useMemo } from "react";
-import { Button } from "./ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "./ui/navigation-menu";
-import { Toaster } from "@/components/ui/toaster";
-import { useManufacturingOrders } from "@/hooks/useManufacturingOrders";
 
 interface LayoutProps {
   children: React.ReactNode;
   title?: string;
-}
-
-interface NavItem {
-  path: string;
-  label: string;
-  showOnMobile: boolean;
-  roles: ("admin" | "sales")[];
 }
 
 const Layout = ({
@@ -43,58 +21,6 @@ const Layout = ({
 }: LayoutProps): JSX.Element => {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const { role, loading } = useRole();
-  const { hasNewOrders } = useManufacturingOrders({
-    updateLastViewed: router.pathname === "/manufacturing",
-  });
-
-  const navItems: NavItem[] = useMemo(
-    () => [
-      {
-        path: "/",
-        label: "Entregas",
-        showOnMobile: true,
-        roles: ["admin", "sales"],
-      },
-      {
-        path: "/calendar",
-        label: "Calendario",
-        showOnMobile: false,
-        roles: ["admin", "sales"],
-      },
-      {
-        path: "/manufacturing",
-        label: "Camas con Cajones",
-        showOnMobile: true,
-        roles: ["admin", "sales"],
-      },
-      {
-        path: "/price-checker",
-        label: "Precios",
-        showOnMobile: true,
-        roles: ["admin", "sales"],
-      },
-      {
-        path: "/carriers",
-        label: "Transportes",
-        showOnMobile: true,
-        roles: ["admin"],
-      },
-      {
-        path: "/tv",
-        label: "Teles",
-        showOnMobile: false,
-        roles: ["admin", "sales"],
-      },
-      {
-        path: "/targets",
-        label: "Objetivos",
-        showOnMobile: false,
-        roles: ["admin", "sales"],
-      },
-    ],
-    []
-  );
 
   const handleSignOut = useCallback(async () => {
     try {
@@ -109,53 +35,6 @@ const Layout = ({
     }
   }, [router, supabase]);
 
-  const getNavButtonClasses = useCallback(
-    (path: string, showOnMobile: boolean): string => {
-      const baseClasses =
-        router.pathname === path ? "text-stone-950" : "text-stone-600";
-      const mobileClasses = showOnMobile ? "" : "hidden md:block";
-
-      return `${baseClasses} ${mobileClasses}`.trim();
-    },
-    [router.pathname]
-  );
-
-  const renderNavButtons = useCallback(
-    () => (
-      <NavigationMenu>
-        <NavigationMenuList className="flex gap-0">
-          {navItems
-            .filter(({ roles }) => role && roles.includes(role))
-            .map(({ path, label, showOnMobile }) => (
-              <NavigationMenuItem key={path} className="relative">
-                <Link href={path} legacyBehavior passHref>
-                  <NavigationMenuLink
-                    className={`${navigationMenuTriggerStyle()} ${getNavButtonClasses(
-                      path,
-                      showOnMobile
-                    )}`}
-                  >
-                    {label}
-                    {path === "/manufacturing" &&
-                      role === "admin" &&
-                      hasNewOrders && (
-                        <span className="absolute top-2 right-2">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                          </span>
-                        </span>
-                      )}
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-            ))}
-        </NavigationMenuList>
-      </NavigationMenu>
-    ),
-    [navItems, role, getNavButtonClasses, hasNewOrders]
-  );
-
   return (
     <>
       <Head>
@@ -163,52 +42,13 @@ const Layout = ({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <header className="bg-white justify-between p-3 flex border-b border-grid">
-        <div className="flex items-center">
-          <Image
-            src="/logo.jpg"
-            alt="Logo"
-            width={50}
-            height={50}
-            className="mx-4"
-            unoptimized
-          />
-          <nav className="flex items-center">{renderNavButtons()}</nav>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="group hidden sm:inline-flex text-stone-600 h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
-                Herramientas
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem asChild>
-                  <Link href="/update-prices">Actualizar Precios</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/update-stock">Actualizar Stock</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="text-stone-600 md:block hidden mr-4"
-            >
-              <User className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleSignOut}>
-              Cerrar Sesión
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
-      <main className="p-4 md:p-8 mx-auto max-w-7xl min-h-screen">
-        {children}
-      </main>
+      <SidebarProvider>
+        <AppSidebar onSignOut={handleSignOut} />
+        <SidebarInset className="bg-gray-50">
+          <SidebarTrigger className="m-2 text-stone-700" />
+          <main className="p-4 md:p-8 bg-gray-50">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
       <Toaster />
     </>
   );

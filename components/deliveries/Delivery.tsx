@@ -113,8 +113,14 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
         return delivery.suppliers?.name;
       case "store_movement":
         return `Movimiento de ${
-          getStore(delivery.origin_store)?.label || delivery.origin_store
-        } a ${getStore(delivery.dest_store)?.label || delivery.dest_store}`;
+          delivery.origin_store
+            ? getStore(delivery.origin_store)?.label || delivery.origin_store
+            : "N/A"
+        } a ${
+          delivery.dest_store
+            ? getStore(delivery.dest_store)?.label || delivery.dest_store
+            : "N/A"
+        }`;
       default:
         return delivery.customers?.name;
     }
