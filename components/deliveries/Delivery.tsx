@@ -90,6 +90,8 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = React.useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(false);
+  const productContainerRef = React.useRef<HTMLDivElement>(null);
 
   const balanceData = useDeliveryBalance({
     invoice_id: delivery.state === "pending" ? delivery.invoice_id : null,
@@ -146,38 +148,34 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
     setIsCancelDialogOpen(true);
   };
 
-  const renderProducts = () => {
-    const items = delivery.delivery_items || [];
-    return items.map((item, index) => (
-      <div
-        key={index}
-        className={`grid grid-cols-[50%,35%,15%] gap-2 items-center text-sm ${
-          index !== items.length - 1 ? "border-b border-b-gray-200 pb-2" : ""
-        }`}
-      >
-        <span className="capitalize truncate">
-          {item.products?.name?.toLowerCase() || "Unknown Product"}
-        </span>
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.1,
+      }
+    );
 
-        <span
-          className={`whitespace-nowrap ${
-            item.pending_quantity > 0 ? "text-yellow-600" : "text-green-600"
-          }`}
-        >
-          {item.pending_quantity} pendiente de {item.quantity}
-        </span>
+    if (productContainerRef.current) {
+      observer.observe(productContainerRef.current);
+    }
 
-        <span className="text-slate-500 text-right mr-8 font-mono text-xs">
-          {item.product_sku}
-        </span>
-      </div>
-    ));
-  };
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="rounded-lg space-y-2 bg-white border p-6">
       {/* Error Alert */}
       {error && (
-        <Alert variant="destructive">
+        <Alert
+          variant="destructive"
+          className="animate-in fade-in-50 slide-in-from-top-2 duration-300"
+        >
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -196,7 +194,7 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
                 target="_blank"
                 rel="noreferrer"
               >
-                <p className="text-slate-600 text-sm hover:underline-offset-4 hover:underline ">
+                <p className="text-slate-600 text-sm hover:underline-offset-4 hover:underline">
                   {formatPhoneNumber(displayPhone)}
                 </p>
               </a>
@@ -424,34 +422,83 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
       {/* Product Alert */}
       <Alert className="bg-slate-50">
         <AlertDescription>
-          {delivery.delivery_items && delivery.delivery_items.length > 0 ? (
-            <div className="space-y-2">{renderProducts()}</div>
-          ) : delivery.products && delivery.products.length > 0 ? (
-            <div className="space-y-2">
-              {delivery.products.map((product, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-[1fr,auto,auto] gap-4 items-center text-sm"
-                >
-                  <span className="capitalize truncate">
-                    {product.quantity}x {product.name.toLowerCase()}
-                  </span>
-                  <span className="whitespace-nowrap">
-                    {product.quantity} total
-                  </span>
-                  {product.sku && (
-                    <span className="text-slate-500 font-mono text-xs">
-                      {product.sku}
+          <div ref={productContainerRef}>
+            {delivery.delivery_items && delivery.delivery_items.length > 0 ? (
+              <div className="space-y-2">
+                {delivery.delivery_items.map((item, index) => (
+                  <div
+                    key={index}
+                    className={`grid grid-cols-[50%,35%,15%] gap-2 items-center text-sm ${
+                      isVisible
+                        ? "opacity-0 animate-[fade-in_0.3s_ease-out_forwards]"
+                        : "opacity-0"
+                    } ${
+                      index !== delivery.delivery_items.length - 1
+                        ? "border-b border-b-gray-200 pb-2"
+                        : ""
+                    }`}
+                    style={
+                      isVisible
+                        ? { animationDelay: `${index * 100}ms` }
+                        : undefined
+                    }
+                  >
+                    <span className="capitalize truncate">
+                      {item.products?.name?.toLowerCase() || "Unknown Product"}
                     </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-red-500 font-medium">
-              <p>NO SE ENCONTRARON PRODUCTOS. REVISÁ CON ADMINISTRADOR</p>
-            </div>
-          )}
+
+                    <span
+                      className={`whitespace-nowrap ${
+                        item.pending_quantity > 0
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {item.pending_quantity} pendiente de {item.quantity}
+                    </span>
+
+                    <span className="text-slate-500 text-right mr-8 font-mono text-xs">
+                      {item.product_sku}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : delivery.products && delivery.products.length > 0 ? (
+              <div className="space-y-2">
+                {delivery.products.map((product, index) => (
+                  <div
+                    key={index}
+                    className={`grid grid-cols-[1fr,auto,auto] gap-4 items-center text-sm ${
+                      isVisible
+                        ? "opacity-0 animate-[fade-in_0.3s_ease-out_forwards]"
+                        : "opacity-0"
+                    }`}
+                    style={
+                      isVisible
+                        ? { animationDelay: `${index * 50}ms` }
+                        : undefined
+                    }
+                  >
+                    <span className="capitalize truncate">
+                      {product.quantity}x {product.name.toLowerCase()}
+                    </span>
+                    <span className="whitespace-nowrap">
+                      {product.quantity} total
+                    </span>
+                    {product.sku && (
+                      <span className="text-slate-500 font-mono text-xs">
+                        {product.sku}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-red-500 font-medium animate-in fade-in-50 duration-300">
+                <p>NO SE ENCONTRARON PRODUCTOS. REVISÁ CON ADMINISTRADOR</p>
+              </div>
+            )}
+          </div>
         </AlertDescription>
       </Alert>
       {/* Address */}
@@ -488,6 +535,18 @@ export default function Delivery({ delivery, fetchURL }: DeliveryProps) {
           <p className="text-sm text-slate-500">No hay notas</p>
         )}
       </div>
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(5px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

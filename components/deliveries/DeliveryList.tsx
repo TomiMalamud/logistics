@@ -5,7 +5,7 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationNext,
-  PaginationPrevious
+  PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useRouter } from "next/router";
 import Delivery from "./Delivery";
@@ -28,7 +28,7 @@ export default function DeliveryList({ data, searchUrl }: DeliveryListProps) {
 
   if (!data?.feed?.length) {
     return (
-      <div className="py-8 text-center text-gray-500">
+      <div className="py-8 text-center text-gray-500 animate-fade-in">
         No se encontraron resultados
       </div>
     );
@@ -41,8 +41,8 @@ export default function DeliveryList({ data, searchUrl }: DeliveryListProps) {
           pathname: router.pathname,
           query: {
             ...router.query,
-            page: newPage.toString()
-          }
+            page: newPage.toString(),
+          },
         },
         undefined,
         { shallow: true }
@@ -101,13 +101,45 @@ export default function DeliveryList({ data, searchUrl }: DeliveryListProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        {data.feed.map((delivery: any) => (
-          <div className="py-2" key={delivery.id}>
-            <Delivery delivery={delivery} fetchURL={searchUrl} />
+        {data.feed.map((delivery: any, index: number) => (
+          <div
+            key={delivery.id}
+            className="opacity-0 animate-[fade-in_0.5s_ease-out_forwards]"
+            style={{
+              animationDelay: `${index * 100}ms`,
+            }}
+          >
+            <div
+              className="py-2 animate-[slide-up_0.5s_ease-out_forwards]"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <Delivery delivery={delivery} fetchURL={searchUrl} />
+            </div>
           </div>
         ))}
       </div>
-      <Pagination>
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes slide-up {
+          from {
+            transform: translateY(20px);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+      <Pagination
+        className="opacity-0 animate-[fade-in_0.5s_ease-out_forwards]"
+        style={{ animationDelay: `${data.feed.length * 100}ms` }}
+      >
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
