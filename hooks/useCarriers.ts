@@ -1,5 +1,5 @@
 // useCarriers.ts
-import { useState } from 'react';
+import { useState } from "react";
 
 interface Carrier {
   id: number;
@@ -13,22 +13,26 @@ export function useCarriers() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const fetchCarriers = async () => {
-    if (isInitialized || isLoading) return;
-    
+    // Allow refetching even if initialized when explicitly called
+    if (isLoading) return;
+
     setIsLoading(true);
+    setError(null);
+
     try {
-      const response = await fetch('/api/carriers');
+      const response = await fetch("/api/carriers");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       setCarriers(data);
-      setError(null);
       setIsInitialized(true);
     } catch (error) {
-      console.error('Error fetching carriers:', error);
-      setError('Error al cargar transportes');
+      console.error("Error fetching carriers:", error);
+      setError("Error al cargar transportes");
       setCarriers([]);
+      // Reset initialized state to allow retrying
+      setIsInitialized(false);
     } finally {
       setIsLoading(false);
     }

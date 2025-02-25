@@ -1,19 +1,23 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { useCarriers } from "@/hooks/useCarriers";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface CostCarrierFormProps {
   onCarrierChange: (id: number | undefined) => void;
   onCostChange: (cost: string) => void;
   required?: boolean;
   className?: string;
+  initialCarrierId?: number;
+  initialDeliveryCost?: string;
 }
 
 export function isDeliveryCostValid(cost: string): boolean {
@@ -26,17 +30,38 @@ export default function CostCarrierForm({
   onCarrierChange,
   onCostChange,
   required = false,
-  className = ""
+  className = "",
+  initialCarrierId,
+  initialDeliveryCost,
 }: CostCarrierFormProps) {
-  const [deliveryCost, setDeliveryCost] = useState("");
-  const [selectedCarrierId, setSelectedCarrierId] = useState("");
+  const [deliveryCost, setDeliveryCost] = useState(initialDeliveryCost || "");
+  const [selectedCarrierId, setSelectedCarrierId] = useState(
+    initialCarrierId ? initialCarrierId.toString() : ""
+  );
+
+  // Update state when initial values change
+  useEffect(() => {
+    if (initialDeliveryCost) {
+      setDeliveryCost(initialDeliveryCost);
+      onCostChange(initialDeliveryCost);
+    }
+    if (initialCarrierId) {
+      setSelectedCarrierId(initialCarrierId.toString());
+      onCarrierChange(initialCarrierId);
+    }
+  }, [initialCarrierId, initialDeliveryCost, onCarrierChange, onCostChange]);
 
   const {
     carriers,
     isLoading: isLoadingCarriers,
     error: carriersError,
-    fetchCarriers
+    fetchCarriers,
   } = useCarriers();
+
+  // Fetch carriers on component mount
+  useEffect(() => {
+    fetchCarriers();
+  }, []);
 
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -65,7 +90,25 @@ export default function CostCarrierForm({
       <div className="space-y-2">
         <label className="text-sm font-medium">Transporte</label>
         {carriersError ? (
-          <div className="text-sm text-red-500">{carriersError}</div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 text-sm text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-4 w-4" />
+              <span>Error al cargar transportes</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchCarriers}
+              disabled={isLoadingCarriers}
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-1 ${
+                  isLoadingCarriers ? "animate-spin" : ""
+                }`}
+              />
+              Reintentar
+            </Button>
+          </div>
         ) : (
           <Select
             value={selectedCarrierId}
@@ -73,7 +116,7 @@ export default function CostCarrierForm({
             required={required}
             disabled={isLoadingCarriers}
             onOpenChange={(open) => {
-              if (open) {
+              if (open && carriers.length === 0) {
                 fetchCarriers();
               }
             }}
@@ -86,11 +129,17 @@ export default function CostCarrierForm({
               />
             </SelectTrigger>
             <SelectContent>
-              {carriers.map((carrier) => (
-                <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                  {carrier.name}
-                </SelectItem>
-              ))}
+              {carriers.length === 0 && !isLoadingCarriers && !carriersError ? (
+                <div className="p-2 text-center text-sm text-gray-500">
+                  No hay transportes disponibles
+                </div>
+              ) : (
+                carriers.map((carrier) => (
+                  <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                    {carrier.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         )}

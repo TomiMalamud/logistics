@@ -113,6 +113,21 @@ export default function StateDialog({
     form: false,
   });
 
+  // Initialize form with initial values when dialog opens
+  useEffect(() => {
+    if (open) {
+      if (initialDeliveryCost || initialCarrierId) {
+        setDeliveryType("carrier");
+        if (initialDeliveryCost) {
+          setDeliveryCost(initialDeliveryCost.toString());
+        }
+        if (initialCarrierId) {
+          setSelectedCarrierId(initialCarrierId);
+        }
+      }
+    }
+  }, [open, initialDeliveryCost, initialCarrierId]);
+
   const checkFormDirty = useCallback(() => {
     const hasSelectedItems = Object.values(selectedItems).some(
       (item) => item.quantity > 0
@@ -557,6 +572,8 @@ export default function StateDialog({
               onCarrierChange={setSelectedCarrierId}
               onCostChange={setDeliveryCost}
               required
+              initialCarrierId={initialCarrierId}
+              initialDeliveryCost={initialDeliveryCost?.toString()}
             />
           )}
 
