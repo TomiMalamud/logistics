@@ -80,6 +80,7 @@ export default function CompareStock() {
     comparison: false,
   });
   const [showOnlyDifferences, setShowOnlyDifferences] = useState(false);
+  const [removeCheckDigit, setRemoveCheckDigit] = useState(true);
 
   const validateFile = (file: File) => {
     const validTypes = [
@@ -224,8 +225,10 @@ export default function CompareStock() {
 
       const physicalInventory = skuData.reduce<Record<string, number>>(
         (acc, row) => {
-          const cleanSku = row.SKU.slice(0, -1).toUpperCase();
-          acc[cleanSku] = (acc[cleanSku] || 0) + 1;
+          const sku = removeCheckDigit
+            ? row.SKU.slice(0, -1).toUpperCase()
+            : row.SKU.toUpperCase();
+          acc[sku] = (acc[sku] || 0) + 1;
           return acc;
         },
         {}
@@ -421,6 +424,22 @@ export default function CompareStock() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="checkDigit"
+              checked={removeCheckDigit}
+              onCheckedChange={(checked) =>
+                setRemoveCheckDigit(checked as boolean)
+              }
+            />
+            <label
+              htmlFor="checkDigit"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              El código tiene dígito de control, quitarlo para hacer el stock
+            </label>
           </div>
         </CardContent>
         <CardFooter>

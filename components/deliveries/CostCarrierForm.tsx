@@ -61,6 +61,7 @@ export default function CostCarrierForm({
   // Fetch carriers on component mount
   useEffect(() => {
     fetchCarriers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
