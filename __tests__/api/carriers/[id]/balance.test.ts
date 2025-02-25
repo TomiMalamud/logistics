@@ -1,16 +1,19 @@
 import { createMocks } from "node-mocks-http";
 import balanceHandler from "@/pages/api/carriers/[id]/balance";
-import { supabase } from "@/lib/supabase";
 import { Database } from "@/supabase/types/supabase";
 
 type DeliveryTypeEnum = Database["public"]["Enums"]["delivery_type"];
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
+// Mock the createClient function instead of supabase directly
+jest.mock("@/lib/utils/supabase/api", () => {
+  return jest.fn().mockImplementation(() => ({
     from: jest.fn(),
     rpc: jest.fn(),
-  },
-}));
+  }));
+});
+
+// Import the mocked function
+import createClient from "@/lib/utils/supabase/api";
 
 describe("Carrier Balance API", () => {
   beforeEach(() => {
@@ -65,47 +68,51 @@ describe("Carrier Balance API", () => {
       },
     ];
 
-    // Mock supabase responses
-    (supabase.from as jest.Mock).mockImplementation((table) => {
-      if (table === "carriers") {
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          single: jest
-            .fn()
-            .mockResolvedValue({ data: mockCarrier, error: null }),
-        };
-      } else if (table === "delivery_operations") {
+    // Mock the Supabase client responses
+    const mockSupabaseClient = {
+      from: jest.fn().mockImplementation((table) => {
+        if (table === "carriers") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest
+              .fn()
+              .mockResolvedValue({ data: mockCarrier, error: null }),
+          };
+        } else if (table === "delivery_operations") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            gte: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: mockOperations, error: null }),
+          };
+        } else if (table === "carrier_payments") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            gte: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: mockPayments, error: null }),
+          };
+        }
         return {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
           gte: jest.fn().mockReturnThis(),
-          order: jest
-            .fn()
-            .mockResolvedValue({ data: mockOperations, error: null }),
+          order: jest.fn().mockReturnThis(),
         };
-      } else if (table === "carrier_payments") {
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          gte: jest.fn().mockReturnThis(),
-          order: jest
-            .fn()
-            .mockResolvedValue({ data: mockPayments, error: null }),
-        };
-      }
-      return {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        gte: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-      };
-    });
+      }),
+      rpc: jest.fn().mockResolvedValue({
+        data: mockInitialBalance,
+        error: null,
+      }),
+    };
 
-    (supabase.rpc as jest.Mock).mockResolvedValue({
-      data: mockInitialBalance,
-      error: null,
-    });
+    // Set up the mock implementation for this test
+    (createClient as jest.Mock).mockReturnValue(mockSupabaseClient);
 
     const { req, res } = createMocks({
       method: "GET",
@@ -147,13 +154,19 @@ describe("Carrier Balance API", () => {
   });
 
   it("handles supabase error", async () => {
-    (supabase.from as jest.Mock).mockImplementation(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({
-        error: new Error("Database error"),
-      }),
-    }));
+    // Mock error response
+    const mockErrorClient = {
+      from: jest.fn().mockImplementation(() => ({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: new Error("Database error"),
+        }),
+      })),
+    };
+
+    (createClient as jest.Mock).mockReturnValue(mockErrorClient);
 
     const { req, res } = createMocks({
       method: "GET",

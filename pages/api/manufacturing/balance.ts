@@ -1,6 +1,6 @@
-import { supabase } from "@/lib/supabase";
-import { ManufacturingStatus } from "@/types/types";
 import { NextApiRequest, NextApiResponse } from "next";
+import { ManufacturingStatus } from "@/types/types";
+import createClient from "@/lib/utils/supabase/api";
 
 export type Transaction = {
   date: string;
@@ -51,7 +51,10 @@ export default async function handler(
     const filterDate = thirtyDaysAgo.toISOString().split("T")[0];
 
     // Get total finished orders before filter date (for initial balance)
-    const { data: finishedData, error: finishedError } = await supabase
+    const { data: finishedData, error: finishedError } = await createClient(
+      req,
+      res
+    )
       .from("manufacturing_orders")
       .select("price")
       .eq("status", "finished")
@@ -61,7 +64,7 @@ export default async function handler(
 
     // Get total payments before filter date (for initial balance)
     const { data: previousPayments, error: previousPaymentsError } =
-      await supabase
+      await createClient(req, res)
         .from("manufacturing_payments")
         .select("amount")
         .lt("payment_date", filterDate);
@@ -82,7 +85,7 @@ export default async function handler(
     const initialBalance = totalFinishedBefore - totalPaymentsBefore;
 
     // Fetch all finished orders within 30-day window
-    const { data: orders, error: ordersError } = await supabase
+    const { data: orders, error: ordersError } = await createClient(req, res)
       .from("manufacturing_orders")
       .select(
         `
@@ -109,7 +112,10 @@ export default async function handler(
     if (ordersError) throw ordersError;
 
     // Fetch payments within 30-day window
-    const { data: payments, error: paymentsError } = await supabase
+    const { data: payments, error: paymentsError } = await createClient(
+      req,
+      res
+    )
       .from("manufacturing_payments")
       .select("*")
       .gte("payment_date", filterDate)

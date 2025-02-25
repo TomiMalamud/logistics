@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
+import createClient from "@/lib/utils/supabase/api";
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,7 +11,7 @@ export default async function handler(
   }
 
   try {
-    const { data: orders, error } = await supabase
+    const { data: orders, error } = await createClient(req, res)
       .from("manufacturing_orders")
       .select(
         `

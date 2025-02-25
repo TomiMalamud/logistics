@@ -4,7 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,10 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/utils/supabase/component";
+import { z } from "zod";
 import React, { useState } from "react";
 
 interface PaymentFormProps {
@@ -30,10 +31,18 @@ interface FormErrors {
   payment_method?: string;
 }
 
+// Define validation schema using zod
+const paymentSchema = z.object({
+  payment_date: z.string().min(1, "La fecha de pago es requerida"),
+  amount: z.string().min(1, "El monto es requerido"),
+  payment_method: z.string().min(1, "El método de pago es requerido"),
+  notes: z.string().optional(),
+});
+
 const PaymentForm: React.FC<PaymentFormProps> = ({
   carrierId,
   onSuccess,
-  trigger
+  trigger,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -42,31 +51,33 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     amount: "",
     payment_method: "",
     notes: "",
-    payment_date: new Date().toISOString().split("T")[0]
+    payment_date: new Date().toISOString().split("T")[0],
   });
+  const supabase = createClient();
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-    
-    if (!formData.payment_date) {
-      newErrors.payment_date = "La fecha de pago es requerida";
+    try {
+      paymentSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: FormErrors = {};
+        error.errors.forEach((err) => {
+          const field = err.path[0] as keyof FormErrors;
+          if (field in errors) {
+            newErrors[field] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
     }
-    
-    if (!formData.amount) {
-      newErrors.amount = "El monto es requerido";
-    }
-    
-    if (!formData.payment_method) {
-      newErrors.payment_method = "El método de pago es requerido";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -75,9 +86,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
     try {
       const { error } = await supabase.from("carrier_payments").insert({
-        ...formData,
-        carrier_id: carrierId,
-        amount: parseInt(formData.amount)
+        payment_date: formData.payment_date,
+        payment_method: formData.payment_method,
+        notes: formData.notes || null,
+        carrier_id: parseInt(carrierId, 10),
+        amount: parseInt(formData.amount, 10),
       });
 
       if (error) throw error;

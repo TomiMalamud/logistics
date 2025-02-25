@@ -3,6 +3,7 @@ import { formatDate } from "@/lib/utils/format";
 import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
 import PDFDocument from "pdfkit";
+import createClient from "@/lib/utils/supabase/api";
 
 // Types
 interface Product {
@@ -82,6 +83,17 @@ export default async function handler(
   }
 
   try {
+    // Authenticate user
+    const supabase = createClient(req, res);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const { delivery, customer } = req.body;
 
     // Validate input data

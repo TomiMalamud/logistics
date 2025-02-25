@@ -10,6 +10,18 @@ jest.mock("path", () => ({
   join: jest.fn(() => "/mocked/path/to/logo.jpg"),
 }));
 
+// Mock Supabase client
+jest.mock("@/lib/utils/supabase/api", () => {
+  return jest.fn().mockImplementation(() => ({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: "test-user-id" } },
+        error: null,
+      }),
+    },
+  }));
+});
+
 describe("/api/deliveries/generate-remito", () => {
   const mockDelivery = {
     id: 123,
@@ -75,6 +87,37 @@ describe("/api/deliveries/generate-remito", () => {
       expect(res._getStatusCode()).toBe(405);
       expect(JSON.parse(res._getData())).toEqual({
         message: "Method not allowed",
+      });
+    });
+  });
+
+  describe("Authentication", () => {
+    it("should return 401 for unauthenticated requests", async () => {
+      // Override the default mock to return an error
+      jest
+        .requireMock("@/lib/utils/supabase/api")
+        .mockImplementationOnce(() => ({
+          auth: {
+            getUser: jest.fn().mockResolvedValue({
+              data: { user: null },
+              error: { message: "Unauthorized" },
+            }),
+          },
+        }));
+
+      const { req, res } = createMocks({
+        method: "POST",
+        body: {
+          delivery: mockDelivery,
+          customer: mockCustomer,
+        },
+      });
+
+      await handler(req, res);
+
+      expect(res._getStatusCode()).toBe(401);
+      expect(JSON.parse(res._getData())).toEqual({
+        error: "Unauthorized",
       });
     });
   });

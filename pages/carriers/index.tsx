@@ -22,34 +22,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/lib/supabase";
+import { formatDate, sanitizePhoneNumber } from "@/lib/utils/format";
+import { createClient } from "@/lib/utils/supabase/component";
 import { Carrier } from "@/types/types";
-import {
-  formatDate,
-  sanitizePhoneNumber,
-  validatePhoneNumber,
-} from "@/lib/utils/format";
 import { DollarSign, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { z } from "zod";
+
+const carrierSchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  phone: z.string().min(1, "El teléfono es requerido"),
+  service_area: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  service_hours: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  type: z.enum(["local", "national"]).nullable().optional(),
+  avg_cost: z.number().nullable().optional(),
+  is_reliable: z.boolean().default(false),
+});
 
 export default function CarriersPage() {
   const [carriers, setCarriers] = useState<Carrier[]>([]);
   const [error, setError] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   const [currentCarrier, setCurrentCarrier] = useState<Carrier | null>(null);
+  const supabase = createClient();
 
-  useEffect(() => {
-    fetchCarriers();
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setError("");
-    }
-  }, [isOpen]);
-
-  async function fetchCarriers() {
+  const fetchCarriers = useCallback(async () => {
     const { data, error } = await supabase
       .from("carriers")
       .select(
@@ -91,40 +91,49 @@ export default function CarriersPage() {
     }));
 
     setCarriers(processedData);
-  }
+  }, [supabase]);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+  useEffect(() => {
+    fetchCarriers();
+  }, [fetchCarriers]);
 
-    const phone = formData.get("phone") as string;
-    const sanitizedPhone = sanitizePhoneNumber(phone);
-
-    if (!validatePhoneNumber(sanitizedPhone)) {
-      setError(
-        "Número de teléfono inválido - No puede tener 0, 15, espacios o guiones."
-      );
-      return;
+  useEffect(() => {
+    if (!isOpen) {
+      setError("");
     }
+  }, [isOpen]);
 
-    const carrierData = {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    const formData = new FormData(event.currentTarget);
+    const sanitizedPhone = formData.get("phone") as string;
+
+    const rawData = {
       name: formData.get("name") as string,
       phone: sanitizedPhone,
-      service_area: formData.get("service_area") as string,
-      location: formData.get("location") as string,
-      service_hours: formData.get("service_hours") as string,
-      notes: formData.get("notes") as string,
-      type: formData.get("type") as string,
-      avg_cost: Number(formData.get("avg_cost")) || 0,
+      service_area: (formData.get("service_area") as string) || null,
+      location: (formData.get("location") as string) || null,
+      service_hours: (formData.get("service_hours") as string) || null,
+      notes: (formData.get("notes") as string) || null,
+      type: (formData.get("type") as "local" | "national") || null,
+      avg_cost: Number(formData.get("avg_cost")) || null,
       is_reliable: formData.get("is_reliable") === "true",
     };
 
-    if (!carrierData.type) {
-      setError("Carrier type is required");
+    // Validate with Zod
+    const result = carrierSchema.safeParse(rawData);
+
+    if (!result.success) {
+      // Handle validation errors
+      const formattedErrors = result.error.format();
+      console.error("Validation errors:", formattedErrors);
+      setError("Por favor, verifica los datos ingresados.");
       return;
     }
+
+    const carrierData = result.data;
 
     if (currentCarrier) {
       const { error } = await supabase
@@ -137,9 +146,24 @@ export default function CarriersPage() {
         return;
       }
     } else {
-      const { error } = await supabase.from("carriers").insert(carrierData);
+      // Create a properly typed carrier object for insertion
+      const carrierToInsert = {
+        name: carrierData.name,
+        phone: carrierData.phone,
+        service_area: carrierData.service_area,
+        location: carrierData.location,
+        service_hours: carrierData.service_hours,
+        notes: carrierData.notes,
+        type: carrierData.type,
+        avg_cost: carrierData.avg_cost,
+        is_reliable: carrierData.is_reliable,
+      };
 
-      if (error) {
+      const { error: insertError } = await supabase
+        .from("carriers")
+        .insert([carrierToInsert]);
+
+      if (insertError) {
         setError("Error al crear el transporte.");
         return;
       }
@@ -148,7 +172,7 @@ export default function CarriersPage() {
     setIsOpen(false);
     setCurrentCarrier(null);
     fetchCarriers();
-    form.reset();
+    event.currentTarget.reset();
   }
 
   async function handleDelete(id: number) {
@@ -394,7 +418,7 @@ export default function CarriersPage() {
                   {carrier.is_reliable ? "Confiable" : "No Confiable"}
                 </Badge>
                 <Badge
-                  variant={getTypeBadgeVariant(carrier.type)}
+                  variant={getTypeBadgeVariant(carrier.type || "local")}
                   className="pointer-events-none"
                 >
                   {carrier.type === "local" ? "Local" : "Nacional"}

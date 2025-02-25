@@ -1,8 +1,8 @@
 // pages/api/carriers/[id]/balance.ts
-import { supabase } from "@/lib/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { Database } from "@/supabase/types/supabase";
+import createClient from "@/lib/utils/supabase/api";
 
 type DeliveryTypeEnum = Database["public"]["Enums"]["delivery_type"];
 
@@ -83,7 +83,7 @@ export default async function handler(
     const filterDate = thirtyDaysAgo.toISOString().split("T")[0];
 
     // Fetch carrier details
-    const { data: carrier, error: carrierError } = await supabase
+    const { data: carrier, error: carrierError } = await createClient(req, res)
       .from("carriers")
       .select("id, name")
       .eq("id", id)
@@ -93,17 +93,23 @@ export default async function handler(
 
     // Calculate initial balance (before 30-day window)
     const { data: initialBalanceData, error: initialBalanceError } =
-      await supabase.rpc("calculate_carrier_balance_before_date", {
-        p_carrier_id: parseInt(id),
-        p_date: filterDate,
-      });
+      await createClient(req, res).rpc(
+        "calculate_carrier_balance_before_date",
+        {
+          p_carrier_id: parseInt(id),
+          p_date: filterDate,
+        }
+      );
 
     if (initialBalanceError) throw initialBalanceError;
 
     const initialBalance = initialBalanceData || 0;
 
     // Fetch operations within 30-day window
-    const { data: operations, error: operationsError } = await supabase
+    const { data: operations, error: operationsError } = await createClient(
+      req,
+      res
+    )
       .from("delivery_operations")
       .select(
         `
@@ -131,7 +137,10 @@ export default async function handler(
     if (operationsError) throw operationsError;
 
     // Fetch payments within 30-day window
-    const { data: payments, error: paymentsError } = await supabase
+    const { data: payments, error: paymentsError } = await createClient(
+      req,
+      res
+    )
       .from("carrier_payments")
       .select("*")
       .eq("carrier_id", id)
