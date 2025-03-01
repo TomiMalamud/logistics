@@ -55,11 +55,11 @@ export interface FinancingOption {
   cards?: string[];
 }
 
-export const CASH_DISCOUNT = 20; // 20% discount for cash payments
+export const CASH_DISCOUNT = 25;
 
 export const FINANCING_OPTIONS: FinancingOption[] = [
-  { months: 10, discount: 0, label: "10 cuotas", cards: ["Naranja"] },
-  { months: 6, discount: 0, label: "6 cuotas" },
-  { months: 3, discount: 5, label: "3 cuotas" },
-  { months: 1, discount: 15, label: "1 cuota" },
+  { months: 12, discount: 0, label: "12 cuotas", cards: ["Naranja"] },
+  { months: 6, discount: 5, label: "6 cuotas" },
+  { months: 3, discount: 10, label: "3 cuotas" },
+  { months: 1, discount: 20, label: "1 cuota" },
 ];

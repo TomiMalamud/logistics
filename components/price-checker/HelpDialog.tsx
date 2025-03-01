@@ -32,7 +32,7 @@ export default function HelpDialog() {
           <h3 className="text-lg font-bold">Naranja</h3>
           <ul className="list-disc list-inside space-y-1 text-md">
             <li>
-              <span className="font-bold">Terminal:</span> Payway de CCD
+              <span className="font-bold">Terminal:</span> Payway nuestro
             </li>
             <li>
               3 cuotas (Plan Z): Código{" "}
@@ -47,9 +47,9 @@ export default function HelpDialog() {
               </span>
             </li>
             <li>
-              10 cuotas: Código{" "}
+              12 cuotas: Código{" "}
               <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                10
+                12
               </span>
             </li>
           </ul>
@@ -60,29 +60,23 @@ export default function HelpDialog() {
           </h3>
           <ul className="list-disc list-inside space-y-1 text-md">
             <li>
-              <span className="font-bold">Terminal:</span> Mercado Pago Point
+              <span className="font-bold">Terminal:</span> Payway nuestro
             </li>
             <li>
-              <span className="font-bold">12 cuotas:</span> Aplicar descuento de
-              1 pago en crédito en el Point y el cliente paga el interés.
+              3 cuotas: Código{" "}
+              <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
+                13
+              </span>
             </li>
             <li>
-              En determinados períodos, avisados por WhatsApp, se cobra con la
-              terminal de Payway de CCD con los códigos:
-              <ul className="list-[circle] list-inside ml-4 mt-1 space-y-1 text-md">
-                <li>
-                  3 cuotas: Código{" "}
-                  <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                    13
-                  </span>
-                </li>
-                <li>
-                  6 cuotas: Código{" "}
-                  <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                    16
-                  </span>
-                </li>
-              </ul>
+              6 cuotas: Código{" "}
+              <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
+                16
+              </span>
+            </li>
+            <li>
+              12 cuotas: Aplicar descuento de 1 pago en crédito en el Point y el
+              cliente paga el interés.
             </li>
           </ul>
         </div>
