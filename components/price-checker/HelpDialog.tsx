@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Truck } from "lucide-react";
 
 export default function HelpDialog() {
   return (
@@ -18,15 +18,17 @@ export default function HelpDialog() {
           variant="link"
         >
           <HelpCircle className="w-4 h-4" />
-          ¿Cómo paso la tarjeta?
+          Ayuda sobre cobros y envíos
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
-            Cómo pasar la tarjeta
+            Ayuda sobre cobros y envíos
           </DialogTitle>
-          <DialogDescription>Payway de CCD: Cotización. </DialogDescription>
+          <DialogDescription>
+            Payway de CCD: Cotización. Payway nuestro: Factura.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-2 text-stone-700">
           <h3 className="text-lg font-bold">Naranja</h3>
@@ -79,6 +81,11 @@ export default function HelpDialog() {
               cliente paga el interés.
             </li>
           </ul>
+          <div className="flex items-center gap-2">
+            <Truck size={20} />
+            <h3 className="text-lg font-bold teaxt-stone-700">Envíos</h3>
+          </div>
+          <p>Revisá el costo de envío en el calculador de la página.</p>
         </div>
       </DialogContent>
     </Dialog>
