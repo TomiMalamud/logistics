@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { HelpCircle, Truck } from "lucide-react";
+import { CreditCard, HelpCircle, Truck } from "lucide-react";
 
 export default function HelpDialog() {
   return (
@@ -21,71 +21,41 @@ export default function HelpDialog() {
           Ayuda sobre cobros y envíos
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
             Ayuda sobre cobros y envíos
           </DialogTitle>
           <DialogDescription>
-            Payway de CCD: Cotización. Payway nuestro: Factura.
+            <ul>
+              <li>Payway de CCD: Cotización.</li>
+              <li>Payway nuestro: Factura.</li>
+              <li>Mercado Pago Point: Factura.</li>
+              <li>Transferencias: A Mercado Pago (Factura).</li>
+              <li>QR: Mercado Pago. QR Modo: Payway.</li>
+            </ul>
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-2 text-stone-700">
-          <h3 className="text-lg font-bold">Naranja</h3>
-          <ul className="list-disc list-inside space-y-1 text-md">
-            <li>
-              <span className="font-bold">Terminal:</span> Payway nuestro
-            </li>
-            <li>
-              3 cuotas (Plan Z): Código{" "}
-              <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                11
-              </span>
-            </li>
-            <li>
-              6 cuotas: Código{" "}
-              <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                6
-              </span>
-            </li>
-            <li>
-              12 cuotas: Código{" "}
-              <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                12
-              </span>
-            </li>
-          </ul>
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <CreditCard size={20} />
+            <h3 className="text-lg font-bold teaxt-stone-700">
+              Financiación con tarjeta
+            </h3>
+          </div>
+          <p className="text-sm text-stone-700">
+            Buscá un producto y mirá las opciones de financiación y por dónde
+            pasar la tarjeta.
+          </p>
         </div>
-        <div className="space-y-2 text-stone-700">
-          <h3 className="text-lg font-bold">
-            Visa, Mastercard, Cabal bancarias
-          </h3>
-          <ul className="list-disc list-inside space-y-1 text-md">
-            <li>
-              <span className="font-bold">Terminal:</span> Payway nuestro
-            </li>
-            <li>
-              3 cuotas: Código{" "}
-              <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                13
-              </span>
-            </li>
-            <li>
-              6 cuotas: Código{" "}
-              <span className="font-mono px-1 bg-gray-200 text-gray-900 rounded-sm">
-                16
-              </span>
-            </li>
-            <li>
-              12 cuotas: Aplicar descuento de 1 pago en crédito en el Point y el
-              cliente paga el interés.
-            </li>
-          </ul>
-          <div className="flex items-center gap-2">
+        <div>
+          <div className="flex items-center gap-2 my-2">
             <Truck size={20} />
             <h3 className="text-lg font-bold teaxt-stone-700">Envíos</h3>
           </div>
-          <p>Revisá el costo de envío en el calculador de la página.</p>
+          <p className="text-sm text-stone-700">
+            Revisá el costo de envío en el calculador de la página.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

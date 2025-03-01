@@ -53,13 +53,52 @@ export interface FinancingOption {
   interest?: number;
   label: string;
   cards?: string[];
+  helper?: string;
 }
 
 export const CASH_DISCOUNT = 25;
 
 export const FINANCING_OPTIONS: FinancingOption[] = [
-  { months: 12, discount: 0, label: "12 cuotas", cards: ["Naranja"] },
-  { months: 6, discount: 5, label: "6 cuotas" },
-  { months: 3, discount: 10, label: "3 cuotas" },
-  { months: 1, discount: 20, label: "1 cuota" },
+  {
+    months: 6,
+    discount: 5,
+    label: "6 cuotas",
+    cards: ["Bancaria"],
+    helper: "Código 16",
+  },
+  {
+    months: 3,
+    discount: 10,
+    label: "3 cuotas",
+    cards: ["Bancaria"],
+    helper: "Código 13",
+  },
+  {
+    months: 1,
+    discount: 20,
+    label: "1 cuota",
+    cards: ["Bancaria", "Naranja"],
+    helper: "Código 1",
+  },
+  {
+    months: 12,
+    discount: 0,
+    label: "12 cuotas",
+    cards: ["Naranja"],
+    helper: "Código 12",
+  },
+  {
+    months: 6,
+    discount: 0,
+    label: "6 cuotas",
+    cards: ["Naranja"],
+    helper: "Código 6",
+  },
+  {
+    months: 3,
+    discount: 5,
+    label: "Plan Z",
+    cards: ["Naranja"],
+    helper: "Código 11",
+  },
 ];
