@@ -1,12 +1,11 @@
 import Layout from "@/components/Layout";
 import ManufacturingOrdersList from "@/components/manufacturing/Table";
-import { CreateOrderForm } from "@/components/manufacturing/CreateOrderForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/utils/supabase/server-props";
 import { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { Wallet } from "lucide-react";
+import { Wallet, Plus } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -37,10 +36,12 @@ export default function ManufacturingPage({ user }: Props) {
                 </Link>
               </Button>
             </div>
-            <CreateOrderForm
-              user={user}
-              defaultDeliveryId={delivery_id ? String(delivery_id) : undefined}
-            />
+            <Button asChild>
+              <Link href={delivery_id ? `/manufacturing/create?delivery_id=${delivery_id}` : "/manufacturing/create"}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo Pedido
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
             <ManufacturingOrdersList />

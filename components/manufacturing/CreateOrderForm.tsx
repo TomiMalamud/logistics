@@ -9,15 +9,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -48,7 +39,7 @@ import { DeliveryItem } from "@/types/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addBusinessDays } from "date-fns";
-import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -164,8 +155,8 @@ const useDeliveries = () => {
 };
 
 export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const form = useForm<FormValues>({
@@ -175,13 +166,6 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
       deliveryId: defaultDeliveryId,
     },
   });
-
-  // Open dialog if defaultDeliveryId is provided
-  React.useEffect(() => {
-    if (defaultDeliveryId) {
-      setDialogOpen(true);
-    }
-  }, [defaultDeliveryId]);
 
   const { data: deliveries, isLoading: isLoadingDeliveries } = useDeliveries();
   const { data: deliveryItems, isLoading: isLoadingItems } = useDeliveryItems(
@@ -263,12 +247,7 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
       queryClient.invalidateQueries({ queryKey: ["manufacturing-orders"] });
       queryClient.invalidateQueries({ queryKey: ["manufacturer-balance"] });
       form.reset();
-      setDialogOpen(false);
       onSuccess?.();
-    },
-    onError: () => {
-      // Keep the dialog open when there are errors
-      setDialogOpen(true);
     },
   });
 
@@ -307,8 +286,6 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
     });
   };
 
-  const [search, setSearch] = useState("");
-
   const filteredDeliveries = React.useMemo(() => {
     if (!deliveries) return [];
     return deliveries.filter((delivery) => {
@@ -323,25 +300,247 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
   const isCustomOrder = form.watch("isCustomOrder");
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Pedido
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl overflow-y-scroll my-4">
-        <DialogHeader>
-          <DialogTitle>Nuevo Pedido</DialogTitle>
-          <DialogDescription>
-            Nueva cama con cajones para Maxi. Si son 2 unidades, creá 2 pedidos.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="isCustomOrder"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="cursor-pointer">
+                  Pedido personalizado
+                </FormLabel>
+                <FormDescription>
+                  Marcar si este es un pedido sin venta asociada
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {!isCustomOrder ? (
+          <div className="grid grid-cols-[2fr,1fr] gap-4">
             <FormField
               control={form.control}
-              name="isCustomOrder"
+              name="deliveryId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Venta</FormLabel>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={popoverOpen}
+                          className="w-full justify-between font-normal"
+                          disabled={isLoadingDeliveries}
+                        >
+                          {field.value
+                            ? deliveries?.find(
+                                (delivery) =>
+                                  delivery.id.toString() === field.value
+                              )?.customers.name
+                            : "Seleccionar una venta"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-full p-0" 
+                      align="start"
+                      side="bottom"
+                      sideOffset={4}
+                    >
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Buscar venta..."
+                          value={search}
+                          onValueChange={setSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            No se encontraron ventas.
+                          </CommandEmpty>
+                          {isLoadingDeliveries ? (
+                            <div className="p-4 text-sm text-muted-foreground text-center flex items-center justify-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Cargando ventas...
+                            </div>
+                          ) : (
+                            <CommandGroup>
+                              {filteredDeliveries.map((delivery) => (
+                                <CommandItem
+                                  key={delivery.id}
+                                  value={`${delivery.customers?.name} ${delivery.invoice_number}`}
+                                  onSelect={() => {
+                                    field.onChange(delivery.id.toString());
+                                    setPopoverOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === delivery.id.toString()
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {delivery.customers.name} -{" "}
+                                  {delivery.invoice_number}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {deliveryItems && (
+              <div className="flex items-center mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Entrega estimada
+                  <p className="font-semibold">
+                    {formatLongDate(
+                      addBusinessDays(new Date(), 15).toISOString()
+                    )}
+                  </p>
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <FormField
+              control={form.control}
+              name="customProductName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre del Producto</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ej: CAMA CON CAJONES 2 PLAZAS"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="customPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Precio</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Ej: 150000"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value
+                            ? Number(e.target.value)
+                            : undefined
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+
+        {deliveryItems && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="productSku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Producto</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Seleccionar un producto" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {deliveryItems?.map((item) => (
+                          <SelectItem
+                            key={item.product_sku}
+                            value={item.product_sku}
+                          >
+                            {item.quantity} - {item.products?.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="extraProductSku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Producto Extra</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={!form.getValues("productSku")}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-white" >
+                          <SelectValue placeholder="Seleccionar un extra (opcional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {deliveryItems?.map((item) => (
+                          <SelectItem
+                            key={item.product_sku}
+                            value={item.product_sku}
+                            disabled={
+                              item.product_sku ===
+                              form.getValues("productSku")
+                            }
+                          >
+                            {item.quantity} - {item.products?.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="needsPackaging"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
@@ -352,282 +551,45 @@ export function CreateOrderForm({ user, onSuccess, defaultDeliveryId }: Props) {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel className="cursor-pointer">
-                      Pedido personalizado
+                      Embalaje
                     </FormLabel>
-                    <FormDescription>
-                      Marcar si este es un pedido sin venta asociada
-                    </FormDescription>
                   </div>
                 </FormItem>
               )}
             />
 
-            {!isCustomOrder ? (
-              <div className="grid grid-cols-[2fr,1fr] gap-4">
-                <FormField
-                  control={form.control}
-                  name="deliveryId"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Venta</FormLabel>
-                      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={popoverOpen}
-                              className="w-full justify-between font-normal"
-                              disabled={isLoadingDeliveries}
-                            >
-                              {field.value
-                                ? deliveries?.find(
-                                    (delivery) =>
-                                      delivery.id.toString() === field.value
-                                  )?.customers.name
-                                : "Seleccionar una venta"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command>
-                            <div className="flex items-center border-b px-3">
-                              <CommandInput
-                                placeholder="Buscar venta..."
-                                value={search}
-                                onValueChange={setSearch}
-                              />
-                            </div>
-                            <CommandList>
-                              <CommandEmpty>
-                                No se encontraron ventas.
-                              </CommandEmpty>
-                              {isLoadingDeliveries ? (
-                                <div className="p-4 text-sm text-muted-foreground text-center flex items-center justify-center gap-2">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Cargando ventas...
-                                </div>
-                              ) : (
-                                <CommandGroup>
-                                  {filteredDeliveries.map((delivery) => (
-                                    <CommandItem
-                                      key={delivery.id}
-                                      value={`${delivery.customers?.name} ${delivery.invoice_number}`}
-                                      onSelect={() => {
-                                        field.onChange(delivery.id.toString());
-                                        setPopoverOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          field.value === delivery.id.toString()
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                      {delivery.customers.name} -{" "}
-                                      {delivery.invoice_number}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              )}
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Notas</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} className="bg-white" />
+                  </FormControl>
+                  <FormDescription className="max-w-96">
+                    Si la cama es de 1 plaza, indicá para qué lado abren los
+                    cajones como si estuvieras parado en los pies de la
+                    cama.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
 
-                {deliveryItems && (
-                  <div className="flex items-center mt-4">
-                    <p className="text-sm text-muted-foreground">
-                      Entrega estimada
-                      <p className="font-semibold">
-                        {formatLongDate(
-                          addBusinessDays(new Date(), 15).toISOString()
-                        )}
-                      </p>
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <FormField
-                  control={form.control}
-                  name="customProductName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre del Producto</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Ej: CAMA CON CAJONES 2 PLAZAS"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="customPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Precio</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Ej: 150000"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? Number(e.target.value)
-                                : undefined
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            {deliveryItems && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="productSku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Producto</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar un producto" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {deliveryItems?.map((item) => (
-                              <SelectItem
-                                key={item.product_sku}
-                                value={item.product_sku}
-                              >
-                                {item.quantity} - {item.products?.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="extraProductSku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Producto Extra</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={!form.getValues("productSku")}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar un extra (opcional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {deliveryItems?.map((item) => (
-                              <SelectItem
-                                key={item.product_sku}
-                                value={item.product_sku}
-                                disabled={
-                                  item.product_sku ===
-                                  form.getValues("productSku")
-                                }
-                              >
-                                {item.quantity} - {item.products?.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="needsPackaging"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="cursor-pointer">
-                          Embalaje
-                        </FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notas</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} />
-                      </FormControl>
-                      <FormDescription className="max-w-96">
-                        Si la cama es de 1 plaza, indicá para qué lado abren los
-                        cajones como si estuvieras parado en los pies de la
-                        cama.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="submit"
-                disabled={createOrder.isPending}
-                className="w-full"
-              >
-                {createOrder.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Crear Pedido
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        <Button
+          type="submit"
+          disabled={createOrder.isPending}
+          className="w-full"
+        >
+          {createOrder.isPending && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          )}
+          Crear Pedido
+        </Button>
+      </form>
+    </Form>
   );
 }
