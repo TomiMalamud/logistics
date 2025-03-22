@@ -15,7 +15,7 @@ const App = ({ Component, pageProps }: AppProps) => {
   }, []);
 
   return (
-    <main className={publicSans.className}>
+    <main className={`${publicSans.className} antialiased`}>
       <QueryClientProvider client={queryClient}>
         <Component {...pageProps} />
         {process.env.NODE_ENV === "development" && <ReactQueryDevtools />}
