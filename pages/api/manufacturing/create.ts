@@ -1,4 +1,4 @@
-import { getProductCostBySku } from "@/lib/api";
+import { getProductBySku } from "@/lib/api";
 import createClient from "@/lib/utils/supabase/api";
 import { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
@@ -44,7 +44,7 @@ type ManufacturingOrderInsert =
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
@@ -104,11 +104,11 @@ export default async function handler(
     let totalCost = 0;
     if (!is_custom_order && product_sku) {
       try {
-        const mainProduct = await getProductCostBySku(product_sku);
+        const mainProduct = await getProductBySku(product_sku);
         totalCost += mainProduct.CostoInterno;
 
         if (extra_product_sku) {
-          const extraProduct = await getProductCostBySku(extra_product_sku);
+          const extraProduct = await getProductBySku(extra_product_sku);
           totalCost += extraProduct.CostoInterno;
         }
       } catch (error) {
@@ -138,7 +138,7 @@ export default async function handler(
 
     if (orderError || !order) {
       throw new Error(
-        orderError?.message || "Failed to create manufacturing order"
+        orderError?.message || "Failed to create manufacturing order",
       );
     }
 

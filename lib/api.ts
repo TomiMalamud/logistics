@@ -75,7 +75,7 @@ const _searchInvoices = async (
   fechaDesde: string,
   fechaHasta: string,
   filtro?: string,
-  page: number = 1
+  page: number = 1,
 ): Promise<SearchComprobanteResponse> => {
   const token = await getAccessToken();
 
@@ -110,7 +110,7 @@ const _searchInvoices = async (
 const fetchAllComprobantes = async (
   fechaDesde: string,
   fechaHasta: string,
-  filtro?: string
+  filtro?: string,
 ): Promise<Comprobante[]> => {
   const allItems: Comprobante[] = [];
   let page = 1;
@@ -122,7 +122,7 @@ const fetchAllComprobantes = async (
         fechaDesde,
         fechaHasta,
         filtro,
-        page
+        page,
       );
       allItems.push(...response.Items);
 
@@ -150,7 +150,7 @@ const fetchAllComprobantes = async (
 export const searchComprobantes = async (
   filtro?: string,
   fechaDesde?: string,
-  fechaHasta?: string
+  fechaHasta?: string,
 ): Promise<SearchComprobanteResponse> => {
   // Use provided dates or defaults
   const startDate =
@@ -278,7 +278,7 @@ export class APIError extends Error {
  * Searches products in the ERP system
  */
 export const searchProducts = async (
-  query?: string
+  query?: string,
 ): Promise<SearchProductsResponse> => {
   if (!API_URL_BASE || !CLIENT_ID || !CLIENT_SECRET) {
     throw new APIError("API configuration missing");
@@ -325,7 +325,7 @@ export const searchProducts = async (
 
     const data: SearchProductsResponse = await response.json();
     const activeProducts = data.Items.filter(
-      (product) => product.Estado === "Activo" && product.PrecioFinal > 0
+      (product) => product.Estado === "Activo" && product.PrecioFinal > 0,
     );
 
     return {
@@ -365,7 +365,7 @@ interface InventoryMovement {
  * Creates an internal inventory movement in the ERP system
  */
 export const createInventoryMovement = async (
-  movement: InventoryMovement
+  movement: InventoryMovement,
 ): Promise<void> => {
   const token = await getAccessToken();
 
@@ -394,7 +394,7 @@ export const createInventoryMovement = async (
 
       throw new APIError(
         `Error creating inventory movement: ${errorText}`,
-        response.status
+        response.status,
       );
     }
   } catch (error: any) {
@@ -415,17 +415,10 @@ export const createInventoryMovement = async (
   }
 };
 
-interface ProductCost {
-  CostoInterno: number;
-  Nombre: string;
-}
-
 /**
- * Fetches a product's internal cost by its SKU
+ * Fetches a product's details by its SKU
  */
-export const getProductCostBySku = async (
-  sku: string
-): Promise<ProductCost> => {
+export const getProductBySku = async (sku: string): Promise<Concepto> => {
   if (!API_URL_BASE || !CLIENT_ID || !CLIENT_SECRET) {
     throw new APIError("API configuration missing");
   }
@@ -452,15 +445,15 @@ export const getProductCostBySku = async (
         body: errorText,
         url: url.toString(),
       });
-
-      throw new APIError("Error fetching product cost", response.status);
+      // Check if the product simply wasn't found (e.g., 404)
+      if (response.status === 404) {
+        throw new APIError(`Product SKU ${sku} not found in ERP`, 404);
+      }
+      throw new APIError(`Error fetching product ${sku}`, response.status);
     }
 
-    const data = await response.json();
-    return {
-      CostoInterno: data.CostoInterno || 0,
-      Nombre: data.Nombre,
-    };
+    const data: Concepto = await response.json(); // Assume the response matches Concepto
+    return data; // Return the full data object
   } catch (error: any) {
     if (error instanceof APIError) throw error;
 
@@ -468,13 +461,13 @@ export const getProductCostBySku = async (
     if (error.message?.includes("401") || error.status === 401) {
       tokenCache = { access_token: null, expires_at: null };
       try {
-        return await getProductCostBySku(sku);
+        return await getProductBySku(sku); // Retry with the new function name
       } catch (retryError) {
         console.error("Retry failed:", retryError);
         throw new APIError("Authentication failed", 401);
       }
     }
 
-    throw new APIError(error.message || "Error fetching product cost");
+    throw new APIError(error.message || `Error fetching product ${sku}`);
   }
 };

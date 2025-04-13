@@ -125,8 +125,8 @@ export const DraggableDeliveryItem = ({
                 delivery.type === "delivered"
                   ? "bg-gray-50 cursor-auto text-gray-500"
                   : isPastDue && !isToday
-                  ? "bg-red-200 hover:bg-red-300"
-                  : "bg-blue-50 hover:bg-blue-100"
+                    ? "bg-red-200 hover:bg-red-300"
+                    : "bg-blue-50 hover:bg-blue-100"
               }
             `}
           >
@@ -251,7 +251,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
         const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
 
         const response = await fetch(
-          `${searchUrl}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+          `${searchUrl}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         );
 
         if (!response.ok) throw new Error("Failed to fetch deliveries");
@@ -269,12 +269,15 @@ const DeliveryCalendar = ({ searchUrl }) => {
         });
 
         // Group filtered deliveries by date
-        const grouped = filteredDeliveries.reduce((acc, delivery) => {
-          const normalizedDate = delivery.display_date.split("T")[0];
-          acc[normalizedDate] = acc[normalizedDate] || [];
-          acc[normalizedDate].push(delivery);
-          return acc;
-        }, {} as Record<string, CalendarDelivery[]>);
+        const grouped = filteredDeliveries.reduce(
+          (acc, delivery) => {
+            const normalizedDate = delivery.display_date.split("T")[0];
+            acc[normalizedDate] = acc[normalizedDate] || [];
+            acc[normalizedDate].push(delivery);
+            return acc;
+          },
+          {} as Record<string, CalendarDelivery[]>,
+        );
 
         setDeliveries(grouped);
       } catch (error) {
@@ -283,7 +286,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
         setLoading(false);
       }
     },
-    [searchUrl, filter]
+    [searchUrl, filter],
   );
 
   useEffect(() => {
@@ -363,14 +366,23 @@ const DeliveryCalendar = ({ searchUrl }) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="space-y-4">
-        <Link href="/?scheduledDate=noDate&page=">
-          <Alert variant="destructive">
+        {unscheduledCount > 0 ? (
+          <Link href="/?scheduledDate=noDate&page=">
+            <Alert variant="destructive">
+              <AlertDescription>
+                Hay <span className="font-bold">{unscheduledCount}</span>{" "}
+                entregas sin programar que no se ven en el calendario.
+              </AlertDescription>
+            </Alert>
+          </Link>
+        ) : (
+          <Alert>
             <AlertDescription>
-              Hay <span className="font-bold">{unscheduledCount}</span> entregas
-              sin programar que no se ven en el calendario.
+              👍 Todas las entregas están programadas y se muestran en el
+              calendario
             </AlertDescription>
           </Alert>
-        </Link>
+        )}
         <Card>
           <CardHeader className="flex-row justify-between items-center">
             <div className="flex items-center gap-x-4">
@@ -441,7 +453,7 @@ const DeliveryCalendar = ({ searchUrl }) => {
                     const currentDate = new Date(
                       date.getFullYear(),
                       date.getMonth(),
-                      day
+                      day,
                     );
                     return currentDate.getDay() !== 0 ? (
                       <div key={`day-${day}`} className="bg-white">

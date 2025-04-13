@@ -42,13 +42,35 @@ import { Database } from "@/supabase/types/supabase";
 import type { Comprobante } from "@/types/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "@supabase/supabase-js";
-import { AlertCircle, Edit2, Mail, MapPin, Phone } from "lucide-react";
+import {
+  AlertCircle,
+  Edit2,
+  Mail,
+  MapPin,
+  Phone,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
 import { useRouter } from "next/router";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { titleCase } from "title-case";
 import * as z from "zod";
 import { Skeleton } from "../ui/skeleton";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 type Store = Database["public"]["Enums"]["store"];
 type DeliveryType = Database["public"]["Enums"]["delivery_type"];
@@ -114,7 +136,7 @@ const deliveryFormSchema = z
           name: z.string().min(1),
           sku: z.string().min(1),
           quantity: z.number().min(1),
-        })
+        }),
       )
       .optional(),
     store_id: z.enum(["60835", "24471", "31312", "70749"] as const),
@@ -134,7 +156,7 @@ const deliveryFormSchema = z
     {
       message: "El email es requerido o se debe indicar por qué no lo tenemos",
       path: ["email"],
-    }
+    },
   );
 
 export default function DeliveryForm({ user }: DeliveryFormProps) {
@@ -150,6 +172,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
   const [invoices, setInvoices] = React.useState<Comprobante[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadingDetails, setLoadingDetails] = React.useState(false);
+  const [openCombobox, setOpenCombobox] = React.useState(false);
 
   const form = useForm<DeliveryFormValues>({
     resolver: zodResolver(deliveryFormSchema),
@@ -235,11 +258,11 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
       // Check for Cama con Cajones
       if (
         itemsData.items?.some((item) =>
-          item.Concepto?.toLowerCase().includes("cama con cajones")
+          item.Concepto?.toLowerCase().includes("cama con cajones"),
         )
       ) {
         setError(
-          "Este pedido contiene una Cama con Cajones. Después de guardar la entrega, vas a ir directo a la página de Camas con Cajones."
+          "Este pedido contiene una Cama con Cajones. Después de guardar la entrega, vas a ir directo a la página de Camas con Cajones.",
         );
       }
     } catch (error) {
@@ -319,7 +342,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
 
       // Check if we need to create a manufacturing order
       const hasBedWithDrawers = invoiceItems.some((item) =>
-        item.Concepto?.toLowerCase().includes("cama con cajones")
+        item.Concepto?.toLowerCase().includes("cama con cajones"),
       );
 
       if (hasBedWithDrawers && delivery?.id) {
@@ -330,7 +353,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
     } catch (error) {
       console.error(error);
       setError(
-        error instanceof Error ? error.message : "An unknown error occurred"
+        error instanceof Error ? error.message : "An unknown error occurred",
       );
     } finally {
       setLoading(false);
@@ -348,24 +371,65 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
           {/* Invoice Selection */}
           <div className="space-y-2">
             <Label>Factura</Label>
-            <Select onValueChange={handleInvoiceSelect}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccioná un comprobante" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {isLoading ? (
-                    <SelectItem value="loading">Cargando...</SelectItem>
-                  ) : (
-                    invoices.map((inv) => (
-                      <SelectItem key={inv.Id} value={String(inv.Id)}>
-                        {inv.TipoFc} {inv.Numero} | {inv.RazonSocial}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openCombobox}
+                  className="w-full justify-between"
+                  disabled={isLoading}
+                >
+                  {selectedInvoice
+                    ? `${selectedInvoice.TipoFc} ${selectedInvoice.Numero} | ${selectedInvoice.RazonSocial}`
+                    : isLoading
+                      ? "Cargando..."
+                      : "Seleccioná un comprobante"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command
+                  filter={(value, search) => {
+                    const invoice = invoices.find(
+                      (inv) => String(inv.Id) === value,
+                    );
+                    if (!invoice) return 0;
+                    const text =
+                      `${invoice.TipoFc} ${invoice.Numero} ${invoice.RazonSocial}`.toLowerCase();
+                    if (text.includes(search.toLowerCase())) return 1;
+                    return 0;
+                  }}
+                >
+                  <CommandInput placeholder="Buscar comprobante..." />
+                  <CommandList>
+                    <CommandEmpty>No se encontraron comprobantes.</CommandEmpty>
+                    <CommandGroup>
+                      {invoices.map((inv) => (
+                        <CommandItem
+                          key={inv.Id}
+                          value={String(inv.Id)}
+                          onSelect={(currentValue) => {
+                            handleInvoiceSelect(currentValue);
+                            setOpenCombobox(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedInvoice?.Id === inv.Id
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {inv.TipoFc} {inv.Numero} | {inv.RazonSocial}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {selectedInvoice && (
@@ -488,7 +552,7 @@ function CustomerInfoCard({ form, validationErrors }: CustomerInfoCardProps) {
   const [isAddressDialogOpen, setIsAddressDialogOpen] = React.useState(false);
   const [bypassReason, setBypassReason] = React.useState("");
   const [editedAddress, setEditedAddress] = React.useState(
-    form.watch("address")
+    form.watch("address"),
   );
 
   return (
@@ -568,10 +632,15 @@ function CustomerInfoCard({ form, validationErrors }: CustomerInfoCardProps) {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error en los datos del cliente</AlertTitle>
             <AlertDescription>
-              {Object.values(validationErrors)
-                .filter(Boolean)
-                .map((error) => error.message)
-                .filter(Boolean)
+              {Object.entries(validationErrors)
+                .filter(([, value]) => value?.message)
+                .map(([key, error]) => {
+                  let fieldName = key;
+                  if (key === "address") fieldName = "Domicilio";
+                  if (key === "phone") fieldName = "Teléfono";
+                  if (key === "email") fieldName = "Email";
+                  return `${titleCase(fieldName)}: ${error.message}`;
+                })
                 .join(". ")}
             </AlertDescription>
           </Alert>

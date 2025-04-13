@@ -1,58 +1,16 @@
 // pages/api/deliveries/create/delivery.ts
 import { createOrUpdateContact, formatPerfitContact } from "@/lib/perfit";
 import createClient from "@/lib/utils/supabase/api";
+import { homeDeliverySchema } from "@/lib/validation/deliveries";
 import { createDeliveryService } from "@/services/deliveries";
 import { NextApiRequest, NextApiResponse } from "next";
 import { titleCase } from "title-case";
-import { homeDeliverySchema } from "@/lib/validation/deliveries";
-
-interface DeliveryRequest {
-  order_date: string;
-  products: Array<{
-    name: string;
-    sku: string;
-    quantity: number;
-  }>;
-  invoice_number: string;
-  invoice_id: string;
-  name: string;
-  address: string;
-  phone: string;
-  dni: string; // NroDoc from the ERP
-  scheduled_date?: string;
-  notes?: string;
-  created_by: string;
-  email: string | null;
-  emailBypassReason?: string;
-  store_id: string;
-}
-
-const validateRequest = (body: DeliveryRequest): void => {
-  const requiredFields = [
-    "order_date",
-    "products",
-    "name",
-    "address",
-    "phone",
-    "store_id",
-    "dni",
-  ];
-  const missingFields = requiredFields.filter((field) => !body[field]);
-
-  if (missingFields.length > 0) {
-    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
-  }
-
-  if (!body.email && !body.emailBypassReason) {
-    throw new Error("Either email or email bypass reason must be provided");
-  }
-};
 
 const syncWithPerfit = async (email: string, name: string): Promise<void> => {
   try {
     const perfitContact = formatPerfitContact(
       email,
-      titleCase(name.toLowerCase())
+      titleCase(name.toLowerCase()),
     );
     await createOrUpdateContact(perfitContact);
   } catch (error) {
@@ -108,7 +66,7 @@ const findOrUpdateCustomer = async (supabase, customerData) => {
 
     if (createError || !newCustomer) {
       throw new Error(
-        `Failed to create customer: ${createError?.message || "Unknown error"}`
+        `Failed to create customer: ${createError?.message || "Unknown error"}`,
       );
     }
 
@@ -120,7 +78,7 @@ const findOrUpdateCustomer = async (supabase, customerData) => {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
@@ -210,7 +168,7 @@ export default async function handler(
         product_sku: p.sku,
         quantity: p.quantity,
         name: p.name,
-      }))
+      })),
     );
 
     // Add note if provided

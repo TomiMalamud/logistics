@@ -88,6 +88,7 @@ export interface Concepto {
   Id: string;
   Codigo: string;
   Nombre: string;
+  CostoInterno?: number;
   Estado?: string;
   PrecioFinal?: number;
   Stock?: number;

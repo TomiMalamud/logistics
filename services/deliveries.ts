@@ -69,7 +69,7 @@ const TYPE_ORDER: Record<DeliveryType, number> = {
 
 const createDeliveryService = (supabase: SupabaseClient) => {
   const ensureProductsExist = async (
-    products: Array<{ sku: string; name?: string }>
+    products: Array<{ sku: string; name?: string }>,
   ) => {
     // Get all products that don't exist in the database
     const { data: existingProducts, error: lookupError } = await supabase
@@ -77,7 +77,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
       .select("sku")
       .in(
         "sku",
-        products.map((p) => p.sku)
+        products.map((p) => p.sku),
       );
 
     if (lookupError) {
@@ -90,17 +90,31 @@ const createDeliveryService = (supabase: SupabaseClient) => {
       .map((p) => p.sku);
 
     if (missingSkus.length > 0) {
-      // If we have missing products, fetch them from ERP
-      const { searchProducts } = await import("@/lib/api");
-      const erpProducts = await searchProducts();
+      // If we have missing products, fetch them individually from ERP
+      const { getProductBySku } = await import("@/lib/api"); // Import the renamed function
+      const erpProductPromises = missingSkus.map((sku) =>
+        getProductBySku(sku).catch((error) => {
+          // Log the error but return null for this SKU if not found or other error
+          console.warn(
+            `Failed to fetch product ${sku} from ERP:`,
+            error.message,
+          );
+          return null;
+        }),
+      );
 
-      const productsToUpsert = erpProducts.Items.filter(
-        (product) =>
-          missingSkus.includes(product.Codigo) && product.Estado === "Activo"
-      ).map((product) => ({
-        sku: product.Codigo,
-        name: product.Nombre,
-      }));
+      const erpProductsResults = await Promise.all(erpProductPromises);
+
+      // Filter out nulls (failed fetches) and inactive products
+      const productsToUpsert = erpProductsResults
+        .filter(
+          (product): product is NonNullable<typeof product> =>
+            product !== null && product.Estado === "Activo",
+        )
+        .map((product) => ({
+          sku: product.Codigo, // Use Codigo from ERP response
+          name: product.Nombre, // Use Nombre from ERP response
+        }));
 
       if (productsToUpsert.length > 0) {
         const { error: insertError } = await supabase
@@ -112,15 +126,16 @@ const createDeliveryService = (supabase: SupabaseClient) => {
         }
       }
 
-      // Check if any required products are inactive or not found in ERP
+      // Check which missing SKUs were not successfully fetched and upserted
       const syncedSkus = new Set(productsToUpsert.map((p) => p.sku));
       const unavailableSkus = missingSkus.filter((sku) => !syncedSkus.has(sku));
 
       if (unavailableSkus.length > 0) {
+        // Provide a more specific error message
         throw new Error(
-          `Some products are not available in ERP or are inactive: ${unavailableSkus.join(
-            ", "
-          )}`
+          `Failed to sync some products from ERP. They might be inactive or not found: ${unavailableSkus.join(
+            ", ",
+          )}`,
         );
       }
     }
@@ -128,14 +143,14 @@ const createDeliveryService = (supabase: SupabaseClient) => {
 
   const createDeliveryItems = async (
     deliveryId: number,
-    items: Array<{ product_sku: string; quantity: number; name?: string }>
+    items: Array<{ product_sku: string; quantity: number; name?: string }>,
   ) => {
     // First ensure all products exist
     await ensureProductsExist(
       items.map((item) => ({
         sku: item.product_sku,
         name: item.name,
-      }))
+      })),
     );
 
     // Create delivery items
@@ -176,7 +191,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
       if (existingItem.pending_quantity < item.quantity) {
         throw new Error(
           `Invalid quantity for product ${item.product_sku}. ` +
-            `Requested: ${item.quantity}, Available: ${existingItem.pending_quantity}`
+            `Requested: ${item.quantity}, Available: ${existingItem.pending_quantity}`,
         );
       }
     }
@@ -245,7 +260,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
           )
         )
       `,
-          { count: "exact" }
+          { count: "exact" },
         )
         .eq("state", state);
 
@@ -263,7 +278,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
         if (customerIds?.length) {
           query = query.in(
             "customer_id",
-            customerIds.map((c) => c.id)
+            customerIds.map((c) => c.id),
           );
         } else {
           return { data: [], count: 0 }; // No matching customers
@@ -332,7 +347,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
               name
             )
           )
-        `
+        `,
         )
         .eq("operation_type", type)
         .gte("operation_date", startDate)
@@ -363,12 +378,12 @@ const createDeliveryService = (supabase: SupabaseClient) => {
           product_sku: item.product_sku,
           quantity: item.quantity,
           store_id: item.store_id,
-        }))
+        })),
       );
 
     if (opItemsError) {
       throw new Error(
-        `Error creating operation items: ${opItemsError.message}`
+        `Error creating operation items: ${opItemsError.message}`,
       );
     }
 
@@ -380,12 +395,12 @@ const createDeliveryService = (supabase: SupabaseClient) => {
           p_delivery_id: deliveryId,
           p_product_sku: item.product_sku,
           p_quantity: item.quantity,
-        }
+        },
       );
 
       if (updateError) {
         throw new Error(
-          `Error updating pending quantity: ${updateError.message}`
+          `Error updating pending quantity: ${updateError.message}`,
         );
       }
     }
@@ -416,7 +431,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     delivery: {
       origin_store: string;
       dest_store: string;
-    }
+    },
   ) => {
     const { createInventoryMovement } = await import("@/lib/api");
 
@@ -434,7 +449,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
           console.error(`Error moving product ${item.product_sku}:`, error);
           throw error;
         }
-      })
+      }),
     );
   };
 
@@ -457,7 +472,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
         deliveryCost = null;
       } else if (!carrierId || !deliveryCost) {
         throw new Error(
-          "Either pickup_store or both carrier_id and delivery_cost must be provided for delivery operations"
+          "Either pickup_store or both carrier_id and delivery_cost must be provided for delivery operations",
         );
       }
     }
@@ -510,7 +525,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
 
         if (updateError) {
           throw new Error(
-            `Error updating delivery state: ${updateError.message}`
+            `Error updating delivery state: ${updateError.message}`,
           );
         }
       }
@@ -554,7 +569,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
             products (name)
           )
         )
-      `
+      `,
       )
       .eq("id", id)
       .single();
@@ -600,7 +615,7 @@ const createDeliveryService = (supabase: SupabaseClient) => {
     if (delivery.customers?.email) {
       const { triggerEmail } = await import("@/lib/utils/email");
       const hasGani = (delivery.products as Product[])?.some((p) =>
-        p.name.toLowerCase().includes("colchon gani")
+        p.name.toLowerCase().includes("colchon gani"),
       );
 
       if (hasGani) {
