@@ -24,7 +24,7 @@ interface ListDeliveriesParams {
   page: number;
   pageSize: number;
   search?: string;
-  scheduledDate?: "all" | "hasDate" | "noDate";
+  scheduledDate?: "all" | "hasDate" | "noDate" | "thisWeek" | "next30days" | "longTerm";
   type?: DeliveryType;
   userId?: string;
   userRole?: string;
@@ -285,10 +285,49 @@ const createDeliveryService = (supabase: SupabaseClient) => {
         }
       }
 
+      // Apply scheduled date filters
       if (scheduledDate === "hasDate") {
         query = query.not("scheduled_date", "is", null);
       } else if (scheduledDate === "noDate") {
         query = query.is("scheduled_date", null);
+      } else if (scheduledDate === "thisWeek") {
+        // Get current date and end of week (next Sunday)
+        const today = new Date();
+        const endOfWeek = new Date();
+        const daysUntilEndOfWeek = 7 - today.getDay();
+        endOfWeek.setDate(today.getDate() + daysUntilEndOfWeek);
+        
+        // Format dates as ISO strings (YYYY-MM-DD)
+        const todayStr = today.toISOString().split('T')[0];
+        const endOfWeekStr = endOfWeek.toISOString().split('T')[0];
+        
+        query = query
+          .not("scheduled_date", "is", null)
+          .or(`scheduled_date.lte.${todayStr},and(scheduled_date.gte.${todayStr},scheduled_date.lte.${endOfWeekStr})`);
+      } else if (scheduledDate === "next30days") {
+        // Get current date and date 30 days from now
+        const today = new Date();
+        const in30Days = new Date();
+        in30Days.setDate(today.getDate() + 30);
+        
+        // Format dates as ISO strings (YYYY-MM-DD)
+        const todayStr = today.toISOString().split('T')[0];
+        const in30DaysStr = in30Days.toISOString().split('T')[0];
+        
+        query = query
+          .not("scheduled_date", "is", null)
+          .or(`scheduled_date.lte.${todayStr},and(scheduled_date.gte.${todayStr},scheduled_date.lte.${in30DaysStr})`);
+      } else if (scheduledDate === "longTerm") {
+        // Get date 30 days from now
+        const in30Days = new Date();
+        in30Days.setDate(in30Days.getDate() + 30);
+        
+        // Format date as ISO string (YYYY-MM-DD)
+        const in30DaysStr = in30Days.toISOString().split('T')[0];
+        
+        query = query
+          .not("scheduled_date", "is", null)
+          .gt("scheduled_date", in30DaysStr);
       }
 
       // Apply appropriate sorting

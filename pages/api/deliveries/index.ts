@@ -55,7 +55,7 @@ export default async function handler(
     }
 
     // Validate scheduledDate parameter
-    if (!["all", "hasDate", "noDate"].includes(scheduledDate as string)) {
+    if (!["all", "hasDate", "noDate", "thisWeek", "next30days", "longTerm"].includes(scheduledDate as string)) {
       return res.status(400).json({ error: "Invalid scheduledDate parameter" });
     }
 
@@ -64,7 +64,7 @@ export default async function handler(
       page: Number(page),
       pageSize: Number(pageSize),
       search: search as string,
-      scheduledDate: scheduledDate as "all" | "hasDate" | "noDate",
+      scheduledDate: scheduledDate as "all" | "hasDate" | "noDate" | "thisWeek" | "next30days" | "longTerm",
       type: type as DeliveryType,
       userId: user.id,
       userRole: profile.role,

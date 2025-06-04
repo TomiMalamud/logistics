@@ -16,6 +16,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
+  SelectSeparator
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,7 +57,7 @@ const DEFAULT_FILTERS = {
   state: "pending",
   page: "1",
   search: "",
-  scheduledDate: "all",
+  scheduledDate: "next30days",
   type: "all",
 };
 
@@ -410,8 +411,30 @@ export default function Index({ profile }: IndexProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Fecha Programada</SelectLabel>
-                      <SelectItem value="all">Fecha Programada</SelectItem>
+                      <SelectLabel>Fecha Programada</SelectLabel>                      
+                      <SelectItem value="thisWeek">
+                        <Calendar
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
+                        Esta semana
+                      </SelectItem>
+                      <SelectItem value="next30days">
+                        <Calendar
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
+                        Próximos 30 días
+                      </SelectItem>
+                      <SelectItem value="longTerm">
+                        <Calendar
+                          className="inline-block mr-2 text-gray-700"
+                          size={12}
+                        />
+                        Largo plazo
+                      </SelectItem>
+                      <SelectSeparator />
+                      <SelectItem value="all">Todas las fechas</SelectItem>
                       <SelectItem value="hasDate">
                         <Calendar
                           className="inline-block mr-2 text-gray-700"
