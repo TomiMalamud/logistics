@@ -9,13 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FINANCING_OPTIONS, FinancingOption } from "@/lib/utils/constants";
 import { Plus } from "lucide-react";
 
@@ -32,8 +26,8 @@ const CREDIT_CARDS = [
 
 // Define POS mappings for each card type
 const POS_MAPPINGS = {
-  bancaria: "Payway nuestro",
-  naranja: "Payway nuestro",
+  bancaria: "Payway Fábrica",
+  naranja: "Payway Fábrica",
   amex: "Mercado Pago",
 };
 
@@ -104,18 +98,29 @@ const FinancingOptions = ({ price }: FinancingOptionsProps) => {
           <label className="text-sm font-medium mb-2 block">
             Seleccionar Tarjeta
           </label>
-          <Select value={selectedCard} onValueChange={setSelectedCard}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Seleccione una tarjeta" />
-            </SelectTrigger>
-            <SelectContent>
+          <RadioGroup value={selectedCard} onValueChange={setSelectedCard}>
+            <div className="flex flex-wrap gap-2">
               {CREDIT_CARDS.map((card) => (
-                <SelectItem key={card.id} value={card.id}>
-                  {card.label}
-                </SelectItem>
+                <div key={card.id} className="relative">
+                  <RadioGroupItem
+                    value={card.id}
+                    id={card.id}
+                    className="sr-only"
+                  />
+                  <label
+                    htmlFor={card.id}
+                    className={`flex items-center cursor-pointer rounded-full border px-3 py-2 text-sm font-medium transition-all ${
+                      selectedCard === card.id
+                        ? "border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500"
+                        : "border-gray-200 bg-white hover:bg-gray-50"
+                    }`}
+                  >
+                    {card.label}
+                  </label>
+                </div>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          </RadioGroup>
         </div>
 
         {/* POS Display */}
