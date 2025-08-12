@@ -35,6 +35,12 @@ export interface GetClientByIdResponse {
   total: number;
 }
 
+export interface SearchClientsResponse {
+  Items: Customer[];
+  TotalItems: number;
+  TotalPage: number;
+}
+
 export interface Comprobante {
   Id: number;
   IdComprobanteAsociado: number;

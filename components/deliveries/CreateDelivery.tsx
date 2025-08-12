@@ -220,7 +220,7 @@ export default function DeliveryForm({ user }: DeliveryFormProps) {
 
       // Fetch both customer and items data in parallel
       const [customerRes, itemsRes] = await Promise.all([
-        fetch(`/api/customer/${selectedInv.IdCliente}`),
+        fetch(`/api/customer/${selectedInv.IdCliente}?razonSocial=${encodeURIComponent(selectedInv.RazonSocial)}`),
         fetch(`/api/invoices/${invoiceId}`),
       ]);
 

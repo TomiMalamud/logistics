@@ -16,14 +16,17 @@ export default async function handler(
       .json({ error: `Method ${req.method} Not Allowed` });
   }
 
-  const { id } = req.query;
+  const { id, razonSocial } = req.query;
 
   if (!id || Array.isArray(id)) {
     return res.status(400).json({ error: 'Invalid or missing id parameter' });
   }
 
   try {
-    const customer: Customer = await getClientById(Number(id));
+    const customer: Customer = await getClientById(
+      Number(id), 
+      typeof razonSocial === 'string' ? razonSocial : undefined
+    );
     return res.status(200).json(customer);
   } catch (error: any) {
     console.error('Error fetching customer:', error);

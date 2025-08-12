@@ -6,6 +6,7 @@ import {
   Customer,
   Comprobante,
   SearchComprobanteResponse,
+  SearchClientsResponse,
 } from "@/types/api";
 
 const API_URL_BASE = process.env.NEXT_PUBLIC_API_URL_BASE as string;
@@ -200,15 +201,17 @@ export const searchComprobantes = async (
     throw error;
   }
 };
+
 /**
- * Fetches a client by ID using the ERP's API.
+ * Searches clients by RazonSocial using the ERP's API.
  */
-export const getClientById = async (id: number): Promise<Customer> => {
+export const searchClients = async (filtro: string): Promise<SearchClientsResponse> => {
   const token = await getAccessToken();
 
-  const url = `${API_URL_BASE}/api/clientes/${id}`;
+  const url = new URL(`${API_URL_BASE}/api/clientes/search`);
+  url.searchParams.append("filtro", filtro);
 
-  const response = await fetch(url, {
+  const response = await fetch(url.toString(), {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -218,12 +221,69 @@ export const getClientById = async (id: number): Promise<Customer> => {
 
   if (!response.ok) {
     const errorData = await response.json();
-    console.error("Error fetching client by ID:", errorData);
-    throw new Error(errorData.message || "Error fetching client by ID");
+    console.error("Error searching clients:", errorData);
+    throw new Error(errorData.Message || errorData.message || "Error searching clients");
   }
 
-  const data: Customer = await response.json();
+  const data: SearchClientsResponse = await response.json();
   return data;
+};
+
+/**
+ * Fetches a client by ID using the ERP's API.
+ * If the direct lookup fails, tries to search by RazonSocial as fallback.
+ */
+export const getClientById = async (id: number, razonSocial?: string): Promise<Customer> => {
+  const token = await getAccessToken();
+  const url = `${API_URL_BASE}/api/clientes/?id=${id}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      
+      // If the direct ID lookup fails due to connection issues, try fallback search
+      if (errorData.Message?.includes('ObjectContext instance has been disposed') && razonSocial) {
+        console.warn(`Direct client lookup failed for ID ${id}, trying search fallback with RazonSocial: ${razonSocial}`);
+        
+        const searchResults = await searchClients(razonSocial);
+        if (searchResults.Items && searchResults.Items.length > 0) {
+          // Find exact match by ID, or return first match if ID not found
+          const exactMatch = searchResults.Items.find(client => client.Id === id);
+          return exactMatch || searchResults.Items[0];
+        }
+        throw new Error(`Client with ID ${id} not found via search fallback`);
+      }
+      
+      console.error("Error fetching client by ID:", errorData);
+      throw new Error(errorData.Message || errorData.message || "Error fetching client by ID");
+    }
+
+    const data: Customer = await response.json();
+    return data;
+  } catch (error: any) {
+    // If the error is a network/fetch error and we have razonSocial, also try the fallback
+    if ((error.message?.includes('fetch') || error.message?.includes('network')) && razonSocial) {
+      console.warn(`Network error for client ID ${id}, trying search fallback with RazonSocial: ${razonSocial}`);
+      try {
+        const searchResults = await searchClients(razonSocial);
+        if (searchResults.Items && searchResults.Items.length > 0) {
+          const exactMatch = searchResults.Items.find(client => client.Id === id);
+          return exactMatch || searchResults.Items[0];
+        }
+      } catch (searchError) {
+        console.error("Search fallback also failed:", searchError);
+      }
+    }
+    throw error;
+  }
 };
 
 /**
