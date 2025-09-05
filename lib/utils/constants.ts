@@ -12,32 +12,27 @@ export const getStore = (id: string): Store | undefined =>
 
 export const ERP_PROFILES: Record<string, string> = {
   "24194": "Noe",
-  "25996": "Amadeo",
+  "28119": "Silvi",
+  "29577": "Guido",
 };
 
-export const EMPLOYEE_TIER_TARGETS: Record<
-  string,
-  {
-    base: number;
-    despegue: number;
-    full: number;
-    xxl: number;
-  }
-> = {
-  "24194": {
-    // Noe
-    base: 20000000,
-    despegue: 22000000,
-    full: 25000000,
-    xxl: 28000000,
-  },
-  "25996": {
-    // Amadeo
-    base: 9000000,
-    despegue: 12000000,
-    full: 15000000,
-    xxl: 17000000,
-  },
+export const EMPLOYEE_BASE_TARGETS: Record<string, number> = {
+  "24194": 25000000, // Noe
+  "28119": 15000000, // Silvi
+  "29577": 20000000, // Guido
+};
+
+export const TIER_MULTIPLIERS = {
+  base: 1,
+  despegue: 1.1,
+  full: 1.25,
+  xxl: 1.4,
+};
+
+export const getEmployeeTierTarget = (employeeId: string, tier: keyof typeof TIER_MULTIPLIERS): number => {
+  const baseTarget = EMPLOYEE_BASE_TARGETS[employeeId];
+  if (!baseTarget) return 0;
+  return baseTarget * TIER_MULTIPLIERS[tier];
 };
 
 export const TIER_BONUSES = {

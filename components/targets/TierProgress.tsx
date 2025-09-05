@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EMPLOYEE_TIER_TARGETS, TIER_BONUSES } from "@/lib/utils/constants";
+import { EMPLOYEE_BASE_TARGETS, TIER_MULTIPLIERS, TIER_BONUSES, getEmployeeTierTarget } from "@/lib/utils/constants";
 import React from "react";
 import { Progress } from "../ui/progress";
 import {
@@ -19,58 +19,60 @@ import { PeriodOption } from "@/hooks/useSalesData";
 
 const getTierTargets = (employeeId: string | undefined) => {
   if (!employeeId || employeeId === "all") {
-    // Default targets when no specific employee is selected
+    // Sum of all employees' targets when no specific employee is selected
+    const allBaseTargets = Object.values(EMPLOYEE_BASE_TARGETS);
+    const totalBaseTarget = allBaseTargets.reduce((sum, target) => sum + target, 0);
+    
     return {
       base: {
         name: "Base",
-        target: 50000000,
+        target: totalBaseTarget * TIER_MULTIPLIERS.base,
         color: "bg-purple-600/40",
         bonus: TIER_BONUSES.base,
       },
       despegue: {
         name: "Despegue",
-        target: 60000000,
+        target: totalBaseTarget * TIER_MULTIPLIERS.despegue,
         color: "bg-purple-600/80",
         bonus: TIER_BONUSES.despegue,
       },
       full: {
         name: "Full",
-        target: 70000000,
+        target: totalBaseTarget * TIER_MULTIPLIERS.full,
         color: "bg-purple-600",
         bonus: TIER_BONUSES.full,
       },
       xxl: {
         name: "XXL",
-        target: 80000000,
+        target: totalBaseTarget * TIER_MULTIPLIERS.xxl,
         color: "bg-yellow-500",
         bonus: TIER_BONUSES.xxl,
       },
     };
   }
 
-  const employeeTargets = EMPLOYEE_TIER_TARGETS[employeeId];
   return {
     base: {
       name: "Base",
-      target: employeeTargets.base,
+      target: getEmployeeTierTarget(employeeId, "base"),
       color: "bg-purple-600/40",
       bonus: TIER_BONUSES.base,
     },
     despegue: {
       name: "Despegue",
-      target: employeeTargets.despegue,
+      target: getEmployeeTierTarget(employeeId, "despegue"),
       color: "bg-purple-600/80",
       bonus: TIER_BONUSES.despegue,
     },
     full: {
       name: "Full",
-      target: employeeTargets.full,
+      target: getEmployeeTierTarget(employeeId, "full"),
       color: "bg-purple-600",
       bonus: TIER_BONUSES.full,
     },
     xxl: {
       name: "XXL",
-      target: employeeTargets.xxl,
+      target: getEmployeeTierTarget(employeeId, "xxl"),
       color: "bg-yellow-500",
       bonus: TIER_BONUSES.xxl,
     },
